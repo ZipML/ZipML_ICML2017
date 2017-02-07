@@ -1,0 +1,71 @@
+Let $\g$ be the true gradient at the $k$th iteration
+\begin{eqnarray*}
+\g &:=& {1\over K} \sum_{k=1}^K \a_k (\a_k^\top \x - b_k)
+\\ & = & 
+\E_k(\a_k \a_k^\top) \x + \E_k (\a_k b_k).
+% \\ & = &
+% \E_k(\E_{\xi_k})
+\end{eqnarray*}
+Let $\g_k$ ($k$ is the sample data) the stochastic gradient with full precision for all data
+\[
+\g_k := \a_k \a_k^\top \x + \a_k b_k.
+\]
+Let $\g_{k, \xi_k, \xi'_k}$ be the stochastic gradient with double samples for low precision data
+\[
+\g_{k, \xi_k, \xi'_k} := {1\over 2}(\a_{k,\xi_k} \a_{k,\xi'_k}^\top + \a_{k,\xi'_k} \a_{k,\xi_k}^\top)\x + {1\over 2} (\a_{k, \xi_k} + \a_{k, \xi'_k})b_k
+\]
+where $\a_{k,\xi_k}$ and $\a_{k,\xi'_k}$ are two independent unbias samples for $\a_k$. As we know that the total computational complexity is proportional to the variance of the stochastic gradient. Next we will analyze the variance of using the stochastic gradient $\g_{k, \xi_k, \xi'_k}$. In particular, we want to study the additional variance due to using the low precision data samples.
+\begin{eqnarray*}
+\E(\|\g_{k, \xi_k, \xi'_k} - \g\|^2) & = & \E(\|\g_{k, \xi_k, \xi'_k} - \g_k + \g_k - \g\|^2) 
+\\ & = &
+\E(\|\g_{k, \xi_k, \xi'_k} - \g_k\|^2) + \E(\|\g_k - \g\|^2) - 2\underbrace{\E \langle \g_{k, \xi_k, \xi'_k} - \g_k,~\g_k - \g \rangle}_{=0}
+\\ & = &
+\E(\|\g_{k, \xi_k, \xi'_k} - \g_k\|^2) + \E(\|\g_k - \g\|^2).
+\end{eqnarray*}
+As we know, for the standard SGD, the computational complexity depends on the upper bound of $\E(\|\g_k - \g\|^2)$. The additional variance is caused by $\E(\|\g_{k, \xi_k, \xi'_k} - \g_k\|^2)$. If both items are comparable, the order of the total complexity does not change by using the low precision data. Then we take a close check both items. For $\E(\|\g_k - \g\|^2)$, we have
+\begin{eqnarray*}
+\E(\|\g_k - \g\|^2) & \leq & 2\E_k(\|(\a_k \a_k^\top - \E_k(\a_k\a_k^\top))\x\|^2 + 2\E_k(\|\a_k b_k - \E_k(\a_k b_k)\|^2).
+\end{eqnarray*}
+
+Let $\sigma^2_{\max}:=\max_{i,k}\E_{\xi}(\a_{k, \xi} - \a_k)^2$. We estimate the upper bound for $\E_{\xi_k, \xi'_k}\left\|\left(\a_{k, \xi_k} \a_{k, \xi'_k}^\top - \a_k \a_k^\top\right)\x\right\|^2$ by fixing $\x$:
+\begin{eqnarray}
+\notag
+&&    \E_{\xi_k, \xi'_k}\left\|\left(\a_{k, \xi_k} \a_{k, \xi'_k}^\top - \a_k \a_k^\top\right)\x\right\|^2
+\\ & = & \notag
+\E_{\xi_k, \xi'_k}\left\|\left(\a_{k, \xi_k} \a_{k, \xi'_k}^\top - \a_{k} \a_{k, \xi'_k}^\top + \a_{k} \a_{k, \xi'_k}^\top - \a_k \a_k^\top\right)\x\right\|^2
+\\ & \leq & \notag
+2\E_{\xi_k, \xi'_k}\left\|(\a_{k, \xi_k} - \a_{k}) \a_{k, \xi'_k}^\top\x\right\|^2 +
+2\E_{\xi_k, \xi'_k}\left\|\a_{k} (\a_{k, \xi'_k}^\top\x -  \a_k^\top\x)\right\|^2
+\\ & \leq & \notag
+2\E_{\xi_k}\left\|\a_{k, \xi_k} - \a_{k}\right\|^2 \E_{\xi'_k} (\a_{k, \xi'_k}^\top\x)^2 +
+2\|\a_{k}\|^2\E_{\xi'_k} ((\a_{k, \xi'_k}-\a_k)^\top\x)^2
+\\ & \leq & \notag
+2n\sigma^2_{\max}\left(\E_{\xi'_k} ((\a_{k, \xi'_k}-\a_k)^\top\x)^2 + (\a_k^\top \x)^2\right) + 2\|\a_k\|^2 \|\x\|^2 \sigma^2_{\max}
+\\ & \leq & \notag
+2n\sigma^2_{\max}\left(\sigma^2_{\max}\|\x\|^2 + \|\a_k\|^2\|\x\|^2) + 2\|\a_k\|^2 \|\x\|^2 \sigma^2_{\max}
+\\ & = & 
+2\sigma^2_{\max}\|\x\|^2(n\sigma^2_{\max} + (n+1)\|\a_k\|^2)
+\label{eq:Exi}
+\end{eqnarray}
+\footnote{Dan and Jerry: can you guys check the last inequality? I think that this is the key difference from the result in section 3.3. If you agree, the result in section 3.3 could be improved too.}
+For $\E(\|\g_{k, \xi_k, \xi'_k} - \g_k\|^2)$ we have the following upper bound
+\begin{eqnarray*}
+&&\E(\|\g_{k, \xi_k, \xi'_k} - \g_k\|^2) 
+\\ &=&
+\E_{\xi_k, \xi'_k}\left\|\left(0.5\a_{k, \xi_k} \a_{k, \xi'_k}^\top + 0.5\a_{k, \xi'_k} \a_{k, \xi_k}^\top - \a_k \a_k^\top\right)\x - \left(0.5 \a_{k, 
+\xi_k} + 0.5\a_{k, \xi'_k} - \a_k\right)b_k\right\|^2
+\\ & \leq &
+2\E_{\xi_k, \xi'_k}\left\|\left(0.5\a_{k, \xi_k} \a_{k, \xi'_k}^\top + 0.5\a_{k, \xi'_k} \a_{k, \xi_k}^\top - \a_k \a_k^\top\right)\x\right\|^2 + 2\E_{\xi_k, \xi'_k}\left\|\left(0.5 \a_{k, 
+\xi_k} + 0.5\a_{k, \xi'_k} - \a_k\right)b_k\right\|^2
+\\ & = &
+2\E_{\xi_k, \xi'_k}\left\|\left(0.5\a_{k, \xi_k} \a_{k, \xi'_k}^\top + 0.5\a_{k, \xi'_k} \a_{k, \xi_k}^\top - \a_k \a_k^\top\right)\x\right\|^2 + 2b_k^2\E_{\xi_k, \xi'_k}\left\|0.5 \a_{k, \xi_k} + 0.5\a_{k, \xi'_k} - \a_k\right\|^2
+\\ & \leq &
+\E_{\xi_k, \xi'_k}\left\|\left(\a_{k, \xi_k} \a_{k, \xi'_k}^\top - \a_k \a_k^\top\right)\x\right\|^2 + \E_{\xi'_k, \xi_k} \left\|\left(\a_{k, \xi'_k} \a_{k, \xi_k}^\top - \a_k \a_k^\top\right)\x\right\|^2 + b_k^2\E_{\xi_k}\left\|\a_{k, \xi_k}-\a_k\right\|^2
+\\ & \leq &
+2\E_{\xi_k, \xi'_k}\left\|\left(\a_{k, \xi_k} \a_{k, \xi'_k}^\top - \a_k \a_k^\top\right)\x\right\|^2 + b_k^2\E_{\xi_k}\left\|\a_{k, \xi_k}-\a_k\right\|^2
+\\ & \leq &
+4\left((n+1)\|\a_k\|^2 + n\sigma^2_{\max}\right) \sigma_{\max}^2 \|\x\|^2 + b_k^2 n \sigma^2_{\max} \quad \quad \text{(from \eqref{eq:Exi})}
+\\ & \leq &
+4\left({(n+1)\|\a_k\|^2 \over s^2} + {n \over s^4}\right) \|\x\|^2 + b_k^2 {n \over s^2},
+\end{eqnarray*}
+where the last inequality uses the fact $\sigma^2_{\max} \leq s^{-2}$.

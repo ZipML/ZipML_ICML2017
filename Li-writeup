@@ -1,0 +1,76 @@
+\subsection{Solution 2: \emph{Error Correction}}
+
+
+
+
+
+
+\paragraph{Algorithm.} 
+Another way we could modify the stochastic gradient to be unbiased is as follows:
+\begin{eqnarray}
+	\g_k := Q(\a_k, s ) (Q(\a_k, s)^\top \x + b_k) - Q_s( D_{s, \a_k}, s ) \x \; , 
+\end{eqnarray}
+where in a slight abuse of notation, we let $Q_s (A, s)$ for a diagonal matrix $A$ be the quantization function applied to the diagonal elements of the matrix as if they formed a vector.
+Here we will take $Q$ and $Q_s$ to be independent quantizations.
+In practical terms, this means that we are not only storing the quantized examples, but also the quantization error in quantized form. 
+
+\paragraph{Properties.} 
+To see that this is an unbiased estimator, notice that
+\begin{eqnarray*}
+	\mathbb{E} [ \g_k ] &=& \mathbb{E} [ Q(\a_k, s ) Q(\a_k, s)^\top \x + Q(\a_k, s) b_k ]  - \mathbb{E} [ Q( D_{s, \a_k}, s ) \x ] \\
+	&=& \mathbb{E} [ Q(\a_k, s ) Q(\a_k, s)^\top \x ] + \a_k b_k   - D_{s, \a_k} \x \\
+	&=& \g'_k \; .
+\end{eqnarray*}
+
+
+
+\paragraph{Second Moment Analysis.} 
+We now show the following second moment bound for error correction:
+\begin{lemma}
+    Let $\a_k, \x, b_k$ be so that $\| \a_k \|_2^2 \leq A^2, \| x \|_2^2 \leq R^2$, and $|b_k| \leq B$.
+    Then, we have 
+    \[
+    E_{Q, Q_s} [\| \g_k \|_2^2] \leq 2 r A^4 \left( 1 + \frac{n}{s^2} \right) X + 4 r B^2 A^2 + 2 (r - 1)A^2 R^2 \; .
+    \]
+\end{lemma}
+\begin{proof}
+By repeated application of the fact that $\| \a_1 + \a_2 \|_2^2 \leq 2 \| \a_1 \|_2 + 2 \| \a_2 \|_2^2$ for any vectors $\a_1, \a_2$, we have
+\begin{align*}
+    \E [\| \g_k \|_2^2] &\leq 4 \E [\| Q(\a_k, s) Q(\a_k, s)^\top \x \|_2^2]  + 4 b_k^2 \E [\| \a_k \|_2^2 ] + 2 \E [ \| Q_s (D_{s, \a_k}, s) \x \|_2^2  ] \\
+    &\leq 4 \E [ \| Q(\a_k, s) \|^2 \x^\top Q(\a_k, s) Q(\a_k, s)^\top \x] + 4 r b_k^2 \| \a_k \|_2^2 + \E [\x^\top Q_s (D_{s, \a_k}, s)^2 \x ] \; .
+\end{align*}
+We will now bound each term separately.
+For the first term, observe that for any vector $\a$, we have $\x^\top \a \a^\top \x \leq \| \a \a^\top \|_{\mathrm{op}} \| \x \|_2^2 = \| \a \|_2^2 \| \x \|_2^2$.
+Hence, we have
+\begin{align*}
+    4 \E [ \| Q(\a_k, s) \|^2 \x^\top Q(\a_k, s) Q(\a_k, s)^\top \x] \leq 4 \E [\| Q(\a_k, s) \|_2^4] \| \x \|_2^2 \; .
+\end{align*}
+Next, observe that as in the proof of Lemma A.2 in \cite{QSGDArxiv}, we have that $\| Q(\a_k, s) \|^2 \leq 2 \| \a_k \|_2^2 \left( 1 + \frac{n}{s^2} \right)$.
+Hence, we have
+\begin{align*}
+4 \E [ \| Q(\a_k, s) \|_2^4] \| \x \|_2^2 &\leq 2 \| \a_k \|_2^2 \left( 1 + \frac{n}{s^2} \right) \E [\| Q(\a_k, s) \|_2^2] \| \x \|_2^2 \\
+&\leq 2 r \| \a_k \|_2^4 \left( 1 + \frac{n}{s^2} \right) \| x \|_2^2 \; .
+\end{align*}
+
+We also have
+\begin{align*}
+    \E[\x^\top Q_s (D_{s, \a_k}, s)^2 \x] &\leq \| \x \|_2^2 \E [\| Q_s (D_{s, \a_k}, s) \|_{\mathrm{op}}^2] \; .
+\end{align*}
+Let $\w$ be the vector of diagonal entries of $D_{s, \a_k}$.
+Observe that the largest element of $Q_s (D_{s, \a_k})$ (and hence its operator norm) is at most $\| \w \|_2^2 = \sum_i \left( \E[Q(a_{k, i}, s)^2] - a_{k, i}^2 \right)^2$.
+By the proof of Lemma 3.4 in \cite{QSGDArxiv}, we have 
+\[
+a_{k, i}^2 \leq \E[Q(a_{k, i}, s)^2] \leq a_{k, i}^2 + \frac{\| \a_k \|_2^2}{s} p \left( \frac{|v_i|}{\| \vec{v}\|_2}, s \right)
+\]
+and hence,
+\begin{align*}
+    \E[\x^\top Q_s (D_{s, \a_k}, s)^2 \x] &\leq \sum_{i = 1}^n \frac{\| \a_k \|_2^2}{s} p \left( \frac{|v_i|}{\| \vec{v}\|_2}, s \right) \\
+    &\leq (r - 1) \| \a_k \|_2^2 \| \x \|_2^2\; ,
+\end{align*}
+by the calculation done in the proof of Lemma 3.4 in \cite{QSGDArxiv}.
+Hence altogether we have
+\[
+\E [\| \g_k \|_2^2] \leq 2 r \| \a_k \|_2^4 \left( 1 + \frac{n}{s^2} \right) \| x \|_2^2 + 4 r b_k^2 \| \a_k \|_2^2 + 2 (r - 1) \| \a_k \|_2^2 \| \x \|_2^2 \; ,
+\]
+from which the desired result follows.
+\end{proof}
