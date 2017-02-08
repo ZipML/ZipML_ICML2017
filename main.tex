@@ -105,71 +105,57 @@ Introduction for details.}
 \label{fig:highlight}
 \end{figure}
 
-%\vspace{-2em}
+\vspace{-2em}
 \section{Introduction}
 
-For nany machine learning applications,
-the total operating cost or 
-power consumption are often dominated by 
-the amount of data movement involved
-in sending input samples and models:
-
-\noindent
-{\bf Use Case 1 (Industrial IoT).} Two
-of our industry partners want to learn
-linear models with data collected by sensors,
-which are sent via 4G or 2G signals. To
-lower the cost and power consumption 
-on sensors, they want to minimize
-the amount of data sent from sensors while
-maintaining the training quality.
-
-\noindent
-{\bf Use Case 2. (Tomographic Reconstruction)}
-One of our industry partner wants to do 
-high-resolution tomographic 3D reconstruction,
-in which the trained model is larger than 240GB in
-32-bit precision. To scale up the system, 
-they want to minimize the 
-amount of data sent from the parameter server
-to the worker.
-
-
-
-All these use cases hinge on one question: {\em
+The total operating costs
+or power consumptions of 
+today's machine learning systems 
+are often bounded by data 
+movement and precision of computation.
+From our experience in supporting
+multiple industry partners with 
+a diverse set of applications
+such as tomographic reconstruction,
+anomaly detection over mobile 
+sensor networks, compressive sensing,
+or Ridge regression over
+enterprise data, many of these 
+applications hinge on one question: {\em
 When training generalized linear models,
-can we lower the precision of data representation
-for communicating input samples and models?}
-In this paper, we develop a framework for this 
-question --- In many cases, we can lower the
-precision of data communication to as low as 
-1 bit while getting the same training
-result, both empirically and theoretically. 
+can we lower the precision of data representation,
+communication, and computation?}
 
-\noindent
-\paragraph*{Related Work on Low-precision ML.} 
-Lower the precision of data representation
-in machine learning systems has received
-tremendous interests recently. Most of
-these work try to lower the precision of
-{\em gradient} in training deep learning
-models~\cite{XXX,XXX,XXX,XXX,XXX,XXX,XXX,XXX,XXX}.
-There are also theoretical guarantees 
-that SGD will converges to the same solution~\cite{XXX,XXX,XXX}
-if proper rounding strategies are applied to gradients.
-For input samples and models, there have been
-empirical results related to deep learning~\cite{XXX,XXX,XXX,XXX}.
-For generalized linear models or tomographic reconstruction
-there have been empirical studies that lower
-the precision of all data representation~\cite{XXX,XXX,XXX,XXX}.
-All these results, however, only hold empirically
-and there are no theoretical guarantee on
-the result trained with low precision
-input samples and model. On the other hand,
-our framework, despite its simplicity, provides
-theoretical guarantees on the result.
+On the other hand, the Deep Learning
+community has recently witnessed a
+tremendous success in  
+end-to-end low-precision, sometimes as
+low as a single bit, training of neural networks
+with negligible quality loss in many cases~\cite{XXX,XXX,XXX,XXX,
+XXX,XXX,XXX,XXX,XXX}. {\em Can we apply
+these techniques to simpler generalized
+linear models?}
 
-
+In this paper, we develop a general 
+framework towards answering these questions and
+present both positive and negative results
+we got with this framework. As shown in 
+Figure~\ref{fig:highlight}, (a) for linear
+models, with rigorous theoretical guarantee, 
+we are able to lower the precision of all
+computation and communication involving
+input samples, gradients, and models, by up to 
+$16\times$; (b) when implemented on FPGA, we achieve
+up to $10\times$ speed up compared with
+a 32-bit FPGA implementation and a 10 cores
+CPU running Hogwild!; and (c) we are able to
+decreases data movement by 3$\times$ for
+tomographic reconstruction while getting
+innegligible quality decrease. Our framework
+also applies to (d) non-linear models and 
+(e) model compression for training deep
+learning models. We now summarize our
+technical contributions.
 
 
 \subsection*{Summary of Technical Contributions}
@@ -180,102 +166,51 @@ We consider the following problem in training generialized linear models:
 \label{eqn:leastsquares}
 \end{align}
 where $l(-,-)$ is a loss function, and $R$ is a regularization term. 
-
-
-
-The proximal stochastic gradient procedure consists in the following iterative process:
+The proximal stochastic gradient procedure consists in the following 
+iterative process:
 \[
 \x \leftarrow \text{Prox}_{\gamma R}(\x - \gamma \g_k) := \argmin_\y {1\over 2} \|\y-(\x - \gamma \g_k)\|^2 + \gamma R(\y)
 \]
 where $k$ is a randomly selected sample index. The gradient at the sample $(\a_k, b_k)$ is: 
 \[
-\g_k := \a_k \a_k^\top \x + \a_k b_k.
+\g_k := \a_k \frac{\partial l(\a_k^\top \x, b_k)}{\partial \a_k^\top \x} 
 \]
-In the following, we denote the problem dimension by $n$. 
-
-\vspace{-2em}
-\paragraph{Related Work.} 
-Thanks to its simplicity, the Stochastic Gradient Descent algorithm (SGD)~\cite{RM}, is now a standard tool in machine learning, with applications from SVM, to neural network back-propagation and recommender systems. Given its practical appeal, there has been a tremendous amount of effort invested in developing computationally efficient variants of this algorithm. 
-This research field is extremely vast, see e.g.~\cite{Bottou, SVRG, Hogwild, PSGD} for examples, and a complete survey is beyond the scope of this paper. 
-
-Here, we focus on the relatively recent efforts to understand the convergence properties of SGD in the context of low-precision data representation, such as the ones caused by fixed-point arithmetic or lossy compression. 
-In particular, De Sa, Zhang, Olukotun, and Re~\cite{BUCKWILD}  proposed and analyzed BuckWild!, a variant of SGD which only employs low-precision representations. They showed that SGD can be provably robust to the rounding errors engendered by fixed-point arithmetic; in practice, BuckWild! can tolerate 8-bit integer precision, although it is observed to diverge for lower precision. 
-In the same vein, recent work by Alistarh, Li, Tomioka, and Vojnovic~\cite{QSGD} proposed a family of lossy compression schemes 
-allowing the optimal compression of gradient updates, while preserving the convergence properties of SGD. 
-Their work was inspired by OneBit SGD, a gradient compression heuristic developed in the context of deep neural networks for speech recognition~\cite{OneBit}. 
-
-While the above research suggests that SGD can tolerate low precision for some of its components, such as the gradient updates or the model, it leaves open the question of whether it is possible to perform end-to-end training of linear models with low-precision representations. 
-In this paper, we answer this question in the affirmative, for the special case of linear regression and least squares SVM. 
+We denote the problem dimension by $n$. 
+We consider the convergence properties of the algorithm when a lossy compression scheme is applied to the data (samples), 
+gradient, and model, for the purpose of reducing the communication cost of the algorithm---That is, each of the $Q_1$, $Q_2$, and $Q_3$ in the gradient update rule:
+$$\x_{t + 1} \leftarrow \x_t - \gamma Q_1(\g_k (Q_2(\x_t), Q_3(\vec{a}_t))).$$
 
 
 \subsection{Our Results}
 
-\paragraph{Regression.} For linear regression, we develop an algorithmic framework which allows stochastic 
-quantization of data, model, \emph{and} gradient.
-Empirically, as shown in Figure~\ref{fig:highlight}(a),
-on datasets such as 
-\texttt{cadata} dataset,\footnote{\url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/regression.html#cadata}}
-quantizing all data, model, and gradients
-with 2-bit is enough to ensure convergence
-to the same solution (within 0.9\%) as a standard, full-precision framework.
-If the original data are stored as
-32-bit floats, like in most existing
-systems, our quantization decreases
-the amount of data movement by up to $16\times$.
-Moreover, as shown in Figure~\ref{fig:highlight}(a),
-the quantized training procedure has comparable
-empirical convergence rate---it requires 
-almost the same number of iterations to
-converge to the same loss.
 
-\paragraph{Classification.} For classification
-tasks, we studied both standard support vector
-machines (SVM) and least-squares support vector
-machines (LS-SVM). Our analytical results apply to both these tasks.  
-As shown
-in Figure~\ref{fig:highlight}(b),
-on datasets such as \texttt{cod-rna},\footnote{ \url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#cod-rna}} quantizing all data, model, and gradients
-using 2 bits per component is enough to ensure convergence
-to the same solution (within 3.8\%).
-When using 3-bit, we observe comparable
-empirical convergence rate as
-using 32-bit floating point representations.
-
-We also investigated convergence for standard SVM (hinge loss). 
-In this case, the interplay between the loss function and quantization renders convergence analysis more difficult. 
-Yet, as we show in Section~\ref{sec:exp},
-it is possible to develop a theoretically-sound
-quantization strategy with which an end-to-end 8-bit quantization is
-always sufficient to ensure robust convergence with comparable empirical
-convergence rates.
+\paragraph{Linear Models.} 
 
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.85\columnwidth]{highlight-pdfcrop}    
-\caption{ZipML on Linear Regression (\texttt{cadata} dataset) and LS-SVM (\texttt{cod-rna} dataset)}
-\label{fig:highlight}
-\end{figure*}
+\paragraph{Non-Linear Models.}
 
-\section{Preliminaries}
 
-\subsection{Computational Model}
+\paragraph{Simple Extension to Deep Learning.}
 
-We consider a computational model illustrated in
-Figure~\ref{fig:model}.  
-In this context, SGD is often bounded by the bandwidth
-of data movements cross these components. 
-In particular, we consider the convergence properties of the algorithm when a lossy compression scheme is applied to the data (samples), 
-gradient, and model, for the purpose of reducing the communication cost of the algorithm. 
-It is interesting to consider how lossy compression impacts the update step in SGD. Let $Q( \vec{v} )$ denote the compression scheme applied to a vector $\vec{v}$. 
 
-\begin{itemize}
-    \item \textbf{Original iteration}: $$\x_{t + 1} \leftarrow \x_t - \gamma \g_k (\x_t, \vec{a}_t).$$
-    \item \textbf{Compressed gradient}: $$\x_{t + 1} \leftarrow \x_t - \gamma Q( \g_k (\x_t, \vec{a}_t) ).$$
-    \item \textbf{Compressed model}: $$\x_{t + 1} \leftarrow \x_t - \gamma \g_k (Q(\x_t), \vec{a}_t).$$
-    \item \textbf{Compressed sample}: $$\x_{t + 1} \leftarrow \x_t - \gamma \g_k (\x_t, Q(\vec{a}_t)).$$
-    \item \textbf{End-to-end compression}: $$\x_{t + 1} \leftarrow \x_t - \gamma Q(\g_k (Q(\x_t), Q(\vec{a}_t))).$$
-\end{itemize}
+
+\newpage
+
+
+
+\section{Linear Models}
+
+\subsection{Naive Sampling vs. Double Sampling}
+
+\subsection{Optimal Quantization Strategy}
+
+\section{Non-Linear Models}
+
+\subsection{Chebyshev Approximation}
+
+\subsection{Refetching Heuristic}
+
+\section{Simple Extension to Deep Learning}
 
 
 
@@ -285,29 +220,26 @@ It is interesting to consider how lossy compression impacts the update step in S
 
 
 
+\newpage
 
-\begin{figure*}[t]
-\centering   
-\includegraphics[scale=0.4]{compmodel-pdfcrop}
-\caption{(a) A Schematic Representation of the Computation Model and (b) An Example Realisation
-of the Computation Model. Three types of
-data, namely (1) sample, (2) model, and (3)
-gradient, moves in the system in three
-steps as illustrated in (a). Given
-different parameters of the computation model,
-such as computational power and memory bandwidth, the system bottleneck may
-vary. For example, in 
-realisation (b) having a hard drive, DRAM, and a
-modern CPU, it is likely that the  bottleneck when training 
-a dense generalized linear model is the
-memory bandwidth between SampleStore
-and GradientDevice.}
-\label{fig:model}
-\end{figure*}
-
-
-
-
+%\begin{figure}[t]
+%\centering   
+%\includegraphics[width=0.5\textwidth]{compmodel-pdfcrop}
+%\caption{A Schematic Representation of the Computation Model and (b) An Example %Realisation
+%of the Computation Model. Three types of
+%data, namely (1) sample, (2) model, and (3)
+%gradient, moves in the system in three
+%steps as illustrated in (a). Given
+%different parameters of the computation model,
+%such as computational power and memory bandwidth, the system bottleneck may
+%vary. For example, in 
+%realisation (b) having a hard drive, DRAM, and a
+%modern CPU, it is likely that the  bottleneck when training 
+%a dense generalized linear model is the
+%memory bandwidth between SampleStore
+%and GradientDevice.}
+%\label{fig:model}
+%\end{figure}
 
 
 %\begin{figure}[h]
@@ -1134,6 +1066,19 @@ Our experimental results for SVM are given in Figure~\ref{fig:svm}. For all data
 \end{itemize}
 
 
+
+\paragraph{Related Work.} 
+Thanks to its simplicity, the Stochastic Gradient Descent algorithm (SGD)~\cite{RM}, is now a standard tool in machine learning, with applications from SVM, to neural network back-propagation and recommender systems. Given its practical appeal, there has been a tremendous amount of effort invested in developing computationally efficient variants of this algorithm. 
+This research field is extremely vast, see e.g.~\cite{Bottou, SVRG, Hogwild, PSGD} for examples, and a complete survey is beyond the scope of this paper. 
+
+Here, we focus on the relatively recent efforts to understand the convergence properties of SGD in the context of low-precision data representation, such as the ones caused by fixed-point arithmetic or lossy compression. 
+In particular, De Sa, Zhang, Olukotun, and Re~\cite{BUCKWILD}  proposed and analyzed BuckWild!, a variant of SGD which only employs low-precision representations. They showed that SGD can be provably robust to the rounding errors engendered by fixed-point arithmetic; in practice, BuckWild! can tolerate 8-bit integer precision, although it is observed to diverge for lower precision. 
+In the same vein, recent work by Alistarh, Li, Tomioka, and Vojnovic~\cite{QSGD} proposed a family of lossy compression schemes 
+allowing the optimal compression of gradient updates, while preserving the convergence properties of SGD. 
+Their work was inspired by OneBit SGD, a gradient compression heuristic developed in the context of deep neural networks for speech recognition~\cite{OneBit}. 
+
+While the above research suggests that SGD can tolerate low precision for some of its components, such as the gradient updates or the model, it leaves open the question of whether it is possible to perform end-to-end training of linear models with low-precision representations. 
+In this paper, we answer this question in the affirmative, for the special case of linear regression and least squares SVM. 
 
 
 
