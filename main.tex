@@ -50,55 +50,62 @@
 \DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
 \DeclarePairedDelimiter\ceil{\lceil}{\rceil}
 
-
-
 \date{}
 
-
 \title{Training Generalized Linear Models with End-to-end Low Precision:\\
-The Cans and the Cants
+The Cans, the Cants, plus a Little Bit Deep Learning
 }
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Recent work has shown that stochastic
-rounding can be used in SGD to lower
-the precision of gradient. However,
-even for generalized linear models,
-if applied to input samples or the model, 
-it introduces bias because of the
-non-linearty of the loss function.
-In this paper, we present ZipML,
-a framework for
-low-precision data movement of
-input samples and models. In ZipML,
-we first represent arbitrary loss functions
-with Chebyshev polynomials and then
-develop sampling strategies for these
-polynomials to get unbiased estimator for
-the gradient. This allows us to 
-lower the amount of data movement 
-of input samples and models by
-4$\times$-16$\times$ while
-providing theoretical guarantee
-on the bias (if any) of the training 
-result. We further propose a 
-data-optimal quantization strategy with 
-dynamic programming, which further 
-decrease data movement of input
-samples by up to 2$\times$. ZipML
-has been applied to applications
-such as tomographic 
-reconstruction and LASSO, and an
-FPGA implementation provides 
-up to 10$\times$ speed up over 
-a full-precision implementation.
+Allured by the recent success of training
+deep learning models with end-to-end low
+precision computation and data movement, 
+we focus on simpler generalized linear models. 
+
+Our positive results hold for linear
+models. Although simply doing stochastic
+quantization introduces innegligible bias, we are able
+to develop a simple, but novel, fix 
+to get an unbiased estimator of the gradient. We further 
+developed an optimal quantization strategy
+that minimizes the variance introduced 
+by stochastic quantization. These techniques 
+have been applied to a range of applications and
+enabled an FPGA prototype that is up to
+10$\times$ faster than using 32bit full precision.
+
+Our negative results appear when we try
+to extend our technique to non-linear models
+such as SVM. We present
+two different strategies with rigorous 
+theoretical bounds and are able to lower the
+precision by $4\times$ while still getting the same
+solution. However, both fail to 
+outperform a strawman quantization approach
+and we analyze our observations.
+
+Last, we also apply the optimal quantization 
+strategy we developed for linear models to 
+training deep neural networks with 
+quantized model and achieves up to 3 points
+higher accuracy than state-of-the-art BNNs
+on CIFAR-10 with a standard network.
 \end{abstract}
 
-
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.5\textwidth]{Figures/RSHighlight}    
 \vspace{-2em}
+\caption{Overview of theoretical results and
+highlights of empirical results. See
+Introduction for details.}
+\label{fig:highlight}
+\end{figure}
+
+%\vspace{-2em}
 \section{Introduction}
 
 For nany machine learning applications,
@@ -127,15 +134,6 @@ they want to minimize the
 amount of data sent from the parameter server
 to the worker.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.5\textwidth]{Figures/RSHighlight}    
-\caption{Overview of theoretical results and
-highlights of empirical results. See
-Introduction for details.}
-\vspace{-2em}
-\label{fig:highlight}
-\end{figure}
 
 
 All these use cases hinge on one question: {\em
