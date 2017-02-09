@@ -66,6 +66,7 @@ The Cans, the Cannots, and a Little Bit of Deep Learning
 \maketitle
 
 \begin{abstract}
+<<<<<<< HEAD
 Motivated by recent empirical successes of training deep learning models with end-to-end low precision for computation and data movement, 
 this paper asks the following question: is it possible to train machine learning models at end-to-end low precision with \emph{provable} guarantees?  
 
@@ -102,6 +103,36 @@ However, we observe that, in this case, our techniques do not outperform the tri
 
 \todo{Not sure if this fits here. Perhaps we can describe the optimized quantization stuff as a separate contribution and include this there.}
 Lastly, we also apply the optimal quantization 
+%=======
+%Allured by the recent success of training
+%deep learning models with end-to-end low
+%precision computation and data movement, 
+%we focus on simpler generalized linear models. 
+%
+%Our positive results hold for linear
+%models. Although simply doing stochastic
+%quantization introduces innegligible bias, we are able
+%to develop a simple, but novel, fix 
+%to get an unbiased estimator of the gradient. We further 
+%developed an optimal quantization strategy
+%that minimizes the variance introduced 
+%by stochastic quantization. These techniques 
+%have been applied to a range of applications and
+%enabled an FPGA prototype that is up to
+%10$\times$ faster than using 32bit full precision.
+%
+%Our negative results appear when we try
+%to extend our technique to non-linear models
+%such as SVM. We present
+%two different strategies with rigorous 
+%theoretical bounds and are able to lower the
+%precision by $4\times$ while still getting the same
+%solution. However, both fail to 
+%outperform a strawman quantization approach
+%more than 2$\times$.
+%
+%Last, we also apply the optimal quantization 
+%>>>>>>> 39f67c51e7f7a63046c41289ca5bce222734d085
 strategy we developed for linear models to 
 training deep neural networks with 
 quantized model and achieves up to 3 points
@@ -216,7 +247,7 @@ where $k$ is a randomly selected sample index. The gradient at the sample $(\a_k
 \g_k := \a_k \frac{\partial l(\a_k^\top \x, b_k)}{\partial \a_k^\top \x} 
 \]
 We denote the problem dimension by $n$. 
-We consider the convergence properties of the algorithm when a lossy compression scheme is applied to the data (samples), 
+We consider the properties of the algorithm when a lossy compression scheme is applied to the data (samples), 
 gradient, and model, for the purpose of reducing the communication cost of the algorithm---That is, each of the $Q_1$, $Q_2$, and $Q_3$ in the gradient update rule:
 $$\x_{t + 1} \leftarrow \x_t - \gamma Q_1(\g_k (Q_2(\x_t), Q_3(\vec{a}_t))).$$
 
@@ -224,18 +255,81 @@ $$\x_{t + 1} \leftarrow \x_t - \gamma Q_1(\g_k (Q_2(\x_t), Q_3(\vec{a}_t))).$$
 \subsection{Our Results}
 
 
-\paragraph{Linear Models.} 
+\paragraph{Linear Models.} When $l(-,-)$ is 
+the least squares loss, we first prove that
+simply doing stochastic quantization of data 
+(i.e., $Q_3$) introduces bias of the gradient
+estimator and therefore SGD would converge
+to a different solution. We propose a simple
+fix to this problem by introducing a
+{\em double sampled} quantization strategy
+$\tilde{Q_3}$ that uses multiple samples to
+eliminate the correlation of samples introduced
+by the non-linearity of the gradient. We
+analyze the additional variance introduced
+by double sampling, we find \textcolor{red}{
+BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH
+BLAH BLAH BLAH BLAH BLAH BLAH}. Using
+stochastic quantization for gradient and model,
+this gives us an end-to-end quantization strategy
+for linear models, whose variance is \textcolor{red}{
+BLAH BLAH BLAH BLAH}.
 
+We then focus on variance reduction for 
+stochastic quantization. We observe that different
+quantization points introduce different
+variances---the points chosen
+by standard fixed point representation is uniformly
+distributed but is not optimal in terms of variance.
+We formulate an optimization to choose 
+quantization points that minimize the total variance
+introduced by quantization and solve it with 
+a dynamic programming algorithm with time complexity
+$O(BLAH)$ and space complexity $O(BLAH)$.
 
-\paragraph{Non-Linear Models.}
-
+\paragraph{Non-Linear Models.} We extend our
+results to non-linear models such as
+logistic regression and SVM. We observe that
+using multiple samples can, in principle,
+provide unbiased estimators for any polynomials
+(with an increased variance). Our first 
+technique uses Chebyshev polynomials to
+approximate the gradient and provide theoretical
+results on the bias introduced by Chebyshev
+approximation and the bias of SGD solution. 
+This provides a way to control the bias given
+users' error tolerance as input. More precisely,
+\textcolor{red}{BLAH BLAH BLAH BLAH BLAH BLAH 
+BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
+BLAH BLAH BLAH}. For SVM, we present a heuristic
+that uses low precision data to decide whether
+one needs to bring in full precision data for
+estimating the loss. When data is separable,
+we prove that \textcolor{red}{BLAH BLAH BLAH BLAH BLAH BLAH 
+BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
+BLAH BLAH BLAH}. With both techniques, we are
+able to lower the precision by 4$\times$ with
+rigorous theoretical guarantee; However,
+compared with a strawman approach that just
+do stochastic rounding over input data, empirically
+we can only provide up to 2$\times$ benefit.
 
 \paragraph{Simple Extension to Deep Learning.}
 
-
-
-\newpage
-
+Our analysis of optimal quantization strategies
+implies that the uniform quantization approach
+popularly used by state-of-the-art end-to-end
+low-precision deep learning training systems
+when more than 1 bit is used are also suboptimal.
+We then apply optimal quantization to 
+model quantization and shows that, with a simple
+standard neural network, we outperforms the
+uniform quantization used by BNN, QNN, and a
+range of other recent approaches. This approach
+is relevant, but slightly different, to some work 
+on model compression for inference~\cite{XXX, YYY}, 
+but to our best knowledge, it is the first time it 
+has been applied to training. 
 
 
 \section{Linear Models}
