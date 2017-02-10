@@ -67,24 +67,22 @@ The Cans, the Cannots, and a Little Bit of Deep Learning
 
 \begin{abstract}
 
-Recently, there has been a tremendous amount of research on both training and inference for machine-learning models at low precision. 
-The promise is simple and compelling: reducing precision, we reduce data movement, computational and power by an order of magnitude, leading to an order-of-magnitude 
-speedup end-to-end. In this paper, we examine this premise from a theoretical and practical perspective. We ask: 
-is it really possible to train machine learning models at end-to-end low precision with \emph{provable} guarantees?  can this lead to consistent order-of-magnitude end-to-end speedup?
+There has recently been significant interest in  training and inference for machine-learning models at low precision. 
+The promise is simple and compelling: by reducing precision, we reduce computation, communication, and power costs by an order of magnitude, which can lead to an order-of-magnitude  end-to-end speedup. 
+We examine this premise from a theoretical and practical perspective. We ask: 
+is it possible to train models at end-to-end low precision with \emph{provable} guarantees?  can this lead to consistent order-of-magnitude speedups?
 
-For linear models, we find that the answer is yes. We develop a simple framework based on stochastic quantization, which is able to execute training at low precision with no bias, 
-guaranteeing convergence. The main element of novelty is a technique for stochastic quantization of \emph{samples}, for which straightforward quantization introduces significant bias.  
-We validate this framework across a range of applications, and show that it enables an FPGA prototype that is up to
-two orders of magnitude faster than a single-threaded CPU implementation, and an order of magnitude faster than a multi-threaded implementation using full 32bit precision.
+For linear models, the answer is yes. We develop a simple framework based on stochastic quantization, which is able to execute training at low precision with no bias, 
+guaranteeing convergence. The main element of novelty is a technique for stochastic quantization of \emph{samples}, for which naive quantization would introduce  significant bias.  
+We validate this framework across a range of applications, and show that it enables an FPGA prototype that is up to an order of magnitude faster than an optimized multi-threaded implementation using full 32bit precision.
 
-Our framework extends to non-linear settings, such as logistic regression and SVM, through approximation: the bias is no longer zero, but can be controlled by adjusting the precision parameters. 
-Specifically, we present a general strategy with rigorous bias bounds, and show that in practice $8bits$ precision is always sufficient to converge to the same solution.  
-However, we note that, due to non-linearity, our framework does not outperform the basic naive rounding approach. We discuss this negative result in detail. 
+We extend our framework through approximation to non-linear settings, such as SVM. 
+We provide rigorous bias bounds, and show that in practice $8bits$ precision is always sufficient to converge to the correct solution.  
+Interestingly, however, we notice that our framework does not always outperform the naive rounding approach. We discuss this negative result in detail. 
 
-An independent contribution of our work is an algorithmic solution to the problem of finding the optimal stochastic quantization strategy with respect to variance, given fixed precision. 
-We show that this can make a significant difference both for linear and non-linear models. In particular, when training deep neural networks with quantized models, we can achieve up to 3 points
-higher accuracy than state-of-the-art BNNs on CIFAR-10 with a standard network. 
-
+Further, we provide optimal algorithms for variance-optimal stochastic quantization, given fixed precision, and show that this can make a significant difference in a variety of settings. 
+In particular, when training deep networks with quantized models, we achieve 
+higher accuracy than state-of-the-art BNNs. 
 
 
 \iffalse
