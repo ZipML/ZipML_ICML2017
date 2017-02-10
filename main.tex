@@ -281,7 +281,7 @@ quantization points introduce different
 variances---the points chosen
 by standard fixed point representation is uniformly
 distributed but is not optimal in terms of variance.
-We formulate an optimization to choose 
+We formulate an optimization problem to choose 
 quantization points that minimize the total variance
 introduced by quantization and solve it with 
 a dynamic programming algorithm with time complexity
@@ -386,10 +386,11 @@ and $Q_2$ and revise the gradient as follows:
 \[
 \g_k := Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \; .
 \]
-It is not hard to see that the above is an unbiased estimator of the true gradient.\footnote{In our implementation,
-we used the average gradient $\g_k := \frac{1}{2}\left(Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) + 
-Q_2 (\a_k, s) (Q_1 (\a_k, s)^\top \x + b_k)\right)$. This version does not impact  the upper bound in our variance analysis,
-but enjoys lower variance (by a constant) both theoretically and empirically.}
+It is not hard to see that the above is an unbiased estimator of the true gradient.
+%\footnote{In our implementation,
+%we used the average gradient $\g_k := \frac{1}{2}\left(Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) + 
+%Q_2 (\a_k, s) (Q_1 (\a_k, s)^\top \x + b_k)\right)$. This version does not impact  the upper bound in our variance analysis,
+%but enjoys lower variance (by a constant) both theoretically and empirically.}
 
 \paragraph{Variance Analysis}
 
@@ -421,37 +422,29 @@ In particular, observe that this corollary essentially suggests that the quantiz
 \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq \sigma^2 + \Theta(n/s^2) \;
 \]
 in the scenario when $M_i (\vec{v}) = \| \vec{v} \|_2 $.
-The first term $\sigma^2$ is due to using stochastic gradient, while the second term is caused by quantization. The value of $s$ is equal to  $\lceil(2^b - 1) / 2\rceil$. Therefore, to ensure these two terms are comparable (so as not to degrade the convergence time of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$.   
+The first term $\sigma^2$ is due to using stochastic gradient, while the second term is caused by quantization. The value of $s$ is equal to  $\lceil(2^b - 1) / 2\rceil$. \textcolor{red}{Therefore, to ensure these two terms are comparable (so as not to degrade the convergence time of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$.}
 
-\paragraph{Quantizing the Model}
+\paragraph*{Overhead of Storing Two Samples}
+The system implication of double sampling is the overhead of sending
+two samples instead of one. We note that this will not introduce $2\times$
+overhead in terms of data communication, instead, just a single more bit
+for the second sample because of the correlation between two samples (they 
+are only different by one bit.) More generally, because samples
+are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
 
-We now assume the setting where the processor can only work with the model in \emph{quantized} form when computing the gradients. 
-However, the gradient is stored in full precision---the model is quantized only when communicated. 
-The gradient computation in this case is:
-\[
-\g_k := \a_k \a_k^\top Q( \x , s) + \a_k b_k.
-\]
-It is easy to see that this gradient is unbiased, as the quantizer commutes with the (linear) gradient. 
-\[
-\E[ \g_k ]  := \a_k \a_k^\top \E [ Q( \x, s ) ]  + \a_k b_k = \a_k \a_k^\top \x   + \a_k b_k = \g_k .
-\]
-Further, the second moment bound is only increased by the variance of the quantization. 
 
-\begin{lemma}
-    \label{lem:model-quantization}
-    Let $\a_k, \x, b_k$ be fixed, and suppose that $\| \a_k \|_2^2 \leq A^2,$ and $\max_i M_i (\x) \leq M_x$.
-    Let $\g'_k = \a_k (\a_k^\top \x + b_k)$ be the (unquantized) stochastic gradient update.
-    Then, we have
-    \[
-    \E [\| \g_k \|_2^2] \leq \| \g'_k \|_2^2 + \frac{A^4 M_x^2}{s^2} \; .
-    \]
-\end{lemma}
+\paragraph*{Extension to Classification}
 
-\paragraph{End-to-end Quantization}
+Extending our result to least-squares SVMs for classification
+is trivial~\cite{SvmVsLssvm}, we leave the discussion to the
+full version of this paper.
 
-We describe the end-to-end quantization strategy of
-quantizing gradients, model, and input samples all 
-at the same time. We assume all 3 sources are quantized: Gradient, model and data. However, the update to the model happens in full precision. The gradient becomes:
+
+\subsection{End-to-end Quantization}
+
+We can now develop an end-to-end quantization strategy that
+quantizes gradients, model, and input samples all 
+at the same time. The gradient becomes:
 
 \begin{eqnarray}
 	\g_k := Q_4 \left( Q_1(\a_k, s ) ( Q_2(\a_k, s)^\top Q_3(\x, s) + b_k) , s \right).
@@ -475,18 +468,16 @@ The iteration then is:
     \]
 \end{corollary}
 
+
+
+
 \subsection{Optimal Quantization Strategy}
 
-\textcolor{red}{Ji will insert it first.
-}
 \input{OQS.tex}
 
-\paragraph*{Overhead of Storing Two Samples}
-We make the point it is a single bit for 2 samples, $\log_2 n$ for 2 samples.
-
-
-
 \section{Non-Linear Models}
+
+\textcolor{red}{DAN: THIS SECTION IS YOURS}
 
 \subsection{Chebyshev Approximation}
 
@@ -739,34 +730,6 @@ and models, we use row scaling because the range of values is more dynamic.
 
 
 \section{Extension to Classification Models}
-
-\subsection{Least Squares Support Vector Machines}
-
-We first extend our quantization framework to 
-least squares support vector machines--a model
-popularly used for classification tasks and
-often showing comparable accuracy to
-SVM~\cite{SvmVsLssvm}.
-The  Least Squares SVM optimization problem of is formally defined as follows: 
-
-\begin{align*}
-\min_{\x}:\quad {1\over 2K}\sum_{k=1}^K (1-b_k\a_k^\top \x)^2 + {c\over 2}\|\x\|^2
-\end{align*}
-
-\noindent Without
-loss of generality, we assume two-class classification problems, i.e.  $b_k \in \{-1, 1\}$.
-We now have:
-\begin{align*}
-\min_{\x}:\quad {1\over 2K}\sum_{k=1}^K (\a_k^\top \x - b_k)^2 + {c\over 2}\|\x\|^2
-\end{align*}
-where $c$ is the regularization parameter. The gradient at a randomly selected sample$(\a_k, b_k)$ is: 
-\[
-\g_k := \a_k \a_k^\top \x + \a_k b_k + {c\over k} \x.
-\]
-
-The gradient is similar to regularized linear regression (Eq.~\ref{eqn:leastsquares}). Therefore, we can still use 
-the same quantization framework we developed
-for linear regression.
 
 \subsection{Support Vector Machines}
 
