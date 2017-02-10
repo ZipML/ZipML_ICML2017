@@ -100,8 +100,8 @@ Our first result is that linear models can be trained at arbitrarily low precisi
 Specifically, we give a framework which allows samples, model, and gradient to be communicated at low precision, while ensuring zero bias in the result of the computation. 
 The first element of novelty is a technique for stochastic quantization of \emph{samples}, for which naive quantization introduces significant bias.  
 The second is an algorithmic solution to the problem of finding the optimal strategy to minimize the variance of stochastic quantization. 
-We validate these techniques across a range of applications, and show that they enable an PGA prototype that is up to
-an order of magnitude faster than a multi-threaded implementation using  full 32bit precision.
+We validate these techniques across a range of applications, and show that they enable an FPGA prototype that is up to
+an order of magnitude faster than a full 32bit precision implementation.
 
 
 
@@ -358,9 +358,157 @@ has been applied to training.
 
 \section{Linear Models}
 
-\subsection{Naive Sampling vs. Double Sampling}
+In this section, we will describe lossy compression schemes for data samples, so that when we apply SGD to solve linear regression on these compressed data points, it still provably converges.
+Throughout this section, the setting will be as follows.
+We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
+\[
+f(\x) = \frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x + b_k \|_2^2 \; ,
+\]
+i.e., minimize the empirical least squares loss.
+The basic (unquantized) SGD scheme which solves this problem is the following: at step $\x_k$, our gradient estimator is $\g'_k = \a_{\pi(k)} (\a_{\pi(k)}^\top \x + b_{\pi(k)})$, where $\pi(k)$ is a uniformly random integer from $1$ to $m$.
+In a slight abuse of notation we let $\a_k = \a_{\pi(k)}$ for the rest of the section.
+Then it is not hard to see that $\E [\g'_k] = \nabla f(\x_k)$, and so this is indeed a stochastic gradient.
+
+The rest of the section is now devoted to devising quantization schemes for $\g'_k$ when given access only to $\a_k$ and $b_k$, namely, given access only to the data points.
+
+\subsection{Naive Random Quantization is Biased}
+
+As a first exercise, we look at what happens when we work with the data directly in quantized form in the context of linear regression. 
+The gradient becomes
+\[
+\g_k := Q(\a_k, s ) Q(\a_k, s)^\top \x + Q(\a_k, s) b_k.
+\]
+It is not hard to see that the expected value of this is in fact: 
+\[
+\E[\g_k] := \a_k \a_k^\top \x + \a_k b_k + D_{s, \a} \x, 
+\]
+where $D_{s, \a}$ is a diagonal matrix and its $i$th diagonal element is 
+\[
+%D_{s, \a} = 
+\E[ Q(\a_i, s)^2 ] - \a_i^2.
+\]
+
+Since $D_{s, \a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
+In fact, it is easy to see that in instances where the minimizer $\x$ is large and gradients become small, we will simply diverge. 
+Fortunately, however, this issue can be easily fixed. 
+
+\subsection{Double Sampling}
+
+\paragraph{Algorithm}
+Instead of the naive estimate, our algorithm is as follows.
+We generate two independent
+random quantizations $Q_1$
+and $Q_2$ and revise the gradient as follows:
+
+%\[
+%\g_k := \frac{1}{2}\left(Q_1(\a_k ) Q_2(\a_k)^\top \x + Q_2(\a_k) b_k + Q_2(\a_k ) %Q_1(\a_k)^\top \x + Q_1(\a_k) b_k\right).
+%\]
+
+%\[
+%\g_k := Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \; .
+%\]
+\[
+\g_k := Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \; .
+\]
+It is not hard to see that the above is an unbiased estimator of the true gradient.\footnote{In our implementation,
+we used the average gradient $\g_k := \frac{1}{2}\left(Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) + 
+Q_2 (\a_k, s) (Q_1 (\a_k, s)^\top \x + b_k)\right)$. This version does not impact  the upper bound in our variance analysis,
+but enjoys lower variance (by a constant) both theoretically and empirically.}
+
+\paragraph{Variance Analysis}
+
+Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment promised in Lemma \ref{lem:quant-facts}.
+Then, we have the following lemma.
+\begin{lemma}
+    Let $\a_k, \x, b_k$ be fixed, and suppose that $\| \a_k \|_2^2 \leq A^2, \| \x \|_2^2 \leq R^2$, and $\max_i M_i (\a_k) \leq M_a$.
+    Let $\g'_k = \a_k (\a_k^\top \x + b)$ be the (unquantized) stochastic gradient update.
+    Then, we have 
+    \[
+    E_{Q_1, Q_2} [\| \g_k \|_2^2] \leq r \cdot \left( \| \g'_k \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \| \a_k \|_2^2 \frac{M_a^2}{s^2} R^2 \right)\; .
+    \]
+\end{lemma}
+
+In particular, this implies the following variance bound on our quantized updates:
+\begin{corollary}
+    Let $\a_k, \x, b_k, \g'_k$ be as above.
+    Suppose moreover $\E [\| \g'_k - \nabla f(\x_k) \|_2^2 ] \leq \sigma^2$ and $\E [\| \g'_k \|_2^2] \leq B$.
+    Then, we have
+    \[
+    \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq  \sigma^2 + \left(r \frac{M_a^2}{\| \a_k \|_2^2} - 1\right) B + \frac{r A^2 M_a^2 R^2}{s^2} \; ,
+    \]
+    where the expectation is taken over $\g'_k$ and the randomness of the quantization.
+\end{corollary}
+
+
+In particular, observe that this corollary essentially suggests that the quantized stochastic gradient variance is bounded by
+\[
+\E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq \sigma^2 + \Theta(n/s^2) \;
+\]
+in the scenario when $M_i (\vec{v}) = \| \vec{v} \|_2 $.
+The first term $\sigma^2$ is due to using stochastic gradient, while the second term is caused by quantization. The value of $s$ is equal to  $\lceil(2^b - 1) / 2\rceil$. Therefore, to ensure these two terms are comparable (so as not to degrade the convergence time of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$.   
+
+\paragraph{Quantizing the Model}
+
+We now assume the setting where the processor can only work with the model in \emph{quantized} form when computing the gradients. 
+However, the gradient is stored in full precision---the model is quantized only when communicated. 
+The gradient computation in this case is:
+\[
+\g_k := \a_k \a_k^\top Q( \x , s) + \a_k b_k.
+\]
+It is easy to see that this gradient is unbiased, as the quantizer commutes with the (linear) gradient. 
+\[
+\E[ \g_k ]  := \a_k \a_k^\top \E [ Q( \x, s ) ]  + \a_k b_k = \a_k \a_k^\top \x   + \a_k b_k = \g_k .
+\]
+Further, the second moment bound is only increased by the variance of the quantization. 
+
+\begin{lemma}
+    \label{lem:model-quantization}
+    Let $\a_k, \x, b_k$ be fixed, and suppose that $\| \a_k \|_2^2 \leq A^2,$ and $\max_i M_i (\x) \leq M_x$.
+    Let $\g'_k = \a_k (\a_k^\top \x + b_k)$ be the (unquantized) stochastic gradient update.
+    Then, we have
+    \[
+    \E [\| \g_k \|_2^2] \leq \| \g'_k \|_2^2 + \frac{A^4 M_x^2}{s^2} \; .
+    \]
+\end{lemma}
+
+\paragraph{End-to-end Quantization}
+
+We describe the end-to-end quantization strategy of
+quantizing gradients, model, and input samples all 
+at the same time. We assume all 3 sources are quantized: Gradient, model and data. However, the update to the model happens in full precision. The gradient becomes:
+
+\begin{eqnarray}
+	\g_k := Q_4 \left( Q_1(\a_k, s ) ( Q_2(\a_k, s)^\top Q_3(\x, s) + b_k) , s \right).
+\end{eqnarray}
+\noindent Here $Q_1, \ldots, Q_4$ are all independent quantizations.  $Q_3$ and  $Q_4$ are normalized with row scaling, and $Q_1, Q_2$ can be normalized arbitrarily.
+The iteration then is: 
+
+\begin{eqnarray}
+	\x = \x - \gamma \g_k.
+\end{eqnarray}
+
+\noindent From combining the previous results, we obtain that, if the samples are normalized, the following holds:
+
+\begin{corollary}
+    \label{cor:full-quantization}
+    Let $\a_k, \x, b_k$ be so that $\| \a_k \|_2^2 \leq 1, \| \x \|_2^2 \leq R^2$.
+    Let $M_a, M_x$ be as above, and let $\g'_k = \a_k (\a_k^\top \x + b_k)$ be the (unquantized) stochastic gradient.
+    Then, we have
+    \[
+    \E [\| \g_k \|_2^2] \leq \rrow \cdot \left( r M_a \left( \| \g'_k \|_2^2 + \frac{R^2}{s^2} \right)  + \frac{r^2 M_a^2 R^2}{s^2} \right) \; .
+    \]
+\end{corollary}
 
 \subsection{Optimal Quantization Strategy}
+
+\textcolor{red}{Ji will insert it first.
+}
+\input{OQS.tex}
+
+\paragraph*{Overhead of Storing Two Samples}
+We make the point it is a single bit for 2 samples, $\log_2 n$ for 2 samples.
+
+
 
 \section{Non-Linear Models}
 
@@ -375,10 +523,87 @@ has been applied to training.
 
 
 
+%\begin{proof}
+%We have that 
+%\[
+%\E_{Q_1, Q_2}(\|\g_k\|^2) = \E_{Q_1, Q_2} [\| Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \|_2^2].
+%\]
+%Next we have
+%\begin{align*}
+%    \E_{Q_1, Q_2} [\| Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \|_2^2] &= \E_{Q_2} \left[ \E_{Q_1} [ (Q_2 (\a_k, s)^\top \x + b_k)^2 Q_1 (\a_k, s)^\top Q_1 (\a_k, s)] \right] \\
+%    &= \E_{Q_1}[ \| Q_1( \vec{a}_k, s) \|_2^2 ] \cdot \E_{Q_2} [\| \a_k (Q_2 (\a_k, s)^\top \x + b_k)\|_2^2 ] \\
+%    &\leq^{\mathrm{Lemma}~\ref{lem:quant-facts}} r M_a^2 \cdot \E [(Q_2 (\a_k, s)^\top \x + b_k)^2 ] \\
+%    &= r M_a^2 \left( \E [(Q_2 (\a_k, s)^\top \x)^2] + 2 b_k \E [Q_2 (\a_k, s)^\top \x] + b_k^2 \right) \\
+%    &= r M_a^2 \left( \E [(Q_2 (\a_k, s)^\top \x)^2] + 2 b_k \a_k^\top \x + b_k^2 \right)
+%\end{align*}
+%Moreover, we have
+%\begin{align*}
+%    E [(Q_2 (\a_k, s)^\top \x)^2] &= \x^\top \left( \E \left[ Q_2 (\a_k, s) Q_2 (\a_k, s)^\top \right] \right) \x \\
+%    &= \x^\top (\a_k \a_k^\top + D) \x^\top \\
+%    &\leq (\a_k^\top \x)^2 + \| D \|_{\mathrm{op}} \| \x \|_2^2 \; ,
+%\end{align*}
+%where $D = \mathrm{diag}_i [ (\E[Q_2 (\a_k, s)_i^2]) - (\a_k)_i^2 ] =\mathrm{diag}_i [ \mathrm{Var} [Q_2 (\a_k, s)_i] ].$ Further, we have that $\| D \|_{\mathrm{op}}  \leq M_a^2 / s^2$.
+%Therefore we have that:
+%\begin{align*}
+%     \E_{Q_1, Q_2} [\| Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \|_2^2]  &\leq r M_a^2 \left( (\a_k^\top \x)^2 + \frac{M_a^2}{s^2} R^2 + 2 b_k \a_k^\top \x + b_k^2  \right) \\
+%    &= r \left( \| \g'_k \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \frac{A^2 M_a^2 R^2}{s^2} \right) \,
+%\end{align*}
+%as claimed, since $\| \g'_k \|_2^2 = \| \a_k \|_2^2 (\a_k^T \x + b_k)^2$.
+%\end{proof}
+
+%\begin{proof}
+%    Observe that $\| \g_k - \nabla f(\x_k) \|_2^2 = \| \g_k - \g'_k \|_2^2 + 2 (\g_k - \g'_k)^\top (\g'_k - \nabla f(\x_k)) + \| g'_k + \nabla f(\x_k) \|_2^2$.
+%    Since $\E [(\g_k - \g'_k)^\top (\g'_k - \nabla f(\x_k))] = 0$, and by assumption $\E [ \| g'_k + \nabla f(\x_k) \|_2^2] \leq \sigma^2$, it suffices the bound the expectation of the first term.
+%    We have
+%    \[
+%     \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq 2 \sigma^2 + 2\E_{\g'_k} \left[ \E_{Q_1, Q_2} [ \| \g'_k - \g_k \|_2^2 \left| \right. \g'_k ] \right] \; .
+%    \]
+%    Since $\E_{Q_1, Q_2} [\g_k | \g'_k] = \g'_k $, we have that 
+%    \begin{align*}
+%    \E_{Q_1, Q_2} [ \| \g'_k - \g_k \|_2^2 \left| \right. \g'_k ] &= \E_{Q_1, Q_2} [\| \g_k \|_2^2 | \g'_k] - \| \g'_k \|_2^2 \\
+%    &\leq \left(r \frac{M_a^2}{\| \a_k \|_2^2} - 1\right) \| \g'_k \|_2^2 + \frac{r A^2 M_a^2 R^2}{s^2} \; ,
+%    \end{align*}
+%    from which the corollary follows.
+%\end{proof}
+
+%\begin{proof}
+%We have
+%\begin{align*}
+%    \E [\| \g_k \|_2^2] &= \| \a_k \|_2^2 \E \left[\left( \a_k^\top Q( \x, s)  + b_k \right)^2 \right] \\
+%    &= \| \a_k \|_2^2 \left( a_k^\top \E[Q(\x, s) Q(\x, s)^\top] a_k + 2 b_k \E[Q(\x, s)^\top \a_k] + b_k^2 \right) \\
+%    &= \| \a_k \|_2^2 \left( a_k^\top \E[Q(\x, s) Q(\x, s)^\top] a_k + 2 b_k \x^\top \a_k + b_k^2 \right) \; .
+%\end{align*}
+%As we had previously for double sampling, we have
+%\begin{align*}
+%    \a_k^\top \left( \E \left[ Q_2 (\x, s) Q_2 (\x, s)^\top \right] \right) \a_k &= \a_k^\top (\x \x^\top + D) \a_k^\top \\
+%    &\leq (\a_k^\top \x)^2 + \| D \|_{\mathrm{op}} \| \a_k \|_2^2 \; ,
+%\end{align*}
+%where as before we have that $D$ consists of diagonal elements $\E[Q_2 (\x, s)_i^2]) - (\x)_i^2 = [\mathrm{Var} [Q_2 (\x, s)_i]] \leq M_x^2 / s^2$.
+%Hence altogether we have
+%\[
+%\E [\| \g_k \|_2^2] \leq \| \g'_k \|_2^2 + \frac{A^4 M_x^2}{s^2} \; ,
+%\]
+%as claimed.
+%\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 \newpage
+\appendix
+
+
 
 %\begin{figure}[t]
 %\centering   
@@ -536,224 +761,6 @@ For all input samples, we always use column scaling because it is easy
 to calculate $M_i$ which does not change during training. For all gradients
 and models, we use row scaling because the range of values is more dynamic.
 
-\section{Compressing the Samples for Linear Regression}
-
-In this section, we will describe lossy compression schemes for data samples, so that when we apply SGD to solve linear regression on these compressed data points, it still provably converges.
-Throughout this section, the setting will be as follows.
-We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
-\[
-f(\x) = \frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x + b_k \|_2^2 \; ,
-\]
-i.e., minimize the empirical least squares loss.
-The basic (unquantized) SGD scheme which solves this problem is the following: at step $\x_k$, our gradient estimator is $\g'_k = \a_{\pi(k)} (\a_{\pi(k)}^\top \x + b_{\pi(k)})$, where $\pi(k)$ is a uniformly random integer from $1$ to $m$.
-In a slight abuse of notation we let $\a_k = \a_{\pi(k)}$ for the rest of the section.
-Then it is not hard to see that $\E [\g'_k] = \nabla f(\x_k)$, and so this is indeed a stochastic gradient.
-
-The rest of the section is now devoted to devising quantization schemes for $\g'_k$ when given access only to $\a_k$ and $b_k$, namely, given access only to the data points.
-
-\subsection{Naive Random Quantization is Biased}
-
-As a first exercise, we look at what happens when we work with the data directly in quantized form in the context of linear regression. 
-The gradient becomes
-\[
-\g_k := Q(\a_k, s ) Q(\a_k, s)^\top \x + Q(\a_k, s) b_k.
-\]
-It is not hard to see that the expected value of this is in fact: 
-\[
-\E[\g_k] := \a_k \a_k^\top \x + \a_k b_k + D_{s, \a} \x, 
-\]
-where $D_{s, \a}$ is a diagonal matrix and its $i$th diagonal element is 
-\[
-%D_{s, \a} = 
-\E[ Q(\a_i, s)^2 ] - \a_i^2.
-\]
-
-Since $D_{s, \a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
-In fact, it is easy to see that in instances where the minimizer $\x$ is large and gradients become small, we will simply diverge. 
-Fortunately, however, this issue can be easily fixed. 
-
-\subsection{Double Sampling}
-
-\paragraph{Algorithm}
-Instead of the naive estimate, our algorithm is as follows.
-We generate two independent
-random quantizations $Q_1$
-and $Q_2$ and revise the gradient as follows:
-
-%\[
-%\g_k := \frac{1}{2}\left(Q_1(\a_k ) Q_2(\a_k)^\top \x + Q_2(\a_k) b_k + Q_2(\a_k ) %Q_1(\a_k)^\top \x + Q_1(\a_k) b_k\right).
-%\]
-
-%\[
-%\g_k := Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \; .
-%\]
-\[
-\g_k := Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \; .
-\]
-It is not hard to see that the above is an unbiased estimator of the true gradient.\footnote{In our implementation,
-we used the average gradient $\g_k := \frac{1}{2}\left(Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) + 
-Q_2 (\a_k, s) (Q_1 (\a_k, s)^\top \x + b_k)\right)$. This version does not impact  the upper bound in our variance analysis,
-but enjoys lower variance (by a constant) both theoretically and empirically.}
-
-
-\paragraph{Variance Analysis}
-
-Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment promised in Lemma \ref{lem:quant-facts}.
-Then, we have the following lemma.
-\begin{lemma}
-    Let $\a_k, \x, b_k$ be fixed, and suppose that $\| \a_k \|_2^2 \leq A^2, \| \x \|_2^2 \leq R^2$, and $\max_i M_i (\a_k) \leq M_a$.
-    Let $\g'_k = \a_k (\a_k^\top \x + b)$ be the (unquantized) stochastic gradient update.
-    Then, we have 
-    \[
-    E_{Q_1, Q_2} [\| \g_k \|_2^2] \leq r \cdot \left( \| \g'_k \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \| \a_k \|_2^2 \frac{M_a^2}{s^2} R^2 \right)\; .
-    \]
-\end{lemma}
-\begin{proof}
-We have that 
-\[
-\E_{Q_1, Q_2}(\|\g_k\|^2) = \E_{Q_1, Q_2} [\| Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \|_2^2].
-\]
-Next we have
-\begin{align*}
-    \E_{Q_1, Q_2} [\| Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \|_2^2] &= \E_{Q_2} \left[ \E_{Q_1} [ (Q_2 (\a_k, s)^\top \x + b_k)^2 Q_1 (\a_k, s)^\top Q_1 (\a_k, s)] \right] \\
-    &= \E_{Q_1}[ \| Q_1( \vec{a}_k, s) \|_2^2 ] \cdot \E_{Q_2} [\| \a_k (Q_2 (\a_k, s)^\top \x + b_k)\|_2^2 ] \\
-    &\leq^{\mathrm{Lemma}~\ref{lem:quant-facts}} r M_a^2 \cdot \E [(Q_2 (\a_k, s)^\top \x + b_k)^2 ] \\
-    &= r M_a^2 \left( \E [(Q_2 (\a_k, s)^\top \x)^2] + 2 b_k \E [Q_2 (\a_k, s)^\top \x] + b_k^2 \right) \\
-    &= r M_a^2 \left( \E [(Q_2 (\a_k, s)^\top \x)^2] + 2 b_k \a_k^\top \x + b_k^2 \right)
-\end{align*}
-Moreover, we have
-\begin{align*}
-    E [(Q_2 (\a_k, s)^\top \x)^2] &= \x^\top \left( \E \left[ Q_2 (\a_k, s) Q_2 (\a_k, s)^\top \right] \right) \x \\
-    &= \x^\top (\a_k \a_k^\top + D) \x^\top \\
-    &\leq (\a_k^\top \x)^2 + \| D \|_{\mathrm{op}} \| \x \|_2^2 \; ,
-\end{align*}
-where $D = \mathrm{diag}_i [ (\E[Q_2 (\a_k, s)_i^2]) - (\a_k)_i^2 ] =\mathrm{diag}_i [ \mathrm{Var} [Q_2 (\a_k, s)_i] ].$ Further, we have that $\| D \|_{\mathrm{op}}  \leq M_a^2 / s^2$.
-Therefore we have that:
-
-\begin{align*}
-     \E_{Q_1, Q_2} [\| Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \|_2^2]  &\leq r M_a^2 \left( (\a_k^\top \x)^2 + \frac{M_a^2}{s^2} R^2 + 2 b_k \a_k^\top \x + b_k^2  \right) \\
-    &= r \left( \| \g'_k \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \frac{A^2 M_a^2 R^2}{s^2} \right) \,
-\end{align*}
-as claimed, since $\| \g'_k \|_2^2 = \| \a_k \|_2^2 (\a_k^T \x + b_k)^2$.
-\end{proof}
-In particular, this implies the following variance bound on our quantized updates:
-\begin{corollary}
-    Let $\a_k, \x, b_k, \g'_k$ be as above.
-    Suppose moreover $\E [\| \g'_k - \nabla f(\x_k) \|_2^2 ] \leq \sigma^2$ and $\E [\| \g'_k \|_2^2] \leq B$.
-    Then, we have
-    \[
-    \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq  \sigma^2 + \left(r \frac{M_a^2}{\| \a_k \|_2^2} - 1\right) B + \frac{r A^2 M_a^2 R^2}{s^2} \; ,
-    \]
-    where the expectation is taken over $\g'_k$ and the randomness of the quantization.
-\end{corollary}
-\begin{proof}
-    Observe that $\| \g_k - \nabla f(\x_k) \|_2^2 = \| \g_k - \g'_k \|_2^2 + 2 (\g_k - \g'_k)^\top (\g'_k - \nabla f(\x_k)) + \| g'_k + \nabla f(\x_k) \|_2^2$.
-    Since $\E [(\g_k - \g'_k)^\top (\g'_k - \nabla f(\x_k))] = 0$, and by assumption $\E [ \| g'_k + \nabla f(\x_k) \|_2^2] \leq \sigma^2$, it suffices the bound the expectation of the first term.
-    We have
-    \[
-     \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq 2 \sigma^2 + 2\E_{\g'_k} \left[ \E_{Q_1, Q_2} [ \| \g'_k - \g_k \|_2^2 \left| \right. \g'_k ] \right] \; .
-    \]
-    Since $\E_{Q_1, Q_2} [\g_k | \g'_k] = \g'_k $, we have that 
-    \begin{align*}
-    \E_{Q_1, Q_2} [ \| \g'_k - \g_k \|_2^2 \left| \right. \g'_k ] &= \E_{Q_1, Q_2} [\| \g_k \|_2^2 | \g'_k] - \| \g'_k \|_2^2 \\
-    &\leq \left(r \frac{M_a^2}{\| \a_k \|_2^2} - 1\right) \| \g'_k \|_2^2 + \frac{r A^2 M_a^2 R^2}{s^2} \; ,
-    \end{align*}
-    from which the corollary follows.
-\end{proof}
-
-In particular, observe that this corollary essentially suggests that the quantized stochastic gradient variance is bounded by
-\[
-\E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq \sigma^2 + \Theta(n/s^2) \;
-\]
-in the scenario when $M_i (\vec{v}) = \| \vec{v} \|_2 $.
-The first term $\sigma^2$ is due to using stochastic gradient, while the second term is caused by quantization. The value of $s$ is equal to  $\lceil(2^b - 1) / 2\rceil$. Therefore, to ensure these two terms are comparable (so as not to degrade the convergence time of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$.   
-
-\section{Quantizing the Model}
-
-We now assume the setting where the processor can only work with the model in \emph{quantized} form when computing the gradients. 
-However, the gradient is stored in full precision---the model is quantized only when communicated. 
-The gradient computation in this case is:
-\[
-\g_k := \a_k \a_k^\top Q( \x , s) + \a_k b_k.
-\]
-It is easy to see that this gradient is unbiased, as the quantizer commutes with the (linear) gradient. 
-\[
-\E[ \g_k ]  := \a_k \a_k^\top \E [ Q( \x, s ) ]  + \a_k b_k = \a_k \a_k^\top \x   + \a_k b_k = \g_k .
-\]
-Further, the second moment bound is only increased by the variance of the quantization. 
-
-\begin{lemma}
-    \label{lem:model-quantization}
-    Let $\a_k, \x, b_k$ be fixed, and suppose that $\| \a_k \|_2^2 \leq A^2,$ and $\max_i M_i (\x) \leq M_x$.
-    Let $\g'_k = \a_k (\a_k^\top \x + b_k)$ be the (unquantized) stochastic gradient update.
-    Then, we have
-    \[
-    \E [\| \g_k \|_2^2] \leq \| \g'_k \|_2^2 + \frac{A^4 M_x^2}{s^2} \; .
-    \]
-\end{lemma}
-\begin{proof}
-We have
-\begin{align*}
-    \E [\| \g_k \|_2^2] &= \| \a_k \|_2^2 \E \left[\left( \a_k^\top Q( \x, s)  + b_k \right)^2 \right] \\
-    &= \| \a_k \|_2^2 \left( a_k^\top \E[Q(\x, s) Q(\x, s)^\top] a_k + 2 b_k \E[Q(\x, s)^\top \a_k] + b_k^2 \right) \\
-    &= \| \a_k \|_2^2 \left( a_k^\top \E[Q(\x, s) Q(\x, s)^\top] a_k + 2 b_k \x^\top \a_k + b_k^2 \right) \; .
-\end{align*}
-As we had previously for double sampling, we have
-\begin{align*}
-    \a_k^\top \left( \E \left[ Q_2 (\x, s) Q_2 (\x, s)^\top \right] \right) \a_k &= \a_k^\top (\x \x^\top + D) \a_k^\top \\
-    &\leq (\a_k^\top \x)^2 + \| D \|_{\mathrm{op}} \| \a_k \|_2^2 \; ,
-\end{align*}
-where as before we have that $D$ consists of diagonal elements $\E[Q_2 (\x, s)_i^2]) - (\x)_i^2 = [\mathrm{Var} [Q_2 (\x, s)_i]] \leq M_x^2 / s^2$.
-Hence altogether we have
-\[
-\E [\| \g_k \|_2^2] \leq \| \g'_k \|_2^2 + \frac{A^4 M_x^2}{s^2} \; ,
-\]
-as claimed.
-\end{proof}
-
-
-\section{Quantizing the Gradients}
-
-Recent work, including some by the authors~\cite{QSGD,BUCKWILD}, has focused on quantizing the gradients 
-with low-precision representation.
-We omit the description of this direction
-because it is relatively well-studied and is orthogonal
-to the contribution of this paper.
-From Lemma \ref{lem:quant-facts}, we have:
-
-\begin{lemma}
-    \label{lem:gradient-quantization}
-    Gradient quantization increases the second moment bound of the gradient by a multiplicative $r M^2$ factor. 
-\end{lemma}
-
-
-\section{End-to-end Quantization}
-
-We describe the end-to-end quantization strategy of
-quantizing gradients, model, and input samples all 
-at the same time. We assume all 3 sources are quantized: Gradient, model and data. However, the update to the model happens in full precision. The gradient becomes:
-
-\begin{eqnarray}
-	\g_k := Q_4 \left( Q_1(\a_k, s ) ( Q_2(\a_k, s)^\top Q_3(\x, s) + b_k) , s \right).
-\end{eqnarray}
-\noindent Here $Q_1, \ldots, Q_4$ are all independent quantizations.  $Q_3$ and  $Q_4$ are normalized with row scaling, and $Q_1, Q_2$ can be normalized arbitrarily.
-The iteration then is: 
-
-\begin{eqnarray}
-	\x = \x - \gamma \g_k.
-\end{eqnarray}
-
-\noindent From combining the previous results, we obtain that, if the samples are normalized, the following holds:
-
-\begin{corollary}
-    \label{cor:full-quantization}
-    Let $\a_k, \x, b_k$ be so that $\| \a_k \|_2^2 \leq 1, \| \x \|_2^2 \leq R^2$.
-    Let $M_a, M_x$ be as above, and let $\g'_k = \a_k (\a_k^\top \x + b_k)$ be the (unquantized) stochastic gradient.
-    Then, we have
-    \[
-    \E [\| \g_k \|_2^2] \leq \rrow \cdot \left( r M_a \left( \| \g'_k \|_2^2 + \frac{R^2}{s^2} \right)  + \frac{r^2 M_a^2 R^2}{s^2} \right) \; .
-    \]
-\end{corollary}
 
 \section{Extension to Classification Models}
 

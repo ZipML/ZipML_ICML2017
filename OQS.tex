@@ -1,0 +1,35 @@
+Give a set of real numbers $\Omega$ with cardinality $N$ and allowed $K$ level quantization. Without the loss of generality, we assume that all real numbers in $\Omega$ is in $[0, 1]$. The goal is to decide the optimal $K$ quantization levels $\{p_1, p_2, \cdots, p_{K-1}\}$ for this set to minimize the overall variance
+\begin{align}
+\min_{0\leq p_1\leq p_2 \leq \cdots \leq p_{K-1} \leq 1}\quad \sum_{x\in \Omega} \sum_{k=1}^K {\bf 1}_k(x)V_k(x)
+\end{align}
+where ${\bf 1}_k(x)$ is the indicator function
+\[
+{\bf 1}_k(x) = 
+\begin{cases}
+1 & \text{if}~x\in (p_{k-1}, p_k] \\
+0 & \text{o.w.}
+\end{cases}
+\]
+with $p_0=0$ and $p_K=1$, and the $V_k(x)$ is the variance function 
+\[
+V_k(x) = (x-p_{k-1})(p_k - x), 
+\]
+which is the variance of Bernoulli distribution with probability $p_k-x$ taking $p_{k-1}$ and probability $x-p_{k-1}$ taking $p_k$. ${\bf 1}_k(x)V_k(x)$ is the variance if $x$ falls into the interval $(p_{k-1}, p_k]$. 
+
+This problem is hard to solve directly due to the non-convexity and non-smoothness. We discretize the range $[0,1]$ into $M$ internals, that is, $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. All $p_k$'s can only take the values in $\{d_1, d_2, \cdots, d_{M-1}\}$ while satisfy the monotonicity.
+
+Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels. Our goal is to calculate $T(K, M)$. This problem can be solved by using dynamic programing
+\[
+T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + V(j,m)
+\]
+where $V(j,m)$ is the total variance of points falling into the interval $[d_j, d_m]$. The optimal value for $p_{K-1}^*$ is $ d_{j^*_{K-1}}$ with $j^*_{K-1}$ equal to
+\[
+j^*_{K-1} = \argmin_{j\in \{K-1, k, \cdots, M-1\}} T(K-1,j) + V(j,M),
+\]
+and the rest can be retrieved by 
+\begin{align*}
+j^*_{k-1} = \argmin_{j\in \{k-1, k, \cdots, j^*_k-1\}} T(k-1, j) + V(j, j^*_k) \\
+\text{for all}~k=2, \cdots, K-2
+\end{align*}
+
+The complexity of calculating matrix $V(\cdot, \cdot)$ is $O(M^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(KM^2)$. The total memory cost is $O(KM + M^2)$.
