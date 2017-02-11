@@ -176,6 +176,7 @@ highlights of empirical results. See
 Introduction for details.}
 \label{fig:highlight}
 \end{figure}
+\footnote{\Ji: Graphs (a) and (d) in Figure 1 are clear enough. We may consider making Figure 1 larger.}
 
 \vspace{-2em}
 \section{Introduction}
@@ -264,7 +265,7 @@ We consider the following problem in training generialized linear models:
 \min_{\x}:\quad {1\over 2K}\sum_{k=1}^K l(\a_k^\top \x, b_k)^2 + R(\x)
 \label{eqn:leastsquares}
 \end{align}
-where $l(-,-)$ is a loss function, and $R$ is a regularization term. 
+where $l(\cdot,\cdot)$ is a loss function, and $R$ is a regularization term, which could be $\ell_1$ norm, $\ell_2$ norm, or even an indicator function representing the constraint. 
 The gradient at the sample $(\a_k, b_k)$ is: 
 \[
 \g_k := \a_k \frac{\partial l(\a_k^\top \x, b_k)}{\partial \a_k^\top \x} 
@@ -272,13 +273,19 @@ The gradient at the sample $(\a_k, b_k)$ is:
 We denote the problem dimension by $n$. 
 We consider the properties of the algorithm when a lossy compression scheme is applied to the data (samples), 
 gradient, and model, for the purpose of reducing the communication cost of the algorithm---That is, each of the $Q_1$, $Q_2$, and $Q_3$ in the gradient update rule:
-$$\x_{t + 1} \leftarrow \x_t - \gamma Q_1(\g_k (Q_2(\x_t), Q_3(\vec{a}_t))).$$
+\[
+\x_{t + 1} \leftarrow \text{prox}_{\gamma R(\cdot)}\left(\x_t - \gamma Q_1(\g_k (Q_2(\x_t), Q_3(\vec{a}_t)))\right).
+\]
+where the proximal operator is defined as
+\[
+\text{prox}_{\gamma R(\cdot)}(\y) =\argmin_{\x} {1\over 2}\|\x-\y\|^2 + \gamma R(\x).
+\]
 
 
 \subsection{Our Results}
 
 
-\paragraph{Linear Models.} When $l(-,-)$ is 
+\paragraph{Linear Models.} When $l(\cdot,\cdot)$ is 
 the least squares loss, we first prove that
 simply doing stochastic quantization of data 
 (i.e., $Q_3$) introduces bias of the gradient
@@ -286,7 +293,7 @@ estimator and therefore SGD would converge
 to a different solution. We propose a simple
 fix to this problem by introducing a
 {\em double sampled} quantization strategy
-$\tilde{Q_3}$ that uses multiple samples to
+$\tilde{Q}_3$ that uses multiple samples to
 eliminate the correlation of samples introduced
 by the non-linearity of the gradient. We
 analyze the additional variance introduced
