@@ -39,7 +39,7 @@ The complexity of calculating matrix $V(\cdot, \cdot)$ is $O(M^2 + N)$ and the c
 \begin{theorem}
 Let the maximal number of points in each interval and the maximal interval length defined by $\{d_m\}_{m=1}^{M-1}$ be bounded by $a/M$ and $bN/M$ respectively. Let $\{p^*_k\}_{k=1}^{K-1}$ and $\{\hat{p}^*_k\}_{k=1}^{K-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the approximate solution using discretization technique introduced above. Let $cM/K$ be the upper bound of the number of small intervals (defined by $\{d_m\}_{m=1}^{M-1}$) crossed by any interval defined by $\{p^*_k\}_{k=1}^{K-1}$. Then we have the discretization error bounded by
 \[
- \mathcal{MV}(\hat{p}^*_1,\cdots, \hat{p}^*_{K-1}) -  \mathcal{MV}(p^*_1,\cdots, p^*_{K-1}) \leq \frac{abc}{KM}.
+ \mathcal{MV}(\hat{p}^*_1,\cdots, \hat{p}^*_{K-1}) -  \mathcal{MV}(p^*_1,\cdots, p^*_{K-1}) \leq {a^2b K \over 4 M^3} + {a^2bc^2 \over MK}.
 \]
 \end{theorem}
 
@@ -50,7 +50,33 @@ Next we consider points falling into the following three sets $C_1 = [p^*_0, Q(p
 \[
 (x-Q(p^*_1))(p^*_1 - x) \leq {a^2 \over 4 M^2}. 
 \]  
-Thus, the change of variance for points in $C_2$ would be bounded by ${a^2 \over 4 M^2}$. Then consider $C_3$. The variance for point $x$ in $C_3$ is 
+Thus, the change of variance for points in $C_2$ would be bounded by ${a^2 \over 4 M^2}$. Then consider $C_3$. The change of variance for point $x$ in $C_3$ is
+\begin{align*}
+& (x-Q(p^*_1))(p^*_2 - x) - (x-p^*_1) (p^*_2 - x) 
+\\
+= & (p^*_1 - Q(p^*_1)) (p^*_2 - x)
+\\
+\leq & {a\over M}(p^*_2 - x)
+\end{align*}
+Therefore, the change of total variance from $\{p^*_1, p^*_2, \cdots, p^*_{K-1}\}$ to $\{Q(p^*_1), p^*_2, \cdots, p^*_{K-1}\}$ is bounded by 
+\begin{align}
+\nonumber
+& \sum_{x\in C_2} {a^2 \over 4M^2} + \sum_{x \in C_3} {a\over M}(p^*_2 - x)
+\\
+\nonumber
+\leq & {Nb \over M} {a^2 \over 4M^2} + {a\over M}{Nb \over M} \sum_{t=1}^{cM/K}t{a\over M}
+\\
+\leq &
+{a^2b N \over 4 M^3} + {a^2bc^2 N \over MK^2}
+\label{eq:bound_1step}
+\end{align}
+Similarly, we quantitize $p^2_2$ in $\{Q(p^*_1), p^*_2, \cdots, p^*_{K-1}\}$ to get a new solution $\{Q(p^*_1), Q(p^*_2), \cdots, p^*_{K-1}\}$ while maintain the monotonicity. We can establish the same upper bound to \eqref{eq:bound_1step}. Following this idea, we can obtain a quantization solution $\{Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1})\}$. Therefore, we obtain that 
+\begin{align*}
+&  \mathcal{MV}(Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1})) -  \mathcal{MV}({p}^*_1,\cdots, {p}^*_{K-1}) 
+ \\
+ & \quad \leq {a^2b K \over 4 M^3} + {a^2bc^2 \over MK}.
+\end{align*}
+Using the fact that $ \mathcal{MV}(p^*_1,\cdots, p^*_{K-1})$ is smaller than $\mathcal{MV}(Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1}))$ proves the claim.
 \end{proof}
 
 
