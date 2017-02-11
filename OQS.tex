@@ -14,11 +14,11 @@ with $p_0=0$ and $p_K=1$, and the $V_k(x)$ is the variance function
 \[
 V_k(x) = (x-p_{k-1})(p_k - x), 
 \]
-which is the variance of Bernoulli distribution with probability $p_k-x$ taking $p_{k-1}$ and probability $x-p_{k-1}$ taking $p_k$. ${\bf 1}_k(x)V_k(x)$ is the variance if $x$ falls into the interval $(p_{k-1}, p_k]$. 
+which is the variance of Bernoulli distribution with probability $p_k-x$ taking value $p_{k-1}$ and probability $x-p_{k-1}$ taking value $p_k$. ${\bf 1}_k(x)V_k(x)$ is the variance if $x$ falls into the interval $(p_{k-1}, p_k]$. 
 
 This problem is hard to solve directly due to the non-convexity and non-smoothness. We discretize the range $[0,1]$ into $M$ internals, that is, $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. All $p_k$'s can only take the values in $\{d_1, d_2, \cdots, d_{M-1}\}$ while satisfy the monotonicity.
 
-Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels. Our goal is to calculate $T(K, M)$. This problem can be solved by using dynamic programing
+Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels. Our goal is to calculate $T(K, M)$. This problem can be solved by dynamic programing using the following recursion
 \[
 T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + V(j,m)
 \]

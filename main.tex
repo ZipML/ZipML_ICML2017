@@ -519,20 +519,12 @@ The upper bound is given by:
 and the lower bound is given by:
 \[1 - b_k Q(\a_k)^\top \x - {abs(\x)\over s}.
 \]
-where $1/s$ is ``resolution'' of the quantization.
-If the upper and lower bounds of a quantized sample have the same sign, then we can be certain that  no ``flipping'' will occur, and we can use the quantized sample. otherwise we send a request to fetch the original data and use it to  compute the gradient.
+where $1/s$ is ``resolution'' of the quantization. If the upper and lower bounds of a quantized sample have the same sign, then we can be certain that  no ``flipping'' will occur, and we can use the quantized sample. otherwise we send a request to fetch the original data and use it to  compute the gradient.
 
-\paragraph*{Importance Sampling}  Another heuristic
- used to decrease the amount of original data that
-we fetch during training is to use {\em importance
-sampling}, instead of standard uniform sampling for SGD~\cite{ImportantSampling}. 
-Intuitively, flipping happens more frequently
-when $1 - b_k \a_k^\top \x$ is close to 0.
-Therefore, we sample an input sample
-with a probability proportional to 
-$|1 - b_k \a_k^\top \x|$. This heuristic 
-increases the variance of SGD, 
-but at the same time it decreases the amount of original data
+\paragraph*{Importance Sampling}  Another heuristic used to decrease the amount of original data that
+we fetch during training is to use {\em importance sampling}, instead of standard uniform sampling for SGD~\cite{ImportantSampling}. Intuitively, flipping happens more frequently when $1 - b_k \a_k^\top \x$ is close to 0.
+Therefore, we sample an input sample with a probability proportional to $|1 - b_k \a_k^\top \x|$. This heuristic 
+increases the variance of SGD, but at the same time it decreases the amount of original data
 needing to be fetched. 
 
 \textcolor{red}{DAN: CAN WE SAY SOMETHING HERE ASSUMING LARGE MARGIN?}
