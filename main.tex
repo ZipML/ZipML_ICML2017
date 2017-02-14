@@ -402,6 +402,10 @@ are only different by one bit). More generally, because samples
 are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
 
 
+\paragraph*{Regularization}
+
+\textcolor{red}{JI: ADD ONE SENTENCE ABOUT REGULARIZATION?}
+
 \paragraph*{Extension to Classification}
 
 Extending our result to least-squares SVMs for classification
@@ -559,20 +563,66 @@ and synthetic data sets, and study the impact
 of the number of bits at which we quantize for each task.
 
 \section{Related Work} 
-Thanks to its simplicity, the Stochastic Gradient Descent algorithm (SGD)~\cite{RM}, is now a standard tool in machine learning, with applications from SVM, to neural network back-propagation and recommender systems. Given its practical appeal, there has been a tremendous amount of effort invested in developing computationally efficient variants of this algorithm. 
-This research field is extremely vast, see e.g.~\cite{Bottou, SVRG, Hogwild, PSGD} for examples, and a complete survey is beyond the scope of this paper. 
 
-Here, we focus on the relatively recent efforts to understand the convergence properties of SGD in the context of low-precision data representation, such as the ones caused by fixed-point arithmetic or lossy compression. 
-In particular, De Sa, Zhang, Olukotun, and Re~\cite{BUCKWILD}  proposed and analyzed BuckWild!, a variant of SGD which only employs low-precision representations. They showed that SGD can be provably robust to the rounding errors engendered by fixed-point arithmetic; in practice, BuckWild! can tolerate 8-bit integer precision, although it is observed to diverge for lower precision. 
-In the same vein, recent work by Alistarh, Li, Tomioka, and Vojnovic~\cite{QSGD} proposed a family of lossy compression schemes 
-allowing the optimal compression of gradient updates, while preserving the convergence properties of SGD. 
-Their work was inspired by OneBit SGD, a gradient compression heuristic developed in the context of deep neural networks for speech recognition~\cite{OneBit}. 
+There has been intensive study about ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
+Most of them provide
+theoretical guarantee when the gradients are quantized.
+The model and input samples, on the other hand, are much more difficult
+to analyze because of the non-linearity. In this paper, 
+we
+focus on the {\em end-to-end}
+quantization for all components.
 
-While the above research suggests that SGD can tolerate low precision for some of its components, such as the gradient updates or the model, it leaves open the question of whether it is possible to perform end-to-end training of linear models with low-precision representations. 
-In this paper, we answer this question in the affirmative, for the special case of linear regression and least squares SVM. 
+\vspace{-1em}
+\paragraph{Low-Precision Deep learning.}
 
-\paragraph{Low-Precision Deep learning}
-Recently, a lot of researchers have investigated low-precision deep neural networks, with different focuses. The first common way is to compress pre-trained networks and focus on small model size and fast inference.~\citet{vanhoucke2011improving} quantized model and activations to 8-bit fixed-point for fast SIMD operations on CPUs.~\citet{gong2014compressing} described how to use vector quantization to compress deep neural networks.~\citet{han2015deep} use k-means to group weights in to a few clusters to do quantization.~\citet{lin2016fixed} discussed how to allocate number of bits to use for each layer and saved 20\% in the model size compared to equal allocation.~\citet{kim2016bitwise} described Bitwise Neural Networks where all weights, activations and inputs are binary-values. These methods usually result in litte to no accuracy loss and enable doing inference on low-power mobile devices~\cite{kim2015compression,wu2016quantized}. On the other hand, there are another chunk of researches focusing on training with low-precison model and activations for fast training as well as fast inference. However, these methods will usually result in a loss in accuracy.~\citet{hubara2016quantized} introduced methods to train Binarized Neural Networks(BNN) and Quantized Neural Networks(QNN), by quantizing weights, activations and gradients to low-precision (eg. 1-bit). XNOR-net~\cite{rastegari2016xnor} also quantizes weights and activations to binary-values.~\citet{zhou2016dorefa} quantized gradients with low-precision on top of weights and activations. ~\citet{miyashita2016convolutional} proposed a method to represent weights and activations in log-domain.~\citet{li2016ternary} introduced ternary weight networks to quantize models so that the weights are constrained to 1, 0 and -1.~\citet{gupta2015deep} first decribed the idea of doing stochastic quantization instead of deterministic quantization.~\citet{seide20141} proposed a method to train deep neural networks using 1-bit gradients with errorection. Our approach is closer to the second method, our end-to-end framework would quantize input data, model and gradients to low-precision for faster computation and smaller memory bandwith and energy usage. Our task in argubaly harder than low-precision deep learning in the sense that our model is much smaller  
+Low-precision training of deep neural networks has been studied
+intensively and many heuristics work well for a subset of networks.
+For example, OneBit SGD~\cite{Frank:2014:Interspeech} provides
+a gradient compression heuristic developed in the context of deep 
+neural networks for speech recognition. There are successful 
+application of end-to-end quantization to training neural networks
+resulting in little to no quality loss~\cite{hubara2016quantized,
+rastegari2016xnor,zhou2016dorefa,miyashita2016convolutional,li2016ternary,gupta2015deep}. These work quantize weights, activations, and gradients 
+to low-precision (e.g., 1-bit) and revise the backpropagation 
+algorithm to be aware of the quantization function.
+The empirical success of these work inspired this paper, in which we try
+to provide a {\em theoretical} understanding of end-to-end low-precision
+training for machine learning models.
+Another line of research concerns about inference and model
+compression of a pre-trained model~\cite{vanhoucke2011improving,gong2014compressing,han2015deep,lin2016fixed,kim2016bitwise,kim2015compression,wu2016quantized}.
+In this paper, we focus on training and leave the study of
+inference as future work.
+
+\vspace{-1em}
+\paragraph{Low-Precision Linear Models.}
+
+Quantization is a fundamental topic studied by the
+DSP community, and there have been research related to
+linear regression models in the presence of quantization
+error or other type of noises. For example,
+\citet{Gopi:2013:ICML} studied compressive sensing
+with quantized measurement, and the \textcolor{red}{XXXXX}
+algorithm focuses on getting a high-precision solution
+with low-precision computation. Also, the
+classic errors-in-variable model~\cite{Hall:2008:Book}
+could also be related if quantization is treated 
+as a source of ``error''. In this paper, we scope
+ourselves in the context of stochastic gradient descent, 
+and our insights go beyond simple linear models.
+
+\vspace{-1em}
+\paragraph{Other Related Work.} Precision of data
+representation is a key design decision to make
+for configurable hardwares such as FPGA. There have
+been attempts to
+lower the precision when training machine learning models
+on these hardware~\cite{Kim:2011:ICASSP}. 
+These results are mostly empirical; We
+aim at providing a theoretical understanding, which 
+enables new practical algorithms that are not covered 
+by these work.
+
 
 
 \cleardoublepage
