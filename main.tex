@@ -70,7 +70,7 @@ The Cans, the Cannots, and a Little Bit of Deep Learning
 
 There has recently been significant interest in training 
 machine-learning models at low precision: by reducing 
-precision, we could reduce computation, communication, and power 
+precision, one can reduce computation, communication, and power 
 consumption by an order of magnitude. 
 We examine this from a theoretical and practical 
 perspective. We ask: 
@@ -123,9 +123,9 @@ Introduction for details.}
 \section{Introduction}
 
 The computational cost and power consumption of today's machine learning systems are often driven by data movement, and by the precision of computation. 
-In our experience, applications such as tomographic reconstruction, anomaly detection in mobile sensor networks, or compressive sensing, the overhead of transmitting the data samples can be massive, 
+In our experience, in applications such as tomographic reconstruction, anomaly detection in mobile sensor networks, or compressive sensing, the overhead of transmitting the data samples can be massive, 
 and hence performance can hinge on reducing the precision of the data representation, and of the associated computation. 
-A similar trend is observed in the deep learning community, where impressive progress has been reported with systems using reduced-precision representations for the model~\cite{m1, m2}, gradients~\cite{zzz}, 
+A similar trend is observed in deep learning, where impressive progress has been reported with systems using reduced-precision representations for the model~\cite{m1, m2}, gradients~\cite{zzz}, 
 or end-to-end quantization~\cite{m1, m2}. 
 In this context, the key motivating question behind our work is:  
 {\em When training general machine learning models,
@@ -364,6 +364,7 @@ It is not hard to see that the above is an unbiased estimator of the true gradie
 Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment.
 Then, we have the following lemma.
 \begin{lemma}
+\label{lem:qbound}
     Let $\a_k, \x, b_k$ be fixed, and suppose that $\| \a_k \|_2^2 \leq A^2, \| \x \|_2^2 \leq R^2$, and $\max_i M_i (\a_k) \leq M_a$.
     Let $\g'_k = \a_k (\a_k^\top \x + b)$ be the (unquantized) stochastic gradient update.
     Then, we have 
@@ -441,11 +442,10 @@ The iteration then is:
     \]
 \end{corollary}
 
-\section{Non-Linear Models}
 
-\textcolor{red}{DAN: THIS SECTION IS YOURS}
+\input{nonlinear.tex}
 
-\subsection{Chebyshev Approximation}
+
 
 \subsection{Refetching Heuristic}
 

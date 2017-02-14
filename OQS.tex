@@ -20,7 +20,7 @@ which is the variance of Bernoulli distribution with probability $p_k-x$ taking 
 
 \paragraph*{Discretization}
 
-This problem is hard to solve directly due to the non-convexity. We discretize the range $[0,1]$ into $M$ internals, that is, $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. All $p_k$'s are restricted to values in $\{d_1, d_2, \cdots, d_{M-1}\}$ while satisfy the monotonicity. 
+This problem is hard to solve directly due to the non-convexity. We discretize the range $[0,1]$ into $M$ intervals, that is, $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. All $p_k$'s are restricted to values in $\{d_1, d_2, \cdots, d_{M-1}\}$ while satisfy the monotonicity. 
 
 \begin{theorem}
 Let the maximal number of points in each interval and the maximal interval length defined by $\{d_m\}_{m=1}^{M-1}$ be bounded by $a/M$ and $bN/M$ respectively. Let $\{p^*_k\}_{k=1}^{K-1}$ and $\{\hat{p}^*_k\}_{k=1}^{K-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the approximate solution using discretization technique introduced above. Let $cM/K$ be the upper bound of the number of small intervals (defined by $\{d_m\}_{m=1}^{M-1}$) crossed by any interval defined by $\{p^*_k\}_{k=1}^{K-1}$. Then we have the discretization error bounded by
