@@ -58,10 +58,9 @@
 %\title{Training Generalized Linear Models with End-to-end Low Precision:\\
 %The Cans, the Cannots, and a Little Bit of Deep Learning
 %}
-\title{Training Generalized Linear Models with End-to-end Low Precision:\\
+\title{Training with End-to-end Low Precision:\\
 The Cans, the Cannots, and a Little Bit of Deep Learning
 }
-
 
 
 \begin{document}
@@ -69,101 +68,45 @@ The Cans, the Cannots, and a Little Bit of Deep Learning
 
 \begin{abstract}
 
-There has recently been significant interest in  training and inference for machine-learning models at low precision. 
-The promise is simple and compelling: by reducing precision, we reduce computation\footnote{\Ji: do we want to say ``inference'', which is versus to ``train'' later?}, communication, and power costs by an order of magnitude, which can lead to an order-of-magnitude  end-to-end speedup. 
-We examine this premise from a theoretical and practical perspective. We ask: 
-is it possible to \emph{train} models at end-to-end low precision with \emph{provable} guarantees?  can this lead to consistent order-of-magnitude speedups?
+There has recently been significant interest in training 
+machine-learning models at low precision: by reducing 
+precision, we could reduce computation, communication, and power 
+consumption by an order of magnitude. 
+We examine this from a theoretical and practical 
+perspective. We ask: 
+{\em is it possible to \emph{train} models at end-to-end low 
+precision with \emph{provable} guarantees?  can this 
+lead to consistent order-of-magnitude speedups?}
 
-For linear models, the answer is yes. We develop a simple framework based on stochastic quantization, which is able to execute training at low precision with no bias, guaranteeing convergence. The main element of novelty is a technique for stochastic quantization of \emph{samples}, for which naive quantization would introduce significant bias. We validate this framework across a range of applications, and show that it enables an FPGA prototype that is up to an order of magnitude faster than an optimized multi-threaded implementation using full 32bit precision.
+For linear models, the answer is yes. We develop a simple 
+framework based on one novel strategy: ``double sampling''. 
+With our framework, it is able 
+to execute training at low precision with no bias, 
+guaranteeing convergence, while naive stochastic quantization 
+would introduce significant bias. We validate this  
+across a range of applications, and show that it enables an 
+FPGA prototype that is up to an order of magnitude faster 
+than an implementation using full 32bit precision.
 
-{\color{red}
-For linear models, the answer is yes. We develop a simple framework based on three novel strategies: stochastic quantization, double sampling, and optimal quantization. It is able to execute training at low precision with no bias, guaranteeing convergence, while naive quantization would introduce significant bias. We validate this framework across a range of applications, and show that it enables an FPGA prototype that is up to an order of magnitude faster than an optimized multi-threaded implementation using full 32bit precision.
-}
+We extend our framework through approximation to non-linear 
+models, such as SVM. We show that, although the bias of using 
+low precision data cannot be avoided, our approach can appropriately 
+control the bias. We find that in practice $8bits$ precision is 
+always sufficient to converge to the correct solution. 
+Interestingly, however, in practice, we notice that our framework 
+does not always outperform the naive rounding approach. We discuss 
+this negative result in detail. 
 
-We extend our framework through approximation to non-linear settings, such as SVM. We provide rigorous bias bounds, and show that in practice $8bits$ precision is always sufficient to converge to the correct solution. Interestingly, however, we notice that our framework does not always outperform the naive rounding approach. We discuss this negative result in detail. 
-
-{\color{red}
-For non-linear models such as SVM, although the bias of using low precision data cannot be avoided, the proposed XXX can appropriately control the bias. We find that in practice $8bits$ precision is always sufficient to converge to the correct solution. Detailed discussion for some negative results are also provided.
-}
-
-Further, we provide optimal algorithms for variance-optimal stochastic quantization, given fixed precision, and show that this can make a significant difference in a variety of settings. In particular, when training deep networks with quantized models, we achieve higher accuracy than state-of-the-art BNNs. 
-
-
-\iffalse
-Motivated by recent empirical successes in training deep learning models with end-to-end low precision for computation and data movement, 
-this paper asks the following question: is it possible to train machine learning models at end-to-end low precision with \emph{provable} guarantees?  
-
-%Allured by the recent success of training
-%deep learning models with end-to-end low
-%precision computation and data movement, 
-%we focus on simpler generalized linear models. 
-
-Our first result is that linear models can be trained at arbitrarily low precision with guaranteed convergence. 
-Specifically, we give a framework which allows samples, model, and gradient to be communicated at low precision, while ensuring zero bias in the result of the computation. 
-The first element of novelty is a technique for stochastic quantization of \emph{samples}, for which naive quantization introduces significant bias.  
-The second is an algorithmic solution to the problem of finding the optimal strategy to minimize the variance of stochastic quantization. 
-We validate these techniques across a range of applications, and show that they enable an FPGA prototype that is up to
-an order of magnitude faster than a full 32bit precision implementation.
-
-
-
-%
-%
-%Our positive results hold for linear
-%models. Although simply doing stochastic
-%quantization introduces innegligible bias, we are able
-%to develop a simple, but novel, fix 
-%to get an unbiased estimator of the gradient. We further 
-%developed an optimal quantization strategy
-%that minimizes the variance introduced 
-%by stochastic quantization. These techniques 
-%have been applied to a range of applications and
-%enabled an FPGA prototype that is up to
-%10$\times$ faster than using 32bit full precision.
-
-We show that it is possible to extend our framework through approximation to arbitrary non-linear settings, such as logistic regression and SVM. 
-In particular, we present strategies with rigorous theoretical bounds, and show that in practice $8bits$ precision is always sufficient to converge to the same solution. 
-However, we observe that, in this case, our techniques do not outperform the trivial naive rounding approach. We discuss this negative result in detail. 
-
-
-\todo{Not sure if this fits here. Perhaps we can describe the optimized quantization stuff as a separate contribution and include this there.}
-Lastly, we also apply the optimal quantization 
-%=======
-%Allured by the recent success of training
-%deep learning models with end-to-end low
-%precision computation and data movement, 
-%we focus on simpler generalized linear models. 
-%
-%Our positive results hold for linear
-%models. Although simply doing stochastic
-%quantization introduces innegligible bias, we are able
-%to develop a simple, but novel, fix 
-%to get an unbiased estimator of the gradient. We further 
-%developed an optimal quantization strategy
-%that minimizes the variance introduced 
-%by stochastic quantization. These techniques 
-%have been applied to a range of applications and
-%enabled an FPGA prototype that is up to
-%10$\times$ faster than using 32bit full precision.
-%
-%Our negative results appear when we try
-%to extend our technique to non-linear models
-%such as SVM. We present
-%two different strategies with rigorous 
-%theoretical bounds and are able to lower the
-%precision by $4\times$ while still getting the same
-%solution. However, both fail to 
-%outperform a strawman quantization approach
-%more than 2$\times$.
-%
-%Last, we also apply the optimal quantization 
-%>>>>>>> 39f67c51e7f7a63046c41289ca5bce222734d085
-strategy we developed for linear models to 
-training deep neural networks with 
-quantized model and achieves up to 3 points
-higher accuracy than state-of-the-art BNNs
-on CIFAR-10 with a standard network. 
-\fi
+Further, we develop variance-optimal 
+stochastic quantization
+strategy and show that 
+it can make a significant difference in a variety of settings. 
+When applied to linear models together with 
+double sampling, we can save up to another 
+$2\times$ communications
+compared with uniform quantization. When
+training deep networks with quantized models, 
+we achieve higher accuracy than state-of-the-art BNNs. 
 
 \end{abstract}
 
@@ -176,20 +119,16 @@ highlights of empirical results. See
 Introduction for details.}
 \label{fig:highlight}
 \end{figure}
-\footnote{\Ji: Graphs (a) and (d) in Figure 1 are clear enough. We may consider making Figure 1 larger.}
-
 \vspace{-2em}
 \section{Introduction}
 
-The computational and power costs of today's machine learning systems are often driven by the impact of data movement, and by the precision of computation. 
+The computational cost and power consumption of today's machine learning systems are often driven by data movement, and by the precision of computation. 
 In our experience, applications such as tomographic reconstruction, anomaly detection in mobile sensor networks, or compressive sensing, the overhead of transmitting the data samples can be massive, 
 and hence performance can hinge on reducing the precision of the data representation, and of the associated computation. 
-A related trend is observed in the deep learning community, where impressive progress has been reported with systems using reduced-precision representations for the model~\cite{m1, m2}, gradients~\cite{zzz}, 
-or even end-to-end, including quantized samples~\cite{m1, m2}. 
+A similar trend is observed in the deep learning community, where impressive progress has been reported with systems using reduced-precision representations for the model~\cite{m1, m2}, gradients~\cite{zzz}, 
+or end-to-end quantization~\cite{m1, m2}. 
 In this context, the key motivating question behind our work is:  
-
-{\em
-When training general machine learning models,
+{\em When training general machine learning models,
 can we lower the precision of data representation,
 communication, and computation, while maintaining provable guarantees?}
  
@@ -260,7 +199,7 @@ In the following, we describe our technical contributions in more detail.
 
 \subsection*{Summary of Technical Contributions}
 
-We consider the following problem in training generialized linear models: 
+We first consider the following problem in training generialized linear models: 
 \begin{align}
 \min_{\x}:\quad {1\over 2K}\sum_{k=1}^K l(\a_k^\top \x, b_k)^2 + R(\x)
 \label{eqn:leastsquares}
@@ -284,8 +223,11 @@ where the proximal operator is defined as
 
 \subsection{Our Results}
 
+We summarize our results as follows. The {\bf (+)}
+signs means positive result where we achieve
+significant speed up in practice, and {\bf (--)} otherwise.
 
-\paragraph{Linear Models.} When $l(\cdot,\cdot)$ is 
+\paragraph{(+) Linear Models.} When $l(\cdot,\cdot)$ is 
 the least squares loss, we first prove that
 simply doing stochastic quantization of data 
 (i.e., $Q_3$) introduces bias of the gradient
@@ -305,48 +247,46 @@ this gives us an end-to-end quantization strategy
 for linear models, whose variance is \textcolor{red}{
 BLAH BLAH BLAH BLAH}.
 
+\vspace{-1em}
+\paragraph{(--) Non-Linear Models.} We extend our
+results to non-linear models such as
+logistic regression and SVM. We observe that
+using multiple samples can, in principle,
+provide unbiased estimators for any polynomials
+(with an increased variance). Our main
+result uses Chebyshev polynomials to
+approximate the gradient and provide theoretical
+bound on the bias introduced by Chebyshev
+approximation and the bias of SGD solution. 
+This provides a way to control the bias given
+users' error tolerance as input.  
+When data is separable,
+we prove that \textcolor{red}{BLAH BLAH 
+BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
+BLAH BLAH BLAH}. With this technique, we are
+able to lower the precision by 4$\times$ with
+rigorous theoretical guarantee; However,
+compared with a strawman approach that just
+do stochastic rounding over input data, 
+\textcolor{red}{BLAH BLAH BLAH BLAH.}.
+
+\vspace{-1em}
+\paragraph{(+) Optimal Quantization and Extension to Deep Learning.}
 We then focus on variance reduction for 
 stochastic quantization. We observe that different
-quantization points introduce different
-variances---the points chosen
+quantization points have different variances---the points chosen
 by standard fixed point representation is uniformly
-distributed but is not optimal in terms of variance.
+distributed but is not optimal.
 We formulate an optimization problem to choose 
 quantization points that minimize the total variance
 introduced by quantization and solve it with 
 a dynamic programming algorithm with time complexity
 $O(BLAH)$ and space complexity $O(BLAH)$.
+When applied to linear models, this optimal 
+strategy can save up to $2\times$ communication
+compared with the uniform strategy.
 
-\paragraph{Non-Linear Models.} We extend our
-results to non-linear models such as
-logistic regression and SVM. We observe that
-using multiple samples can, in principle,
-provide unbiased estimators for any polynomials
-(with an increased variance). Our first 
-technique uses Chebyshev polynomials to
-approximate the gradient and provide theoretical
-results on the bias introduced by Chebyshev
-approximation and the bias of SGD solution. 
-This provides a way to control the bias given
-users' error tolerance as input. More precisely,
-\textcolor{red}{BLAH BLAH BLAH BLAH BLAH BLAH 
-BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
-BLAH BLAH BLAH}. For SVM, we present a heuristic
-that uses low precision data to decide whether
-one needs to bring in full precision data for
-estimating the loss. When data is separable,
-we prove that \textcolor{red}{BLAH BLAH 
-BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
-BLAH BLAH BLAH}. With both techniques, we are
-able to lower the precision by 4$\times$ with
-rigorous theoretical guarantee; However,
-compared with a strawman approach that just
-do stochastic rounding over input data, empirically
-we can only provide up to 2$\times$ benefit.
-
-\paragraph{Simple Extension to Deep Learning.}
-
-Our analysis of optimal quantization strategies
+Our analysis of optimal quantization 
 implies that the uniform quantization approach
 popularly used by state-of-the-art end-to-end
 low-precision deep learning training systems
@@ -364,8 +304,8 @@ has been applied to training.
 
 \section{Linear Models}
 
-In this section, we will describe lossy compression schemes for data samples, so that when we apply SGD to solve linear regression on these compressed data points, it still provably converges.
-Throughout this section, the setting will be as follows.
+In this section, we focus on linear models with
+the following setting.
 We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
 \[
 f(\x) = \frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x + b_k \|_2^2 \; ,
@@ -375,8 +315,6 @@ The basic (unquantized) SGD scheme which solves this problem is the following: a
 In a slight abuse of notation we let $\a_k = \a_{\pi(k)}$ for the rest of the section.
 Then it is not hard to see that $\E [\g'_k] = \nabla f(\x_k)$, and so this is indeed a stochastic gradient.
 
-The rest of the section is now devoted to devising quantization schemes for $\g'_k$ when given access only to $\a_k$ and $b_k$, namely, given access only to the data points.
-
 \subsection{Naive Random Quantization is Biased}
 
 As a first exercise, we look at what happens when we work with the data directly in quantized form in the context of linear regression. 
@@ -384,7 +322,7 @@ The gradient becomes
 \[
 \g_k := Q(\a_k, s ) Q(\a_k, s)^\top \x + Q(\a_k, s) b_k.
 \]
-It is not hard to see that the expected value of this is in fact: 
+It is not hard to see that the expected gradient is: 
 \[
 \E[\g_k] := \a_k \a_k^\top \x + \a_k b_k + D_{s, \a} \x, 
 \]
@@ -396,7 +334,6 @@ where $D_{s, \a}$ is a diagonal matrix and its $i$th diagonal element is
 
 Since $D_{s, \a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
 In fact, it is easy to see that in instances where the minimizer $\x$ is large and gradients become small, we will simply diverge. 
-Fortunately, however, this issue can be easily fixed. 
 
 \subsection{Double Sampling}
 
@@ -404,7 +341,7 @@ Fortunately, however, this issue can be easily fixed.
 Instead of the naive estimate, our algorithm is as follows.
 We generate two independent
 random quantizations $Q_1$
-and $Q_2$ and revise the gradient as follows:
+and $Q_2$ and revise the gradient:
 
 %\[
 %\g_k := \frac{1}{2}\left(Q_1(\a_k ) Q_2(\a_k)^\top \x + Q_2(\a_k) b_k + Q_2(\a_k ) %Q_1(\a_k)^\top \x + Q_1(\a_k) b_k\right).
@@ -424,7 +361,7 @@ It is not hard to see that the above is an unbiased estimator of the true gradie
 
 \paragraph{Variance Analysis}
 
-Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment promised in Lemma \ref{lem:quant-facts}.
+Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment.
 Then, we have the following lemma.
 \begin{lemma}
     Let $\a_k, \x, b_k$ be fixed, and suppose that $\| \a_k \|_2^2 \leq A^2, \| \x \|_2^2 \leq R^2$, and $\max_i M_i (\a_k) \leq M_a$.
@@ -452,14 +389,16 @@ In particular, observe that this corollary essentially suggests that the quantiz
 \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq \sigma^2 + \Theta(n/s^2) \;
 \]
 in the scenario when $M_i (\vec{v}) = \| \vec{v} \|_2 $.
-The first term $\sigma^2$ is due to using stochastic gradient, while the second term is caused by quantization. The value of $s$ is equal to  $\lceil(2^b - 1) / 2\rceil$. \textcolor{red}{Therefore, to ensure these two terms are comparable (so as not to degrade the convergence time of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$.}
+The first term $\sigma^2$ is due to using stochastic gradient, while the second term is caused by quantization. The value of $s$ is equal to  $\lceil(2^b - 1) / 2\rceil$. \textcolor{red}{Therefore, to ensure these two terms are comparable (so as not to degrade the convergence time of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$. Even with this permissive
+bound, we can see that for linear models with millions
+of features 32bits are likely to be an overkill.}
 
 \paragraph*{Overhead of Storing Two Samples}
 The system implication of double sampling is the overhead of sending
 two samples instead of one. We note that this will not introduce $2\times$
 overhead in terms of data communication, instead, just a single more bit
 for the second sample because of the correlation between two samples (they 
-are only different by one bit.) More generally, because samples
+are only different by one bit). More generally, because samples
 are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
 
 
@@ -467,7 +406,7 @@ are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
 
 Extending our result to least-squares SVMs for classification
 is trivial~\cite{SvmVsLssvm}, we leave the discussion to the
-full version of this paper.
+appendix.
 
 
 \subsection{End-to-end Quantization}
@@ -497,12 +436,6 @@ The iteration then is:
     \E [\| \g_k \|_2^2] \leq \rrow \cdot \left( r M_a \left( \| \g'_k \|_2^2 + \frac{R^2}{s^2} \right)  + \frac{r^2 M_a^2 R^2}{s^2} \right) \; .
     \]
 \end{corollary}
-
-\subsection{Optimal Quantization Strategy}
-
-\input{OQS.tex}
-
-\textcolor{red}{JI: can we say something about how the discrete version approximates the real version?}
 
 \section{Non-Linear Models}
 
@@ -542,9 +475,73 @@ needing to be fetched.
 
 \textcolor{red}{DAN: CAN WE SAY SOMETHING HERE ASSUMING LARGE MARGIN?}
 
-\section{Simple Extension to Deep Learning}
 
-\textcolor{red}{CE: THIS SECTION IS YOURS?}
+\section{Optimal Quantization Strategy}
+
+\subsection{Variance-Optimal Quantization}
+
+\input{OQS.tex}
+
+\subsection{Extension to Deep Learning}
+
+Quantization is often used in training 
+Deep Learning models with low-precision~\cite{XXX,XXX}.
+Most of these quantization strategies
+are based on uniform quantization. In this
+section, we show that it is possible to
+apply optimal quantization to
+training deep neural networks.
+
+\paragraph*{State-of-the-arts} We focus on
+training deep neural networks with quantized
+model. Let $\mathcal{W}$ be the model and 
+$l(\mathcal{W})$ be the loss function. State-of-the-arts,
+such as BNN and QNN, replace $\mathcal{W}$
+with the quantized version $Q(\mathcal{W})$, and optimize
+for
+\[
+\min_{\mathcal{W}} l(Q(\mathcal{W})).
+\]
+With a properly defined 
+$\frac{\partial Q}{\partial{\mathcal{W}}}$, we can
+apply the standard forward/backward propagation 
+algorithm to solve this optimization task.
+
+Choosing the quantization function $Q$ is
+an important design decision. For 1-bit quantization,
+BNN searches the optimal quantization point given
+the model. However, for multiple bits,
+BNN, as well as other approaches such as QNN, resort
+to uniform quantization.
+
+\paragraph*{Optimal Model Quantization for Deep Learning}
+
+We can apply the optimal quantization strategy we
+developed and use it as the quantization function $Q$
+in BNN. We empirically validated it 
+and find that this can provide significant quality improvement
+compared with the default multi-bits quantizer in BNN. 
+
+In spirit, our approach is similar to the 1-bit quantizer of
+BNN, which is equivalent to our approach when the data
+distribution is symmetric---We extend this
+to multiple bits in a principled way. Another related work
+is the uniform quantization strategy 
+in {\em log domain}~\cite{miyashita2016convolutional},
+which is similar to our approach when the data distribution
+is ``log uniform''. However, our approach does not rely on
+any specific assumption of data distribution.
+Some previous work uses $k$-means to
+compress the model for {\em inference}~\cite{XXX}---$k$-means
+optimizes for a similar, but different, objective
+function than us. In this paper, we 
+develop a dynamic
+programming algorithm to do optimal quantization efficiently,
+and to our best knowledge, we
+are the first to apply optimal quantization to
+{\em training}.
+
+
 
 
 \section{Experiments} \label{sec:exp}
@@ -561,6 +558,27 @@ We validate this claim on a range of real-world
 and synthetic data sets, and study the impact
 of the number of bits at which we quantize for each task.
 
+\section{Related Work} 
+Thanks to its simplicity, the Stochastic Gradient Descent algorithm (SGD)~\cite{RM}, is now a standard tool in machine learning, with applications from SVM, to neural network back-propagation and recommender systems. Given its practical appeal, there has been a tremendous amount of effort invested in developing computationally efficient variants of this algorithm. 
+This research field is extremely vast, see e.g.~\cite{Bottou, SVRG, Hogwild, PSGD} for examples, and a complete survey is beyond the scope of this paper. 
+
+Here, we focus on the relatively recent efforts to understand the convergence properties of SGD in the context of low-precision data representation, such as the ones caused by fixed-point arithmetic or lossy compression. 
+In particular, De Sa, Zhang, Olukotun, and Re~\cite{BUCKWILD}  proposed and analyzed BuckWild!, a variant of SGD which only employs low-precision representations. They showed that SGD can be provably robust to the rounding errors engendered by fixed-point arithmetic; in practice, BuckWild! can tolerate 8-bit integer precision, although it is observed to diverge for lower precision. 
+In the same vein, recent work by Alistarh, Li, Tomioka, and Vojnovic~\cite{QSGD} proposed a family of lossy compression schemes 
+allowing the optimal compression of gradient updates, while preserving the convergence properties of SGD. 
+Their work was inspired by OneBit SGD, a gradient compression heuristic developed in the context of deep neural networks for speech recognition~\cite{OneBit}. 
+
+While the above research suggests that SGD can tolerate low precision for some of its components, such as the gradient updates or the model, it leaves open the question of whether it is possible to perform end-to-end training of linear models with low-precision representations. 
+In this paper, we answer this question in the affirmative, for the special case of linear regression and least squares SVM. 
+
+\paragraph{Low-Precision Deep learning}
+Recently, a lot of researchers have investigated low-precision deep neural networks, with different focuses. The first common way is to compress pre-trained networks and focus on small model size and fast inference.~\citet{vanhoucke2011improving} quantized model and activations to 8-bit fixed-point for fast SIMD operations on CPUs.~\citet{gong2014compressing} described how to use vector quantization to compress deep neural networks.~\citet{han2015deep} use k-means to group weights in to a few clusters to do quantization.~\citet{lin2016fixed} discussed how to allocate number of bits to use for each layer and saved 20\% in the model size compared to equal allocation.~\citet{kim2016bitwise} described Bitwise Neural Networks where all weights, activations and inputs are binary-values. These methods usually result in litte to no accuracy loss and enable doing inference on low-power mobile devices~\cite{kim2015compression,wu2016quantized}. On the other hand, there are another chunk of researches focusing on training with low-precison model and activations for fast training as well as fast inference. However, these methods will usually result in a loss in accuracy.~\citet{hubara2016quantized} introduced methods to train Binarized Neural Networks(BNN) and Quantized Neural Networks(QNN), by quantizing weights, activations and gradients to low-precision (eg. 1-bit). XNOR-net~\cite{rastegari2016xnor} also quantizes weights and activations to binary-values.~\citet{zhou2016dorefa} quantized gradients with low-precision on top of weights and activations. ~\citet{miyashita2016convolutional} proposed a method to represent weights and activations in log-domain.~\citet{li2016ternary} introduced ternary weight networks to quantize models so that the weights are constrained to 1, 0 and -1.~\citet{gupta2015deep} first decribed the idea of doing stochastic quantization instead of deterministic quantization.~\citet{seide20141} proposed a method to train deep neural networks using 1-bit gradients with errorection. Our approach is closer to the second method, our end-to-end framework would quantize input data, model and gradients to low-precision for faster computation and smaller memory bandwith and energy usage. Our task in argubaly harder than low-precision deep learning in the sense that our model is much smaller  
+
+
+\cleardoublepage
+
+\bibliographystyle{icml2017}
+\bibliography{low-precision.bib}
 
 
 
@@ -640,12 +658,7 @@ of the number of bits at which we quantize for each task.
 
 
 
-
-
-\newpage
-\appendix
-
-
+\iffalse
 
 %\begin{figure}[t]
 %\centering   
@@ -1208,23 +1221,7 @@ Our experimental results for SVM are given in Figure~\ref{fig:svm}. For all data
 \end{itemize}
 
 
+\fi
 
-\paragraph{Related Work.} 
-Thanks to its simplicity, the Stochastic Gradient Descent algorithm (SGD)~\cite{RM}, is now a standard tool in machine learning, with applications from SVM, to neural network back-propagation and recommender systems. Given its practical appeal, there has been a tremendous amount of effort invested in developing computationally efficient variants of this algorithm. 
-This research field is extremely vast, see e.g.~\cite{Bottou, SVRG, Hogwild, PSGD} for examples, and a complete survey is beyond the scope of this paper. 
-
-Here, we focus on the relatively recent efforts to understand the convergence properties of SGD in the context of low-precision data representation, such as the ones caused by fixed-point arithmetic or lossy compression. 
-In particular, De Sa, Zhang, Olukotun, and Re~\cite{BUCKWILD}  proposed and analyzed BuckWild!, a variant of SGD which only employs low-precision representations. They showed that SGD can be provably robust to the rounding errors engendered by fixed-point arithmetic; in practice, BuckWild! can tolerate 8-bit integer precision, although it is observed to diverge for lower precision. 
-In the same vein, recent work by Alistarh, Li, Tomioka, and Vojnovic~\cite{QSGD} proposed a family of lossy compression schemes 
-allowing the optimal compression of gradient updates, while preserving the convergence properties of SGD. 
-Their work was inspired by OneBit SGD, a gradient compression heuristic developed in the context of deep neural networks for speech recognition~\cite{OneBit}. 
-
-While the above research suggests that SGD can tolerate low precision for some of its components, such as the gradient updates or the model, it leaves open the question of whether it is possible to perform end-to-end training of linear models with low-precision representations. 
-In this paper, we answer this question in the affirmative, for the special case of linear regression and least squares SVM. 
-
-\paragraph{Low-Precision Deep learning}
-Recently, a lot of researchers have investigated low-precision deep neural networks, with different focuses. The first common way is to compress pre-trained networks and focus on small model size and fast inference.~\citet{vanhoucke2011improving} quantized model and activations to 8-bit fixed-point for fast SIMD operations on CPUs.~\citet{gong2014compressing} described how to use vector quantization to compress deep neural networks.~\citet{han2015deep} use k-means to group weights in to a few clusters to do quantization.~\citet{lin2016fixed} discussed how to allocate number of bits to use for each layer and saved 20\% in the model size compared to equal allocation.~\citet{kim2016bitwise} described Bitwise Neural Networks where all weights, activations and inputs are binary-values. These methods usually result in litte to no accuracy loss and enable doing inference on low-power mobile devices~\cite{kim2015compression,wu2016quantized}. On the other hand, there are another chunk of researches focusing on training with low-precison model and activations for fast training as well as fast inference. However, these methods will usually result in a loss in accuracy.~\citet{hubara2016quantized} introduced methods to train Binarized Neural Networks(BNN) and Quantized Neural Networks(QNN), by quantizing weights, activations and gradients to low-precision (eg. 1-bit). XNOR-net~\cite{rastegari2016xnor} also quantizes weights and activations to binary-values.~\citet{zhou2016dorefa} quantized gradients with low-precision on top of weights and activations. ~\citet{miyashita2016convolutional} proposed a method to represent weights and activations in log-domain.~\citet{li2016ternary} introduced ternary weight networks to quantize models so that the weights are constrained to 1, 0 and -1.~\citet{gupta2015deep} first decribed the idea of doing stochastic quantization instead of deterministic quantization.~\citet{seide20141} proposed a method to train deep neural networks using 1-bit gradients with errorection. Our approach is closer to the second method, our end-to-end framework would quantize input data, model and gradients to low-precision for faster computation and smaller memory bandwith and energy usage. Our task in argubaly harder than low-precision deep learning in the sense that our model is much smaller  
-\bibliographystyle{icml2017}
-\bibliography{low-precision.bib}
 
 \end{document}
