@@ -49,8 +49,15 @@ We can extend Lemma~\ref{lem:poly-sec-moment-bound} to obtain a general bound on
 	\textcolor{red}{DAN: TODO here}
 \end{lemma}
 
-\paragraph{Chebyshev Approximations.} 
+\paragraph{Chebyshev Approximations} 
 For \emph{hinge loss}, the gradient is the step function, which is hard to approximate generally by polynomials. 
-However, the problem is well studied for intervals of the type  $[-R, R] \setminus [-\delta, \delta]$, for some small parameter $\delta > 0$~\cite{frostig2016principal, allen2016faster}; the latter reference provides the optimal approximation via Chebyshev polynomial, which we use in our experiments. 
+However, the problem is well studied for intervals of the type  $[-R, R] \setminus [-\delta, \delta]$, for some small parameter $\delta > 0$~\cite{frostig2016principal, allen2016faster}; the latter reference provides the optimal approximation via Chebyshev polynomials, which we use in our experiments. 
 
 For \emph{logistic loss}, with sigmoid gradient, we again notice that polynomial approximations have been well studied. In particular, we use the optimal Chebyshev polynomial approximation of~\cite{vlcek2012chebyshev}. 
+
+\paragraph{Practical Considerations} The above strategy introduces a precision-variance trade-off, since increasing the precision of approximation (higher polynomial degree) also increases the variance of the gradient. 
+Fortunately, we can further reduce the variance and increase the approximation quality by increasing the density of the quantization. 
+The results in Section~\ref{sec:exp} show that a total of $8$ bits per sample is sufficient to ensure convergence to the same result as the full-precision 
+implementation for both hinge loss and logistic loss. 
+
+

@@ -167,7 +167,7 @@ present both  positive and negative results
  obtained in the context of this framework. 
  Figure~\ref{fig:highlight} encapsulates our results: 
 (a) for linear models, we are able to lower the precision of both computation and communication, including input samples, gradients, and model, by up to $16$ times, while still providing rigorous theoretical guarantees; 
-(b) our FPGA implementation of this framework achieves up to $10\times$ speed up compared with
+(b) our FPGA implementation of this framework achieves up to $10\times$ speedup compared with
 a 32-bit FPGA implementation, or with a 10-cores CPU running Hogwild!;  
 (c) we are able to decrease data movement by $3\times$ for
 tomographic reconstruction, while getting negligible quality decrease. 
@@ -225,7 +225,7 @@ where the proximal operator is defined as
 
 We summarize our results as follows. The {\bf (+)}
 signs means positive result where we achieve
-significant speed up in practice, and {\bf (--)} otherwise.
+significant practical speedup, and {\bf (--)} otherwise.
 
 \paragraph{(+) Linear Models.} When $l(\cdot,\cdot)$ is 
 the least squares loss, we first prove that
@@ -445,24 +445,23 @@ The iteration then is:
 
 \input{nonlinear.tex}
 
-\textcolor{red}{DAN: ADD ONE SENTENCE ABOUT HOW IT WORKS IN PRACTICE?}
+%\textcolor{red}{DAN: ADD ONE SENTENCE ABOUT HOW IT WORKS IN PRACTICE?}
 
 
-\paragraph*{Refetching Heuristic}
-
-We also develop one simple heuristic for SVM, which we will
-describe in details in the full version of this paper.
-For hinge loss $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$, the idea is to 
-first load a low-precision version to 
-calculate an upper bound and lower bound of $b_k \a_k^\top \x$.
-If one cannot decide the sign of $1-b_k \a_k^\top \x$
-with this, we {\em refetch} the high-precision data.
-In practice, this heuristics works for 
-8bits precision while only refetching $<5\%$
+\paragraph*{The Refetching Heuristic}
+To avoid the overhead of approximation, we develop the following heuristic, whose full description is left to the full version of the paper. 
+Consider for example hinge loss, i.e.  $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$. 
+The idea is to 
+first transmit a single low-precision version of $\a_k$, and to  
+calculate upper and lower bounds on $b_k \a_k^\top \x$.
+If the sign of $1-b_k \a_k^\top \x$ cannot change because of quantization, then we simply apply the approximate gradient. 
+If the sign could change, then we {\em refetch} the data at full precision.
+In practice, this heuristic works for 
+8 bits precision while only refetching $<5\%$
 of the data.
 
 \textcolor{red}{DAN: CAN WE SAY SOMETHING HERE ASSUMING LARGE MARGIN?}
-
+\textcolor{red}{Will look into this later.}
 
 \section{Optimal Quantization Strategy}
 
@@ -480,10 +479,10 @@ section, we show that it is possible to
 apply optimal quantization to
 training deep neural networks.
 
-\paragraph*{State-of-the-arts} We focus on
+\paragraph*{State-of-the-art} We focus on
 training deep neural networks with quantized
 model. Let $\mathcal{W}$ be the model and 
-$l(\mathcal{W})$ be the loss function. State-of-the-arts,
+$l(\mathcal{W})$ be the loss function. State-of-the-art networks,
 such as BNN and QNN, replace $\mathcal{W}$
 with the quantized version $Q(\mathcal{W})$, and optimize
 for
@@ -512,7 +511,7 @@ compared with the default multi-bits quantizer in BNN.
 
 In spirit, our approach is similar to the 1-bit quantizer of
 BNN, which is equivalent to our approach when the data
-distribution is symmetric---We extend this
+distribution is symmetric---we extend this
 to multiple bits in a principled way. Another related work
 is the uniform quantization strategy 
 in {\em log domain}~\cite{miyashita2016convolutional},
@@ -586,7 +585,7 @@ with only 3 or 4-bit end to end quantization.
 \label{fig:convergence}
 \end{figure}
 
-\paragraph{Speed Up}
+\paragraph{Speedup}
 Figure~\ref{fig:speedup} shows that with our quantization framework
 implementation on FPGA with quantized data, 
 we get 6x-7x speed up compared to state-of-art
@@ -631,9 +630,11 @@ with only 3 to 5-bit data quantization. We also get no loss in test accuracy.
 \paragraph{Negative Results}
 Figure~\ref{fig:vsnaive} shows that with 8-bit deterministic rounding or naive
 stochastic rounding, SGD would also converge to same training loss with comparable
-empirical convergence rate. Because we need to send multiple samples if we use Chebyshev
-polynomials, we actually cannot save memory-bandwith with our framework
-compared to simple 8-bit deterministic rounding.
+empirical convergence rate. However, we need to send multiple samples if we use the Chebyshev polynomial approximation. 
+Even though these additional samples can be encoded efficiently (since they can only take a limited set of values), 
+in practice the memory-bandwith savings of our framework
+compared to simple 8-bit deterministic rounding are minor. 
+\
 \begin{figure}[h]
 \centering
     \begin{subfigure}[h]{.4\columnwidth}
@@ -658,7 +659,7 @@ Figure~\ref{fig:optimal} shows that with our data-optimal quantization strategy,
 \caption{Data-Optimal Quantization compared to Uniform Quantization on music dataset}
 \label{fig:optimal}
 \end{figure}
-\subsection{Extention to Deep Learning}
+\subsection{Extensions to Deep Learning}
 
 \section{Related Work} 
 
