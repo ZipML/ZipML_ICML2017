@@ -336,6 +336,14 @@ where $D_{s, \a}$ is a diagonal matrix and its $i$th diagonal element is
 Since $D_{s, \a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
 In fact, it is easy to see that in instances where the minimizer $\x$ is large and gradients become small, we will simply diverge. 
 
+Figure~\ref{fig:gap} shows that SGD will converge to different solution with naive random quantization or deterministic quantization.
+\begin{figure}[h]
+\centering    
+\includegraphics[width=\columnwidth]{micro-experiments/gap} 
+\caption{Naive random quantization or deterministic quantization converge to different solution}
+\label{fig:gap}
+\end{figure} 
+
 \subsection{Double Sampling}
 
 \paragraph{Algorithm}
@@ -535,30 +543,17 @@ are the first to apply optimal quantization to
 
 \section{Experiments} \label{sec:exp}
 
-In this section, we validate that: (1) ZipML 
-converges to the same solution with comparable
-empirical convergence rate for a range of
-statistical models: (i) linear regression;
-(ii) least squares support vector machines;
-(iii) support vector machines; and (iv) logistic regression;
-(2) We can observe a speed-up when ZipML is used on FPGA to train a linear regression model;
-(3) We can lower the number of bits we need by using the data-optimal
-quantization strategy.
-(4) We can improve accuracy in low-precision neural networks if we apply our data-optimal quantiztion strategy.
-We validate these claim on a range of real-world
-and synthetic data sets, and study the impact
-of the number of bits at which we quantize for each task.
-
-
+In this section, we show the results when
+ZipML is used for: (1) linear models; (2) non-linear models;
+and (3) deep learning.
 \subsection{Experimental Setup}
 
 \paragraph{Datasets} 
-We used a synthetic dataset with 10,000 samples and 100 features for linear regression and we used gisette dataset~\cite{guyon2004result} with 6,000 (1,000) training (testing) samples and 5000 features for classification problems (least square SVM, SVM, and logsitic regression).
-
-\paragraph{Metrics} To measure the quality of training,
-we measured the training loss after each training epoch. We also measure test accuracy for classification problems.
-
-\paragraph{Protocol} We use diminishing stepsizes: the real stepsize is ${initial\_stepsize/k}$, where k is the current number of epoch.
+We use a range of real-world
+and synthetic data sets in our experiments. Table~\ref{xxx} shows the data sets we use and their characteristics.
+Because of the limitation of length, we only show the result of one synthetic dataset for regression and one real dataset for classification. The full experiment results would be shown in the appendix.
+\paragraph{Protocal} To measure the quality of training,
+we measured the training loss after each training epoch. We also measure test accuracy for classification problems. We use diminishing stepsizes: the real stepsize is ${initial\_stepsize\over k}$, where k is the current number of epoch.
 
 \subsection{Linear Models}
 In this section, we validate that: (1) ZipML 
@@ -568,10 +563,12 @@ and (ii) least squares support vector machines;
 (2) We can observe a speed-up when ZipML is used on FPGA to train a linear regression model;
 
 \paragraph{Convergence}
+We run SGD to train linear models, with our end-to-end quantization or with full 32-bit floating-point. We compare the training loss in both settings and their convergence rate to the final training loss.
+
 Figure~\ref{fig:convergence} shows that our quantization framework
 converges to the same solution with comparable
-empirical convergence rate for both linear regression and least square SVM
-with only 3 or 4-bit end to end quantization. 
+empirical convergence rate for both linear regression and least square-SVM
+with only 3 or 4-bit end-to-end quantization. We saved 8-10x memory bandwidth compared to using 32-bit floating-point. If we use less bits than what we used in the figure, then the quantized version would either diverge or converge with a lower convergence rate.
 
 \begin{figure}[h]
 \centering
@@ -581,17 +578,19 @@ with only 3 or 4-bit end to end quantization.
     \end{subfigure}
     \begin{subfigure}[h]{.4\columnwidth}
     \includegraphics[width=\columnwidth]{final-experiments/LSSVM} 
-    \caption{on LSSVM}
+    \caption{Least Square-SVM}
     \end{subfigure}
-\caption{ZipML on linear models with end-to-end quantization, 3 or 4-bit is good enough to get a comparable empirical convergence rate to the same loss}
+\caption{ZipML on linear models with end-to-end quantization, 3 or 4-bit is good enough to get a comparable empirical convergence rate to the same loss.}
 \label{fig:convergence}
 \end{figure}
 
-\paragraph{Speedup}
+\paragraph{Speed Up}
+We implemented our low-preicision framework for training a linear model on FPGA. We compare the time to converge to the same training loss with 32-bit FPGA implementation and the current fastest multi-thread CPU implementation, Hogwild!.
+
 Figure~\ref{fig:speedup} shows that with our quantization framework
 implementation on FPGA with quantized data, 
 we get 6x-7x speed up compared to state-of-art
-10-thread CPU or FPGA with full 32-bit floating point data.
+10-thread CPU or FPGA with full 32-bit floating point data. The speed of FPGA is bounded by memory-bandwidth, and by using our framework to quantize data, we save 8x memory-bandwith, which leads to 6x-7x speed up.
 \begin{figure}[h]
 \centering
     \begin{subfigure}[h]{.4\columnwidth}
@@ -600,16 +599,26 @@ we get 6x-7x speed up compared to state-of-art
     \end{subfigure}
     \begin{subfigure}[h]{.4\columnwidth}
     \includegraphics[width=\columnwidth]{final-experiments/SpeedUp-LSSVM} 
-    \caption{6.5x speed up on LSSVM}
+    \caption{6.5x speed up on LS-SVM}
     \end{subfigure}
 \caption{Speed up with ZipML on FPGA vs 10-thread CPU baseline}
 \label{fig:speedup}
 \end{figure}
 \subsection{Non-Linear Models}
+In this section, we validate that: (1) ZipML 
+converges to almost the same solution with comparable
+empirical convergence rate for (i) SVM;
+and (ii) Logistic Regression;
+(2) If we use 8-bit deterministic rounding or naive stochastic rounding, we would also converge to the same solution for (i) SVM;
+and (ii) Logistic Regression.
 
-\paragraph{Chebyshev Polynomials}
+\paragraph{Chebyshev Approximations}
+We run SGD to train models for SVM and logistic regression using:
+(1) original 32-bit data and original gradient; (2) original 32-bit data and gradient approxiamted by Chebyshev polynomials;
+(3) quantized data and gradient approxiamted by Chebyshev polynomails.
+We compare the training loss and test accuracy in these 3 settings.
 
-Figure~\ref{fig:chebyshev} shows that with Chebyshev polynomials approximation to sigmoid 
+Figure~\ref{fig:chebyshev} shows that with Chebyshev polynomial approximation to sigmoid 
 or sign function, our quantization framework
 converges to close training loss with comparable
 empirical convergence rate for both SVM and logistic regression
@@ -630,21 +639,23 @@ with only 3 to 5-bit data quantization. We also get no loss in test accuracy.
 \end{figure}
 
 \paragraph{Negative Results}
+We compare our previous result with naive 8-bit deterministic or stochastic rounding for data.
+
 Figure~\ref{fig:vsnaive} shows that with 8-bit deterministic rounding or naive
 stochastic rounding, SGD would also converge to same training loss with comparable
 empirical convergence rate. However, we need to send multiple samples if we use the Chebyshev polynomial approximation. 
 Even though these additional samples can be encoded efficiently (since they can only take a limited set of values), 
 in practice the memory-bandwith savings of our framework
 compared to simple 8-bit deterministic rounding are minor. 
-\
+
 \begin{figure}[h]
 \centering
     \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/VsNaive-SVM} 
+    \includegraphics[width=\columnwidth]{final-experiments/Naive-SVM} 
     \caption{SVM}
     \end{subfigure}
     \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/VsNaive-LR} 
+    \includegraphics[width=\columnwidth]{final-experiments/Naive-LR} 
     \caption{Logistic Regression}
     \end{subfigure}
 \caption{ZipML on non-linear models with Chebyshev polynomials compared to deterministic rounding and naive stochastic rounding}
@@ -652,17 +663,28 @@ compared to simple 8-bit deterministic rounding are minor.
 \end{figure}
 
 \subsection{Data-Optimal Quantization Strategy}
+We validate that: with our data-optimal quantization strategy, 
+SGD can converge to the same solution with comparable convergence rate with less bits 
+compared to using uniform quantization levels. We compare the training loss of using data-optimal levels with 3-bit quantization and uniform levels with 3-bit and 5-bit quantization
 
-Figure~\ref{fig:optimal} shows that with our data-optimal quantization strategy, on this data set, it is enough to use 3-bit quantization. If we use the uniform quantization levels, we need at least 5-bit data quantization to get the same performance. We save almost half of the bits we need by just allocating markers wisely.
+
+Figure~\ref{fig:optimal_lr} shows that with our data-optimal quantization strategy, on this data set, it is enough to use 3-bit quantization. If we use the uniform quantization levels, we need at least 5-bit data quantization to get the same performance. We save almost half of the bits we need by just allocating markers wisely.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\columnwidth]{final-experiments/OptimalQuantization} 
-\caption{Data-Optimal Quantization compared to Uniform Quantization on music dataset}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/OptimalQuantization} 
+    \caption{Data-Optimal Quantization vs Uniform Quantization}
+    \label{fig:optimal_lr}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \text{figure for deep learning}
+    \label{fig:optimal_dl}
+    \end{subfigure}
 \label{fig:optimal}
+\caption{Optimal Quantizationœ}
 \end{figure}
-\subsection{Extensions to Deep Learning}
-
+\subsection{Extentions to Deep Learning}
 \section{Related Work} 
 
 There has been intensive study about ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 

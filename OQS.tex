@@ -50,6 +50,15 @@ j^*_{k-1} = \argmin_{j\in \{k-1, k, \cdots, j^*_k-1\}} T(k-1, j) + V(j, j^*_k) \
 
 The complexity of calculating matrix $V(\cdot, \cdot)$ is $O(M^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(KM^2)$. The total memory cost is $O(KM + M^2)$. Note that to solve this optimal quantization, we only need to scan all $N$ numbers once.
 
+Figure~\ref{fig:optimalquantization} shows that for such data distribution, after running our dynamic programming algorithm, 
+we get optimal quantization levels.
+\begin{figure}[h]
+\centering    
+\includegraphics[width=\columnwidth]{micro-experiments/dp-level} 
+\caption{An example of using DP to decide optimal quantization levels(16 levels).}
+\label{fig:optimalquantization}
+\end{figure} 
+
 
 
 \iffalse
