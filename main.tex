@@ -552,15 +552,131 @@ are the first to apply optimal quantization to
 
 \textcolor{red}{CE: THIS SECTION IS YOURS?}
 
-In this section, we validate that ZipML 
+In this section, we validate that: (1) ZipML 
 converges to the same solution with comparable
 empirical convergence rate for a range of
-statistical models: (1) linear regression;
-(2) least squares support vector machines;
-and (3) support vector machines.
-We validate this claim on a range of real-world
+statistical models: (i) linear regression;
+(ii) least squares support vector machines;
+(iii) support vector machines; and (iv) logistic regression;
+(2) We can observe a speed-up when ZipML is used on FPGA to train a linear regression model;
+(3) We can lower the number of bits we need by using the data-optimal
+quantization strategy.
+(4) We can improve accuracy in low-precision neural networks if we apply our data-optimal quantiztion strategy.
+We validate these claim on a range of real-world
 and synthetic data sets, and study the impact
 of the number of bits at which we quantize for each task.
+
+
+\subsection{Experimental Setup}
+
+\paragraph{Datasets} 
+We used a synthetic dataset with 10,000 samples and 100 features for linear regression and we used gisette dataset~\cite{guyon2004result} with 6,000 (1,000) training (testing) samples and 5000 features for classification problems (least square SVM, SVM, and logsitic regression).
+
+\paragraph{Metrics} To measure the quality of training,
+we measured the training loss after each training epoch. We also measure test accuracy for classification problems.
+
+\paragraph{Protocol} We use diminishing stepsizes: the real stepsize is ${initial\_stepsize/k}$, where k is the current number of epoch.
+
+\subsection{Linear Models}
+In this section, we validate that: (1) ZipML 
+converges to the same solution with comparable
+empirical convergence rate for (i) linear regression;
+and (ii) least squares support vector machines;
+(2) We can observe a speed-up when ZipML is used on FPGA to train a linear regression model;
+
+\paragraph{Convergence}
+Figure~\ref{fig:convergence} shows that our quantization framework
+converges to the same solution with comparable
+empirical convergence rate for both linear regression and least square SVM
+with only 3 or 4-bit end to end quantization. 
+
+\begin{figure}[h]
+\centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/LinearRegression} 
+    \caption{Linear Regression}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/LSSVM} 
+    \caption{on LSSVM}
+    \end{subfigure}
+\caption{ZipML on linear models with end-to-end quantization, 3 or 4-bit is good enough to get a comparable empirical convergence rate to the same loss}
+\label{fig:convergence}
+\end{figure}
+
+\paragraph{Speed Up}
+Figure~\ref{fig:speedup} shows that with our quantization framework
+implementation on FPGA with quantized data, 
+we get 6x-7x speed up compared to state-of-art
+10-thread CPU or FPGA with full 32-bit floating point data.
+\begin{figure}[h]
+\centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/SpeedUp-LR} 
+    \caption{7.2x speed up on Linear Regression}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/SpeedUp-LSSVM} 
+    \caption{6.5x speed up on LSSVM}
+    \end{subfigure}
+\caption{Speed up with ZipML on FPGA vs 10-thread CPU baseline}
+\label{fig:speedup}
+\end{figure}
+\subsection{Non-Linear Models}
+
+\paragraph{Chebyshev Polynomials}
+
+Figure~\ref{fig:chebyshev} shows that with Chebyshev polynomials approximation to sigmoid 
+or sign function, our quantization framework
+converges to close training loss with comparable
+empirical convergence rate for both SVM and logistic regression
+with only 3 to 5-bit data quantization. We also get no loss in test accuracy.
+
+\begin{figure}[h]
+\centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/SVM-Chebyshev} 
+    \caption{SVM}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/Logistic-Chebyshev} 
+    \caption{Logistic Regression}
+    \end{subfigure}
+\caption{ZipML on non-linear models with Chebyshev polynomials}
+\label{fig:chebyshev}
+\end{figure}
+
+\paragraph{Negative Results}
+Figure~\ref{fig:vsnaive} shows that with 8-bit deterministic rounding or naive
+stochastic rounding, SGD would also converge to same training loss with comparable
+empirical convergence rate. Because we need to send multiple samples if we use Chebyshev
+polynomials, we actually cannot save memory-bandwith with our framework
+compared to simple 8-bit deterministic rounding.
+\begin{figure}[h]
+\centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/VsNaive-SVM} 
+    \caption{SVM}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{final-experiments/VsNaive-LR} 
+    \caption{Logistic Regression}
+    \end{subfigure}
+\caption{ZipML on non-linear models with Chebyshev polynomials compared to deterministic rounding and naive stochastic rounding}
+\label{fig:vsnaive}
+\end{figure}
+
+\subsection{Data-Optimal Quantization Strategy}
+
+Figure~\ref{fig:optimal} shows that with our data-optimal quantization strategy, on this data set, it is enough to use 3-bit quantization. If we use the uniform quantization levels, we need at least 5-bit data quantization to get the same performance. We save almost half of the bits we need by just allocating markers wisely.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{final-experiments/OptimalQuantization} 
+\caption{Data-Optimal Quantization compared to Uniform Quantization on music dataset}
+\label{fig:optimal}
+\end{figure}
+\subsection{Extention to Deep Learning}
 
 \section{Related Work} 
 
@@ -879,7 +995,10 @@ converges to the same solution with comparable
 empirical convergence rate for a range of
 statistical models: (1) linear regression;
 (2) least squares support vector machines;
-and (3) support vector machines.
+(3) support vector machines;
+and (4) linear regression. We further validate that
+with our data-optimal quantization strategy, we can use
+less bits to get the same convergence speed
 We validate this claim on a range of real-world
 and synthetic data sets, and study the impact
 of the number of bits at which we quantize for each task.
@@ -887,22 +1006,12 @@ of the number of bits at which we quantize for each task.
 \subsection{Experimental Setup}
 
 \paragraph{Datasets} 
-
-We used datasets from LIBSVM ~\cite{LIBSVM}.
-We choose three real datasets for linear regression: \texttt{cadata},\footnote{\url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/regression.html#cadata}}
-\texttt{cpusmall},\footnote{\url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/regression.html#cpusmall}} 
-and \texttt{music},\footnote{\url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/regression.html#YearPredictionMSD}}, all of which are dense and overdetermined. To be Specific, \texttt{cadata} has 20,640 samples and 8 features, \texttt{cpusmall} has 8,192 samples and 12 features, and \texttt{music} has 463,715 samples and 90 features.
-We also created three synthetic datasets: All with 10,000 samples, One with 20 features, sparsity 0.2 and standard deviation 1; One with 20 features, sparsity 0.5 and standard deviation 4; One with 160 features, sparsity 0.5 and standard deviation 4.
-
-We choose three real datasets for least squares SVM and standard SVM: \texttt{ijcnn1},\footnote{\url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#ijcnn1}} \texttt{cod-rna},\footnote{\url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#cod-rna}} and \texttt{covtype},\footnote{\url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#covtype.binary}} all of which are dense and overdetermined. Dataset \texttt{ijcnn1} has 49,990 samples and 22 features, \texttt{cod-rna} has 59,535 samples and 8 features, and \texttt{covtype} has 581,012 samples and 54 features.
+We used a synthetic dataset with 10000 samples and 100 features for Linear Regression and we used gisette dataset~\cite{guyon2004result} with 6000(1000) training(testing) samples and 5000 features for classification problems(Least Sqaure SVM, SVM and Logistic Regression).
 
 \paragraph{Metrics} To measure the quality of training,
-we measured the training loss after each training epoch.
+we measured the training loss after each training epoch. For classification tasks, we also measured test accuracy.
 
-\paragraph{Protocol} We run ZipML on each dataset, changing the initial step size from 0.0001, 0.001, 0.01, and 0.1, the real step size is ${initial\_step\_size/k}$, where k is the current number of epoch. We then choose the stepsize that gives us the best final loss. In our experiments, a initial stepsize of 0.01 would give us best result in most cases. For other 3 stepsizes: 0.0001 and 0.001 are too small and would always lead to larger final loss; a larger stepsize of 0.1 would result in divergence in 2 out of 6 datasets for linear regression and 3 out of 3 for LSSVM and SVM, for those 4 datasets that converge when using the stepsize of 0.1, using stepsize of 0.1 will lead to a smaller final loss. We also vary quantization precision from 2 bits to 8 bits and choose the minimum precision that can robustly converge to the same result as the  original. (We do not show higher precision, e.g. $16$-bit, since $8$ bits are usually enough to get the same accuracy as the original.) 
-We run the same setting on each data set for quantized data, quantized data and gradient, and quantized data, gradient and model, respectively.
-%\todo{Hantian: results for 0.001 and 0.0001 do not always make sense to include, since the difference in loss is huge. Talk to me or Ce for details.} 
-
+\paragraph{Protocol} We run ZipML on each dataset, with the diminishing step_size, where the real step_size is ${initial\_step\_size/k}$, where k is the current number of epoch. 
 
 \subsection{Linear Regression}
 We first validate that ZipML 
@@ -950,107 +1059,6 @@ For datasets with more features, Figure~\ref{fig:lrmusic} and \ref{fig:lr160hard
 \caption{ZipML on Linear Regression using \texttt{cadata} dataset. 3-bit version is good enough to get a comparable empirical convergence rate to the same loss; with 8-bit we get almost the same result as the original 32-bit data}
 \label{fig:lrcadata}
 \end{figure}
-
-
-\begin{figure}[h]
-\centering
-   
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/real/cpusmall/d01}
-    \caption{Quantized data, initial stepsize = 0.1}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/real/cpusmall/dg01}
-    \caption{Quantized data and gradient, initial stepsize = 0.1}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/real/cpusmall/dgm01}
-     \caption{Quantized data, gradient, and model, initial stepsize = 0.1}
-    \end{subfigure}
-    
-\caption{ZipML on Linear Regression using \texttt{cpusmall} dataset}
-\label{fig:lrcpusmall}
-\end{figure}
-
-\begin{figure}[h]
-\centering
- 
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/real/YearPredictionMSD/d001}
-    \caption{Quantized data, initial stepsize = 0.01}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/real/YearPredictionMSD/dg001}
-    \caption{Quantized data and gradient, initial stepsize = 0.01}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/real/YearPredictionMSD/dgm001}
-     \caption{Quantized data, gradient, and model, initial stepsize = 0.01}
-     \label{subfig:musicdgm}
-    \end{subfigure}
-    
-\caption{ZipML on Linear Regression using \texttt{music} dataset}
-\label{fig:lrmusic}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/20easy/d01}
-    \caption{Quantized data, initial stepsize = 0.1}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/20easy/dg01}
-    \caption{Quantized data and gradient, initial stepsize = 0.1}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/20easy/dgm01}
-     \caption{Quantized data, gradient, and model, initial stepsize = 0.1}
-    \end{subfigure}
-    
-\caption{ZipML on Linear Regression using \texttt{synthetic} dataset with 20 features and standard deviation 1}
-\label{fig:lr20easy}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/20hard/d01}
-    \caption{Quantized data, initial stepsize = 0.1}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/20hard/dg01}
-    \caption{Quantized data and gradient, initial stepsize = 0.1}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/20hard/dgm01}
-     \caption{Quantized data, gradient, and model, initial stepsize = 0.1}
-    \end{subfigure}
-    
-\caption{ZipML on Linear Regression using \texttt{synthetic} dataset with 20 features and standard deviation 4}
-\label{fig:lr20hard}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-   
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/160hard/d001}
-    \caption{Quantized data, initial stepsize = 0.01}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/160hard/dg001}
-    \caption{Quantized data and gradient, initial stepsize = 0.01}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    \includegraphics[width=\columnwidth]{lr/synthetic/160hard/dgm001}
-     \caption{Quantized data, gradient, and model, initial stepsize = 0.01}
-    \end{subfigure}
-    
-\caption{ZipML on Linear Regression using \texttt{synthetic} dataset with 160 features and standard deviation 4}
-\label{fig:lr160hard}
-\end{figure}
-
 
 
 
