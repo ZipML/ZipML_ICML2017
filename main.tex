@@ -212,9 +212,10 @@ The gradient at the sample $(\a_k, b_k)$ is:
 We denote the problem dimension by $n$. 
 We consider the properties of the algorithm when a lossy compression scheme is applied to the data (samples), 
 gradient, and model, for the purpose of reducing the communication cost of the algorithm---That is, each of the $Q_1$, $Q_2$, and $Q_3$ in the gradient update rule:
-\[
+\begin{align}
 \x_{t + 1} \leftarrow \text{prox}_{\gamma R(\cdot)}\left(\x_t - \gamma Q_1(\g_k (Q_2(\x_t), Q_3(\vec{a}_t)))\right).
-\]
+\label{eq:proxupdate}
+\end{align}
 where the proximal operator is defined as
 \[
 \text{prox}_{\gamma R(\cdot)}(\y) =\argmin_{\x} {1\over 2}\|\x-\y\|^2 + \gamma R(\x).
@@ -406,6 +407,7 @@ are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
 \paragraph*{Regularization}
 
 \textcolor{red}{JI: ADD ONE SENTENCE ABOUT REGULARIZATION?}
+\textcolor{red}{All results in this section can be applied to the optimization in the form $\min_{\x}: f(\x) + R(\x)$ with possibly nonsmooth regularization term $R(\x)$. The key substitution is to use the proximal update defined in \eqref{eq:proxupdate}.}
 
 \paragraph*{Extension to Classification}
 
