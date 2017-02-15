@@ -445,37 +445,21 @@ The iteration then is:
 
 \input{nonlinear.tex}
 
+\textcolor{red}{DAN: ADD ONE SENTENCE ABOUT HOW IT WORKS IN PRACTICE?}
 
 
-\subsection{Refetching Heuristic}
+\paragraph*{Refetching Heuristic}
 
-Consider solving the following regularized hinge loss optimization problem for Support Vector Machines(SVM):
-\begin{align*}
-\min_{\x}:\quad \sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x) + R(\x).
-\end{align*}
-The gradient at a randomly selected sample $(\a_k, b_k)$ is: 
-
-\[
-\g_k := \left\{ \begin{array}{ll}
-         -b_k \a_k^\top & \mbox{if $b_k \a_k^\top \x < 1$};\\
-         0 & \mbox{otherwise}. \end{array} \right.
-\]
-This loss function is not smooth. When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^\top \x)$ and $(1 - b_k Q(\a_k)^\top \x)$ may have different signs, in which case the two procedures will apply different gradients. We say that in this case the gradient is \emph{flipped}. 
- 
-To eliminate gradient flips, after getting the quantized sample $Q(\a_k)$, we can compute  upper and lower bounds on $1 - b_k \a_k^\top \x$. 
-The upper bound is given by:
-\[1 - b_k Q(\a_k)^\top \x + {abs(\x)\over s}.
-\]
-and the lower bound is given by:
-\[1 - b_k Q(\a_k)^\top \x - {abs(\x)\over s}.
-\]
-where $1/s$ is ``resolution'' of the quantization. If the upper and lower bounds of a quantized sample have the same sign, then we can be certain that  no ``flipping'' will occur, and we can use the quantized sample. otherwise we send a request to fetch the original data and use it to  compute the gradient.
-
-\paragraph*{Importance Sampling}  Another heuristic used to decrease the amount of original data that
-we fetch during training is to use {\em importance sampling}, instead of standard uniform sampling for SGD~\cite{ImportantSampling}. Intuitively, flipping happens more frequently when $1 - b_k \a_k^\top \x$ is close to 0.
-Therefore, we sample an input sample with a probability proportional to $|1 - b_k \a_k^\top \x|$. This heuristic 
-increases the variance of SGD, but at the same time it decreases the amount of original data
-needing to be fetched. 
+We also develop one simple heuristic for SVM, which we will
+describe in details in the full version of this paper.
+For hinge loss $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$, the idea is to 
+first load a low-precision version to 
+calculate an upper bound and lower bound of $b_k \a_k^\top \x$.
+If one cannot decide the sign of $1-b_k \a_k^\top \x$
+with this, we {\em refetch} the high-precision data.
+In practice, this heuristics works for 
+8bits precision while only refetching $<5\%$
+of the data.
 
 \textcolor{red}{DAN: CAN WE SAY SOMETHING HERE ASSUMING LARGE MARGIN?}
 
@@ -549,8 +533,6 @@ are the first to apply optimal quantization to
 
 
 \section{Experiments} \label{sec:exp}
-
-\textcolor{red}{CE: THIS SECTION IS YOURS?}
 
 In this section, we validate that: (1) ZipML 
 converges to the same solution with comparable
