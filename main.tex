@@ -120,11 +120,13 @@ we achieve higher accuracy than state-of-the-art XNOR-Net.
 \caption{Overview of theoretical results and
 highlights of empirical results. See
 Introduction for details.}
+\vspace{-1em}
 \label{fig:highlight}
 \end{figure}
-\vspace{-2em}
+
 \section{Introduction}
 
+\vspace{-1em}
 The computational cost and power consumption of today's machine learning systems are often driven by data movement, and by the precision of computation. 
 In our experience, in applications such as tomographic reconstruction, anomaly detection in mobile sensor networks, or compressive sensing, the overhead of transmitting the data samples can be massive, 
 and hence performance can hinge on reducing the precision of data representation and 
@@ -200,7 +202,7 @@ In the following, we describe our technical contributions in more detail.
 %learning models. We now summarize our
 %technical contributions.
 
-
+\vspace{-1em}
 \subsection*{Summary of Technical Contributions}
 
 We first consider the following problem in training generialized linear models: 
@@ -226,12 +228,14 @@ where the proximal operator is defined as
 \text{prox}_{\gamma R(\cdot)}(\y) =\argmin_{\x} {1\over 2}\|\x-\y\|^2 + \gamma R(\x).
 \]
 
+\vspace{-1em}
 \subsection{Our Results}
 
 We summarize our results as follows. The {\bf (+)}
 sign means ``positive result'' where we achieve
 significant practical speedup, and {\bf (--)} otherwise.
 
+\vspace{-1em}
 \paragraph{(+) Linear Models.} When $l(\cdot,\cdot)$ is 
 the least squares loss, we first prove that
 simply doing stochastic quantization of data 
