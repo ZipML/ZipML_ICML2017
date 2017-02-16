@@ -684,7 +684,33 @@ Figure~\ref{fig:optimal_lr} shows that with our data-optimal quantization strate
 \label{fig:optimal}
 \caption{Optimal Quantizationœ}
 \end{figure}
+
+
 \subsection{Extentions to Deep Learning}
+
+We validate that our data-optimal quantization
+strategy can be used in training deep neural
+networks. We take Caffe's CIFAR-10 tutorial
+and compare four different quantization
+strategies: (1) Full Precision, (2) BNN5, 
+a BNN implementation that quantize data into
+five uniformly chosen levels, and (3)
+Optimal5, our quantization strategy with
+five optimal quantization levels. As
+shown in Figure~\ref{fig:optimal}, Optimal5
+converges to a significantly lower training 
+loss compared with BNN5. In terms of
+testing accuracy, Optimal5 achieves a
+near 10 points improvement over BNN5.
+This illustrates the improvement
+one can get by training neural network with
+a carefully chosen quantization strategy.
+
+
+
+
+
+
 \section{Related Work} 
 
 There has been intensive study about ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
