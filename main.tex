@@ -566,6 +566,21 @@ Because of the limitation of length, we only show the result of one synthetic da
 \paragraph{Protocal} To measure the quality of training,
 we measured the training loss after each training epoch. We also measure test accuracy for classification problems. We use diminishing stepsizes: the real stepsize is ${initial\_stepsize\over k}$, where k is the current number of epoch.
 
+\begin{table}[]
+\centering
+\caption{My caption}
+\label{my-label}
+\begin{tabular}{llllllll}
+Regression     &               &              &            & Classification &               &              &            \\
+Name           & Training Size & Testing Size & \#Features & Name           & Training Size & Testing Size & \#Features \\
+Synthetic 10   & 10,000        & 10,000       & 10         & cod-rna        & 59,535        &              & 8          \\
+Synthetic 100  & 10,000        & 10,000       & 100        & gisette        & 6,000         & 1,000        & 5,000      \\
+Synthetic 1000 & 10,000        & 10,000       & 1,000      & epsilon        & 10,000        & 10,000       & 2,000      \\
+YearPrediction & 463,715       & 51,630       & 90         &                &               &              &            \\
+cadata         & 20,640        &              & 8          &                &               &              &            \\
+cpusmall       & 8,192         &              & 12         &                &               &              &           
+\end{tabular}
+\end{table}
 \subsection{Linear Models}
 In this section, we validate that: (1) ZipML 
 converges to the same solution with comparable
