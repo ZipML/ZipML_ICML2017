@@ -3,6 +3,7 @@
 
 \usepackage{graphicx}
 
+\usepackage{multirow}
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{amssymb,latexsym,color}
@@ -570,25 +571,37 @@ Because of the limitation of length, we only show the result of one synthetic da
 \paragraph{Protocal} To measure the quality of training,
 we measured the training loss after each training epoch. We also measure test accuracy for classification problems. We use diminishing stepsizes: the real stepsize is ${initial\_stepsize\over k}$, where k is the current number of epoch.
 
-\begin{table}[]
+\begin{table}[t]
+\scriptsize
 \centering
-\caption{Dataset used in experiment section}
+\caption{Dataset statistics}
 \label{table:dataset}
-\begin{tabular}{llll}
-Regression     &               &              &               \\
-Name           & Training Size & Testing Size & \#Features  \\
+\begin{tabular}{crrrr}
+\hline
+\multicolumn{4}{c}{\bf Regression}\\
+Dataset           & Training Set & Testing Set & \# Features  \\
+\hline
 Synthetic 10   & 10,000        & 10,000       & 10               \\
 Synthetic 100  & 10,000        & 10,000       & 100              \\
 Synthetic 1000 & 10,000        & 10,000       & 1,000           \\
 YearPrediction & 463,715       & 51,630       & 90                  \\
 cadata         & 20,640        &              & 8                   \\
 cpusmall       & 8,192         &              & 12     \\
-\\
-Classification &               &              &          \\
-Name           & Training Size & Testing Size & \#Features \\
+\hline
+\hline
+\multicolumn{4}{c}{\bf Classification}\\
+Dataset           & Training Set & Testing Set & \# Features \\
+\hline
 cod-rna        & 59,535        &              & 8    \\
 gisette        & 6,000         & 1,000        & 5,000  \\  
 epsilon        & 10,000        & 10,000       & 2,000\\  
+\hline
+\hline
+\multicolumn{4}{c}{\bf Deep Learning}\\
+Dataset           & Training Set & Testing Set & \# Features \\
+\hline
+CIFAR-10        & 50,000        & 10,000             &$32\times 32\times 3$     \\
+\hline
 \end{tabular}
 \end{table}
 \subsection{Linear Models}
