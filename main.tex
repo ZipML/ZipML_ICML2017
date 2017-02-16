@@ -568,17 +568,23 @@ we measured the training loss after each training epoch. We also measure test ac
 
 \begin{table}[]
 \centering
-\caption{My caption}
-\label{my-label}
-\begin{tabular}{llllllll}
-Regression     &               &              &            & Classification &               &              &            \\
-Name           & Training Size & Testing Size & \#Features & Name           & Training Size & Testing Size & \#Features \\
-Synthetic 10   & 10,000        & 10,000       & 10         & cod-rna        & 59,535        &              & 8          \\
-Synthetic 100  & 10,000        & 10,000       & 100        & gisette        & 6,000         & 1,000        & 5,000      \\
-Synthetic 1000 & 10,000        & 10,000       & 1,000      & epsilon        & 10,000        & 10,000       & 2,000      \\
-YearPrediction & 463,715       & 51,630       & 90         &                &               &              &            \\
-cadata         & 20,640        &              & 8          &                &               &              &            \\
-cpusmall       & 8,192         &              & 12         &                &               &              &           
+\caption{Dataset used in experiment section}
+\label{table:dataset}
+\begin{tabular}{llll}
+Regression     &               &              &               \\
+Name           & Training Size & Testing Size & \#Features  \\
+Synthetic 10   & 10,000        & 10,000       & 10               \\
+Synthetic 100  & 10,000        & 10,000       & 100              \\
+Synthetic 1000 & 10,000        & 10,000       & 1,000           \\
+YearPrediction & 463,715       & 51,630       & 90                  \\
+cadata         & 20,640        &              & 8                   \\
+cpusmall       & 8,192         &              & 12     \\
+\\
+Classification &               &              &          \\
+Name           & Training Size & Testing Size & \#Features \\
+cod-rna        & 59,535        &              & 8    \\
+gisette        & 6,000         & 1,000        & 5,000  \\  
+epsilon        & 10,000        & 10,000       & 2,000\\  
 \end{tabular}
 \end{table}
 \subsection{Linear Models}
