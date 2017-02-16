@@ -74,7 +74,7 @@ The Cans, the Cannots, and a Little Bit of Deep Learning
 There has recently been significant interest in training 
 machine-learning models at low precision: by reducing 
 precision, one can reduce computation, communication, and power 
-consumption by an order of magnitude. 
+consumption by one order of magnitude. 
 We examine this from a theoretical and practical 
 perspective. We ask: 
 {\em is it possible to \emph{train} models at end-to-end low 
@@ -88,19 +88,19 @@ to execute training at low precision with no bias,
 guaranteeing convergence, while naive stochastic quantization 
 would introduce significant bias. We validate this  
 across a range of applications, and show that it enables an 
-FPGA prototype that is up to an order of magnitude faster 
-than an implementation using full 32bit precision.
+FPGA prototype that is up to one order of magnitude faster 
+than an implementation using full 32-bits precision.
 
 We extend our framework through approximation to non-linear 
 models, such as SVM. We show that, although the bias of using 
 low precision data cannot be avoided, our approach can appropriately 
-control the bias. We find that in practice $8bits$ precision is 
+control the bias. We find that in practice {\em 8-bits} precision is 
 always sufficient to converge to the correct solution. 
 Interestingly, however, in practice, we notice that our framework 
 does not always outperform the naive rounding approach. We discuss 
 this negative result in detail. 
 
-Further, we develop variance-optimal 
+Further, we develop a variance-optimal 
 stochastic quantization
 strategy and show that 
 it can make a significant difference in a variety of settings. 
@@ -109,7 +109,7 @@ double sampling, we can save up to another
 $2\times$ communications
 compared with uniform quantization. When
 training deep networks with quantized models, 
-we achieve higher accuracy than state-of-the-art BNNs. 
+we achieve higher accuracy than state-of-the-art XNOR-Net. 
 
 \end{abstract}
 
@@ -127,11 +127,12 @@ Introduction for details.}
 
 The computational cost and power consumption of today's machine learning systems are often driven by data movement, and by the precision of computation. 
 In our experience, in applications such as tomographic reconstruction, anomaly detection in mobile sensor networks, or compressive sensing, the overhead of transmitting the data samples can be massive, 
-and hence performance can hinge on reducing the precision of the data representation, and of the associated computation. 
-A similar trend is observed in deep learning, where impressive progress has been reported with systems using reduced-precision representations for the model~\cite{m1, m2}, gradients~\cite{zzz}, 
-or end-to-end quantization~\cite{m1, m2}. 
-In this context, the key motivating question behind our work is:  
-{\em When training general machine learning models,
+and hence performance can hinge on reducing the precision of data representation and 
+associated computation. 
+A similar trend is observed in deep learning, where impressive progress has been reported with systems 
+using end-to-end reduced-precision representations~\cite{hubara2016quantized,
+rastegari2016xnor,zhou2016dorefa,miyashita2016convolutional}. 
+In this context, the motivating question behind our work is:  {\em When training general machine learning models,
 can we lower the precision of data representation,
 communication, and computation, while maintaining provable guarantees?}
  
@@ -214,7 +215,8 @@ The gradient at the sample $(\a_k, b_k)$ is:
 \]
 We denote the problem dimension by $n$. 
 We consider the properties of the algorithm when a lossy compression scheme is applied to the data (samples), 
-gradient, and model, for the purpose of reducing the communication cost of the algorithm---That is, each of the $Q_1$, $Q_2$, and $Q_3$ in the gradient update rule:
+gradient, and model, for the purpose of reducing the communication cost of the algorithm---That is, 
+we consider $Q_1$, $Q_2$, and $Q_3$ in the gradient update rule:
 \begin{align}
 \x_{t + 1} \leftarrow \text{prox}_{\gamma R(\cdot)}\left(\x_t - \gamma Q_1(\g_k (Q_2(\x_t), Q_3(\vec{a}_t)))\right).
 \label{eq:proxupdate}
@@ -227,7 +229,7 @@ where the proximal operator is defined as
 \subsection{Our Results}
 
 We summarize our results as follows. The {\bf (+)}
-signs means positive result where we achieve
+sign means ``positive result'' where we achieve
 significant practical speedup, and {\bf (--)} otherwise.
 
 \paragraph{(+) Linear Models.} When $l(\cdot,\cdot)$ is 
@@ -297,16 +299,16 @@ when more than 1 bit is used are also suboptimal.
 We then apply optimal quantization to 
 model quantization and shows that, with a simple
 standard neural network, we outperforms the
-uniform quantization used by BNN, QNN, and a
-range of other recent approaches. This approach
+uniform quantization used by XNOR-Net and a
+range of other recent approaches. This
 is relevant, but slightly different, to some work 
-on model compression for inference~\cite{XXX, YYY}, 
+on model compression for inference~\cite{Han:2016:ICLR}, 
 but to our best knowledge, it is the first time it 
 has been applied to training. 
 
-
 \section{Linear Models}
 
+\vspace{-0.5em}
 In this section, we focus on linear models.
 We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
 \[
@@ -318,6 +320,7 @@ follows: at step $\x_k$, our gradient estimator is $\g_k^{(full)} = \a_{\pi(k)} 
 We abuse the notation and let $\a_k = \a_{\pi(k)}$.
 It is not hard to see that $\E [\g_k^{(full)}] = \nabla f(\x_k)$.
 
+\vspace{-1em}
 \paragraph*{Quantization Function $Q$} We define
 the quantization function $Q$ that we will use
 for the rest of this paper. Given a vector
@@ -337,8 +340,10 @@ We assume that these
 separators are uniformly distributed,
 and revisit this in Section~\ref{sec:optimal}.
 
+\vspace{-1em}
 \subsection{Naive Stochastic Quantization is Biased}
 
+\vspace{-0.5em}
 We focus on quantizing the input samples.
 We first establish that, when we quantize $\a_k$
 using the stochastic quantization methods designed
@@ -576,17 +581,10 @@ converges to the same solution with comparable
 empirical convergence rate for both linear regression and least square-SVM
 with only 3 or 4-bit end-to-end quantization. We saved 8-10x memory bandwidth compared to using 32-bit floating-point. If we use less bits than what we used in the figure, then the quantized version would either diverge or converge with a lower convergence rate.
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/LinearRegression} 
-    \caption{Linear Regression}
-    \end{subfigure}
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/LSSVM} 
-    \caption{Least Square-SVM}
-    \end{subfigure}
-\caption{ZipML on linear models with end-to-end quantization, 3 or 4-bit is good enough to get a comparable empirical convergence rate to the same loss.}
+\includegraphics[width=\columnwidth]{final-experiments/linearmodel} 
+\caption{Linear models with end-to-end low precision.}
 \label{fig:convergence}
 \end{figure}
 
@@ -597,19 +595,13 @@ Figure~\ref{fig:speedup} shows that with our quantization framework
 implementation on FPGA with quantized data, 
 we get 6x-7x speed up compared to state-of-art
 10-thread CPU or FPGA with full 32-bit floating point data. The speed of FPGA is bounded by memory-bandwidth, and by using our framework to quantize data, we save 8x memory-bandwith, which leads to 6x-7x speed up.
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/SpeedUp-LR} 
-    \caption{7.2x speed up on Linear Regression}
-    \end{subfigure}
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/SpeedUp-LSSVM} 
-    \caption{6.5x speed up on LS-SVM}
-    \end{subfigure}
-\caption{Speed up with ZipML on FPGA vs 10-thread CPU baseline}
+\includegraphics[width=\columnwidth]{final-experiments/linear-fpga} 
+\caption{FPGA implementation of linear models.}
 \label{fig:speedup}
 \end{figure}
+
 \subsection{Non-Linear Models}
 In this section, we validate that: (1) ZipML 
 converges to almost the same solution with comparable
@@ -630,17 +622,10 @@ converges to close training loss with comparable
 empirical convergence rate for both SVM and logistic regression
 with only 3 to 5-bit data quantization. We also get no loss in test accuracy.
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/SVM-Chebyshev} 
-    \caption{SVM}
-    \end{subfigure}
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/Logistic-Chebyshev} 
-    \caption{Logistic Regression}
-    \end{subfigure}
-\caption{ZipML on non-linear models with Chebyshev polynomials}
+\includegraphics[width=\columnwidth]{final-experiments/chebyshev} 
+\caption{Non-linear models with Chebyshev approximation.}
 \label{fig:chebyshev}
 \end{figure}
 
@@ -654,18 +639,11 @@ Even though these additional samples can be encoded efficiently (since they can 
 in practice the memory-bandwith savings of our framework
 compared to simple 8-bit deterministic rounding are minor. 
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/Naive-SVM} 
-    \caption{SVM}
-    \end{subfigure}
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/Naive-LR} 
-    \caption{Logistic Regression}
-    \end{subfigure}
-\caption{ZipML on non-linear models with Chebyshev polynomials compared to deterministic rounding and naive stochastic rounding}
-\label{fig:vsnaive}
+\includegraphics[width=\columnwidth]{final-experiments/optimal} 
+\caption{Optimal quantization strategy.}
+\label{fig:optimal}
 \end{figure}
 
 \subsection{Data-Optimal Quantization Strategy}
@@ -676,23 +654,8 @@ compared to using uniform quantization levels. We compare the training loss of u
 
 Figure~\ref{fig:optimal}(a) shows that with our data-optimal quantization strategy, on this data set, it is enough to use 3-bit quantization. If we use the uniform quantization levels, we need at least 5-bit data quantization to get the same performance. We save almost half of the bits we need by just allocating markers wisely.
 
-\begin{figure}[h]
-\centering
-\begin{subfigure}[h]{.4\columnwidth}
-\includegraphics[width=\columnwidth]{final-experiments/OptimalQuantization} 
-\caption{Data-Optimal Quantization vs Uniform Quantization}
-%\label{fig:optimal_lr}
-\end{subfigure}
-\begin{subfigure}[h]{.4\columnwidth}
-\text{figure for deep learning}
-%\label{fig:optimal_dl}
-\end{subfigure}
-\caption{Optimal Quantizationœ}
-\label{fig:optimal}
-\end{figure}
 
-
-\subsection{Extentions to Deep Learning}
+\subsection{Extensions to Deep Learning}
 
 We validate that our data-optimal quantization
 strategy can be used in training deep neural
