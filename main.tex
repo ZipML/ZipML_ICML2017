@@ -13,6 +13,8 @@
 
 \usepackage{url}
 
+\usepackage{wrapfig}
+
 %\usepackage{algorithm}
 %\usepackage[noend]{algpseudocode}
 
@@ -34,6 +36,7 @@
 \def\x{{\bf x}}
 \def\y{{\bf y}}
 \def\w{{\bf w}}
+\def\v{{\bf v}}
 \def\E{\mathbb{E}}
 \def\rrow{r_\mathrm{row}}
 
@@ -221,7 +224,6 @@ where the proximal operator is defined as
 \text{prox}_{\gamma R(\cdot)}(\y) =\argmin_{\x} {1\over 2}\|\x-\y\|^2 + \gamma R(\x).
 \]
 
-
 \subsection{Our Results}
 
 We summarize our results as follows. The {\bf (+)}
@@ -305,150 +307,155 @@ has been applied to training.
 
 \section{Linear Models}
 
-In this section, we focus on linear models with
-the following setting.
+In this section, we focus on linear models.
 We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
 \[
-f(\x) = \frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x + b_k \|_2^2 \; ,
+f(\x) = \frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x - b_k \|_2^2 \; ,
 \]
 i.e., minimize the empirical least squares loss.
-The basic (unquantized) SGD scheme which solves this problem is the following: at step $\x_k$, our gradient estimator is $\g'_k = \a_{\pi(k)} (\a_{\pi(k)}^\top \x + b_{\pi(k)})$, where $\pi(k)$ is a uniformly random integer from $1$ to $m$.
-In a slight abuse of notation we let $\a_k = \a_{\pi(k)}$ for the rest of the section.
-Then it is not hard to see that $\E [\g'_k] = \nabla f(\x_k)$, and so this is indeed a stochastic gradient.
+The full-precision (unquantized) SGD works as 
+follows: at step $\x_k$, our gradient estimator is $\g_k^{(full)} = \a_{\pi(k)} (\a_{\pi(k)}^\top \x - b_{\pi(k)})$, where $\pi(k)$ is a uniformly random integer from $1$ to $K$.
+We abuse the notation and let $\a_k = \a_{\pi(k)}$.
+It is not hard to see that $\E [\g_k^{(full)}] = \nabla f(\x_k)$.
 
-\subsection{Naive Random Quantization is Biased}
+\paragraph*{Quantization Function $Q$} We define
+the quantization function $Q$ that we will use
+for the rest of this paper. Given a vector
+$\v$, let $M(\v)$ be a scaling factor such that
+$-1 \le \v/M(\v) \le 1$. Without loss of generality,
+let $M(\v)=||\v||_2$. We partition
+the interval $[-1, 1]$ using $s+1$ separators:
+$-1 = l_0 \le l_1 ... \le l_{s} = 1$; for
+each number $v$ in $\v/M(\v)$, we always 
+quantize it to one of two nearest 
+separators: $l_i \le v \le l_{i+1}$. 
+We denote the quantization function by $Q(\v, s)$
+and choose the probability of quantizing to
+different separators such that $\E[Q(\v, s)] = \v$.
+We use $Q(\v)$ when $s$ is not relevant.
+We assume that these
+separators are uniformly distributed,
+and revisit this in Section~\ref{sec:optimal}.
 
-As a first exercise, we look at what happens when we work with the data directly in quantized form in the context of linear regression. 
-The gradient becomes
+\subsection{Naive Stochastic Quantization is Biased}
+
+We focus on quantizing the input samples.
+We first establish that, when we quantize $\a_k$
+using the stochastic quantization methods designed
+for gradient, it introduces significant bias.
+Let $\hat{\a_k} = Q(\a_k)$ be the quantized
+sample, the gradient becomes
 \[
-\g_k := Q(\a_k, s ) Q(\a_k, s)^\top \x + Q(\a_k, s) b_k.
+\g_k := \hat{\a_k} \hat{\a_k}^\top \x - \hat{\a_k} b_k.
 \]
 It is not hard to see that the expected gradient is: 
 \[
-\E[\g_k] := \a_k \a_k^\top \x + \a_k b_k + D_{s, \a} \x, 
+\E[\g_k] := \a_k \a_k^\top \x - \a_k b_k + D_{\a} \x, 
 \]
-where $D_{s, \a}$ is a diagonal matrix and its $i$th diagonal element is 
+where $D_{\a}$ is diagonal and its $i$th diagonal element is 
 \[
-%D_{s, \a} = 
-\E[ Q(\a_i, s)^2 ] - \a_i^2.
+\E[ Q(\a_i)^2 ] - \a_i^2.
 \]
 
-Since $D_{s, \a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
-In fact, it is easy to see that in instances where the minimizer $\x$ is large and gradients become small, we will simply diverge. 
+\begin{wrapfigure}{r}{0.23\textwidth}
+  \begin{center}
+    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
+  \end{center}
+  \label{fig:gap}
+\end{wrapfigure}
 
-Figure~\ref{fig:gap} shows that SGD will converge to different solution with naive random quantization or deterministic quantization.
-\begin{figure}[h]
-\centering    
-\includegraphics[width=\columnwidth]{micro-experiments/gap} 
-\caption{Naive random quantization or deterministic quantization converge to different solution}
-\label{fig:gap}
-\end{figure} 
+Since $D_{\a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
+The figure on the right illustrates the bias
+caused by a non-zero $D_{\a}$.
+In fact, it is easy to see that in instances where the minimizer $\x$ is large and gradients become small, we will simply diverge. 
 
 \subsection{Double Sampling}
 
-\paragraph{Algorithm}
-Instead of the naive estimate, our algorithm is as follows.
+We now present a simple method to fix the biased gradient estimator.
 We generate two independent
-random quantizations $Q_1$
-and $Q_2$ and revise the gradient:
-
-%\[
-%\g_k := \frac{1}{2}\left(Q_1(\a_k ) Q_2(\a_k)^\top \x + Q_2(\a_k) b_k + Q_2(\a_k ) %Q_1(\a_k)^\top \x + Q_1(\a_k) b_k\right).
-%\]
-
-%\[
-%\g_k := Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \; .
-%\]
+random quantizations and revise the gradient:
 \[
-\g_k := Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) \; .
+\g_k := Q_1 (\a_k) (Q_2 (\a_k)^\top \x + b_k) \; .
 \]
-It is not hard to see that the above is an unbiased estimator of the true gradient.
-%\footnote{In our implementation,
-%we used the average gradient $\g_k := \frac{1}{2}\left(Q_1 (\a_k, s) (Q_2 (\a_k, s)^\top \x + b_k) + 
-%Q_2 (\a_k, s) (Q_1 (\a_k, s)^\top \x + b_k)\right)$. This version does not impact  the upper bound in our variance analysis,
-%but enjoys lower variance (by a constant) both theoretically and empirically.}
+This gives us an unbiased estimator 
+of the gradient.
 
-\paragraph{Variance Analysis}
+\paragraph{Variance}
 
 Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment.
-Then, we have the following lemma.
+We have:
 \begin{lemma}
 \label{lem:qbound}
-    Let $\a_k, \x, b_k$ be fixed, and suppose that $\| \a_k \|_2^2 \leq A^2, \| \x \|_2^2 \leq R^2$, and $\max_i M_i (\a_k) \leq M_a$.
-    Let $\g'_k = \a_k (\a_k^\top \x + b)$ be the (unquantized) stochastic gradient update.
-    Then, we have 
+    Given $\a_k, \x, b_k$, suppose $\| \a_k \|_2^2 \leq A^2, \| \x \|_2^2 \leq R^2$ and $\max_i |\a_k| \leq M_a$.
+    Let $\g_k^{(full)}$ be the unquantized stochastic gradient. We have
     \[
-    E_{Q_1, Q_2} [\| \g_k \|_2^2] \leq r \cdot \left( \| \g'_k \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \| \a_k \|_2^2 \frac{M_a^2}{s^2} R^2 \right)\; .
+    E_{Q_1, Q_2} [\| \g_k \|_2^2] \leq r \cdot \left( \| \g_k^{(full)} \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \frac{A^2 M_a^2 R^2}{s^2} \right)\; .
     \]
 \end{lemma}
 
 In particular, this implies the following variance bound on our quantized updates:
 \begin{corollary}
-    Let $\a_k, \x, b_k, \g'_k$ be as above.
-    Suppose moreover $\E [\| \g'_k - \nabla f(\x_k) \|_2^2 ] \leq \sigma^2$ and $\E [\| \g'_k \|_2^2] \leq B$.
-    Then, we have
+    Let $\a_k, \x, b_k, \g_k^{(full)}$ be as above.
+    Suppose $\E [\| \g_k^{(full)} - \nabla f(\x_k) \|_2^2 ] \leq \sigma^2$ and $\E [\| \g_k^{(full)} \|_2^2] \leq B$. We have
     \[
     \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq  \sigma^2 + \left(r \frac{M_a^2}{\| \a_k \|_2^2} - 1\right) B + \frac{r A^2 M_a^2 R^2}{s^2} \; ,
     \]
-    where the expectation is taken over $\g'_k$ and the randomness of the quantization.
+    where the expectation is taken over $\g_k^{(full)}$ and the randomness of the quantization.
 \end{corollary}
 
-
-In particular, observe that this corollary essentially suggests that the quantized stochastic gradient variance is bounded by
+This corollary suggests that the quantized stochastic gradient variance is bounded by
 \[
 \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq \sigma^2 + \Theta(n/s^2) \;
 \]
 in the scenario when $M_i (\vec{v}) = \| \vec{v} \|_2 $.
-The first term $\sigma^2$ is due to using stochastic gradient, while the second term is caused by quantization. The value of $s$ is equal to  $\lceil(2^b - 1) / 2\rceil$. \textcolor{red}{Therefore, to ensure these two terms are comparable (so as not to degrade the convergence time of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$. Even with this permissive
-bound, we can see that for linear models with millions
-of features 32bits are likely to be an overkill.}
+The first term $\sigma^2$ is introduced by stochastic gradient, while the second term is introduced by quantization. Because the value of $s$ is 
+exponential to the number of bits, to ensure these two terms are comparable (to maintain the same convergence rate of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$. We see that even for linear models with millions
+of features, 32-bits is likely to be an ``overkill''.
 
 \paragraph*{Overhead of Storing Two Samples}
-The system implication of double sampling is the overhead of sending
+One system implication of double sampling is the overhead of sending
 two samples instead of one. We note that this will not introduce $2\times$
 overhead in terms of data communication, instead, just a single more bit
 for the second sample because of the correlation between two samples (they 
-are only different by one bit). More generally, because samples
+are only different by at most one bit). More generally, because samples
 are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
 
+\paragraph*{Extensions}
 
-\paragraph*{Regularization}
-
-\textcolor{red}{JI: ADD ONE SENTENCE ABOUT REGULARIZATION?}
-\textcolor{red}{All results in this section can be applied to the optimization in the form $\min_{\x}: f(\x) + R(\x)$ with possibly nonsmooth regularization term $R(\x)$. The key substitution is to use the proximal update defined in \eqref{eq:proxupdate}.}
-
-\paragraph*{Extension to Classification}
-
-Extending our result to least-squares SVMs for classification
-is trivial~\cite{SvmVsLssvm}, we leave the discussion to the
-appendix.
-
+All of our results can be applied to 
+optimization problems 
+with possibly non-smooth regularization term. The key substitution is to use the proximal update defined in \eqref{eq:proxupdate}.
+Also, extending our result to least-squares SVMs for classification is trivial~\cite{Suykens:1999:Book}.
+We leave these details to the full version
+of this paper.
 
 \subsection{End-to-end Quantization}
 
 We can now develop an end-to-end quantization strategy that
 quantizes gradients, model, and input samples all 
 at the same time. The gradient becomes:
+\[
+\g_k := Q_1 \left( Q_2(\a_k, s ) ( Q_3(\a_k, s)^\top Q_4(\x, s) + b_k) , s \right),
+\]
+\noindent 
+where all $Q$'s are independent quantizations.
 
-\begin{eqnarray}
-	\g_k := Q_4 \left( Q_1(\a_k, s ) ( Q_2(\a_k, s)^\top Q_3(\x, s) + b_k) , s \right).
-\end{eqnarray}
-\noindent Here $Q_1, \ldots, Q_4$ are all independent quantizations.  $Q_3$ and  $Q_4$ are normalized with row scaling, and $Q_1, Q_2$ can be normalized arbitrarily.
-The iteration then is: 
+%  $Q_3$ and 
+%The iteration becomes: 
+%
+%\begin{eqnarray}
+%	\x = \x - \gamma \g_k.
+%\end{eqnarray}
 
-\begin{eqnarray}
-	\x = \x - \gamma \g_k.
-\end{eqnarray}
-
-\noindent From combining the previous results, we obtain that, if the samples are normalized, the following holds:
+\noindent From combining the previous results, we have:
 
 \begin{corollary}
     \label{cor:full-quantization}
     Let $\a_k, \x, b_k$ be so that $\| \a_k \|_2^2 \leq 1, \| \x \|_2^2 \leq R^2$.
-    Let $M_a, M_x$ be as above, and let $\g'_k = \a_k (\a_k^\top \x + b_k)$ be the (unquantized) stochastic gradient.
-    Then, we have
+    Let $M_a, M_x$ be as above, and let $\g_k^{(full)}$ be the (unquantized) stochastic gradient.
+    We have
     \[
-    \E [\| \g_k \|_2^2] \leq \rrow \cdot \left( r M_a \left( \| \g'_k \|_2^2 + \frac{R^2}{s^2} \right)  + \frac{r^2 M_a^2 R^2}{s^2} \right) \; .
+    \E [\| \g_k \|_2^2] \leq r \cdot \left( r M_a \left( \| \g_k^{(full)} \|_2^2 + \frac{R^2}{s^2} \right)  + \frac{r^2 M_a^2 R^2}{s^2} \right) \; .
     \]
 \end{corollary}
 
@@ -473,7 +480,11 @@ of the data.
 \textcolor{red}{DAN: CAN WE SAY SOMETHING HERE ASSUMING LARGE MARGIN?}
 \textcolor{red}{Will look into this later.}
 
-\section{Optimal Quantization Strategy}
+\section{Optimal Quantization Strategy} \label{sec:optimal}
+
+We now revisit the choice of quantization points
+and present an optimal strategy to minimize 
+the variance term introduced by quantization.
 
 \subsection{Variance-Optimal Quantization}
 
@@ -481,19 +492,15 @@ of the data.
 
 \subsection{Extension to Deep Learning}
 
-Quantization is often used in training 
-Deep Learning models with low-precision~\cite{XXX,XXX}.
-Most of these quantization strategies
-are based on uniform quantization. In this
-section, we show that it is possible to
-apply optimal quantization to
+In this section, we show that it is possible 
+to apply optimal quantization to
 training deep neural networks.
 
-\paragraph*{State-of-the-art} We focus on
+\paragraph*{State-of-the-arts} We focus on
 training deep neural networks with quantized
 model. Let $\mathcal{W}$ be the model and 
-$l(\mathcal{W})$ be the loss function. State-of-the-art networks,
-such as BNN and QNN, replace $\mathcal{W}$
+$l(\mathcal{W})$ be the loss function. State-of-the-art quantized networks,
+such as XNOR-Net and QNN, replace $\mathcal{W}$
 with the quantized version $Q(\mathcal{W})$, and optimize
 for
 \[
@@ -501,35 +508,34 @@ for
 \]
 With a properly defined 
 $\frac{\partial Q}{\partial{\mathcal{W}}}$, we can
-apply the standard forward/backward propagation 
-algorithm to solve this optimization task.
+apply the standard backprop 
+algorithm.
 
 Choosing the quantization function $Q$ is
 an important design decision. For 1-bit quantization,
-BNN searches the optimal quantization point given
-the model. However, for multiple bits,
-BNN, as well as other approaches such as QNN, resort
+XNOR-Net searches the optimal quantization point. However, for multiple bits,
+XNOR-Net, as well as other approaches such as QNN, resort
 to uniform quantization.
 
 \paragraph*{Optimal Model Quantization for Deep Learning}
 
-We can apply the optimal quantization strategy we
-developed and use it as the quantization function $Q$
-in BNN. We empirically validated it 
-and find that this can provide significant quality improvement
-compared with the default multi-bits quantizer in BNN. 
+We can apply our optimal quantization strategy 
+and use it as the quantization function $Q$
+in XNOR-Net. Empirically, this results in 
+quality improvement
+over with the default {\em multi-bits} quantizer in XNOR-Net. 
 
 In spirit, our approach is similar to the 1-bit quantizer of
-BNN, which is equivalent to our approach when the data
+XNOR-Net, which is equivalent to our approach when the data
 distribution is symmetric---we extend this
 to multiple bits in a principled way. Another related work
 is the uniform quantization strategy 
 in {\em log domain}~\cite{miyashita2016convolutional},
 which is similar to our approach when the data distribution
 is ``log uniform''. However, our approach does not rely on
-any specific assumption of data distribution.
-Some previous work uses $k$-means to
-compress the model for {\em inference}~\cite{XXX}---$k$-means
+any specific assumption of the data distribution.
+\citet{Han:2016:ICLR} use $k$-means to
+compress the model for {\em inference}~---$k$-means
 optimizes for a similar, but different, objective
 function than us. In this paper, we 
 develop a dynamic
@@ -668,21 +674,21 @@ SGD can converge to the same solution with comparable convergence rate with less
 compared to using uniform quantization levels. We compare the training loss of using data-optimal levels with 3-bit quantization and uniform levels with 3-bit and 5-bit quantization
 
 
-Figure~\ref{fig:optimal_lr} shows that with our data-optimal quantization strategy, on this data set, it is enough to use 3-bit quantization. If we use the uniform quantization levels, we need at least 5-bit data quantization to get the same performance. We save almost half of the bits we need by just allocating markers wisely.
+Figure~\ref{fig:optimal}(a) shows that with our data-optimal quantization strategy, on this data set, it is enough to use 3-bit quantization. If we use the uniform quantization levels, we need at least 5-bit data quantization to get the same performance. We save almost half of the bits we need by just allocating markers wisely.
 
 \begin{figure}[h]
 \centering
-    \begin{subfigure}[h]{.4\columnwidth}
-    \includegraphics[width=\columnwidth]{final-experiments/OptimalQuantization} 
-    \caption{Data-Optimal Quantization vs Uniform Quantization}
-    \label{fig:optimal_lr}
-    \end{subfigure}
-    \begin{subfigure}[h]{.4\columnwidth}
-    \text{figure for deep learning}
-    \label{fig:optimal_dl}
-    \end{subfigure}
-\label{fig:optimal}
+\begin{subfigure}[h]{.4\columnwidth}
+\includegraphics[width=\columnwidth]{final-experiments/OptimalQuantization} 
+\caption{Data-Optimal Quantization vs Uniform Quantization}
+%\label{fig:optimal_lr}
+\end{subfigure}
+\begin{subfigure}[h]{.4\columnwidth}
+\text{figure for deep learning}
+%\label{fig:optimal_dl}
+\end{subfigure}
 \caption{Optimal Quantizationœ}
+\label{fig:optimal}
 \end{figure}
 
 
@@ -697,7 +703,7 @@ a BNN implementation that quantize data into
 five uniformly chosen levels, and (3)
 Optimal5, our quantization strategy with
 five optimal quantization levels. As
-shown in Figure~\ref{fig:optimal}, Optimal5
+shown in Figure~\ref{fig:optimal}(b), Optimal5
 converges to a significantly lower training 
 loss compared with BNN5. In terms of
 testing accuracy, Optimal5 achieves a
@@ -739,7 +745,7 @@ The empirical success of these work inspired this paper, in which we try
 to provide a {\em theoretical} understanding of end-to-end low-precision
 training for machine learning models.
 Another line of research concerns about inference and model
-compression of a pre-trained model~\cite{vanhoucke2011improving,gong2014compressing,han2015deep,lin2016fixed,kim2016bitwise,kim2015compression,wu2016quantized}.
+compression of a pre-trained model~\cite{vanhoucke2011improving,gong2014compressing,Han:2016:ICLR,lin2016fixed,kim2016bitwise,kim2015compression,wu2016quantized}.
 In this paper, we focus on training and leave the study of
 inference as future work.
 

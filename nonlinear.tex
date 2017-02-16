@@ -55,7 +55,9 @@ However, the problem is well studied for intervals of the type  $[-R, R] \setmin
 
 For \emph{logistic loss}, with sigmoid gradient, we again notice that polynomial approximations have been well studied. In particular, we use the optimal Chebyshev polynomial approximation of~\cite{vlcek2012chebyshev}. 
 
+\iffalse
 Figure~\ref{fig:approximation} shows how close the Chebyshev polynomial aprroximations with different degrees are to those two kind of functions.
+
 \begin{figure}[h]
 \centering
     \begin{subfigure}[h]{.4\columnwidth}
@@ -69,6 +71,7 @@ Figure~\ref{fig:approximation} shows how close the Chebyshev polynomial aprroxim
 \caption{Chebyshev approximation to gradient of hinge loss and logistic loss with different degrees}
 \label{fig:approximation}
 \end{figure} 
+\fi
 
 \paragraph{Practical Considerations} The above strategy introduces a precision-variance trade-off, since increasing the precision of approximation (higher polynomial degree) also increases the variance of the gradient. 
 Fortunately, we can further reduce the variance and increase the approximation quality by increasing the density of the quantization. 

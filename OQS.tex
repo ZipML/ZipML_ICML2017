@@ -1,46 +1,68 @@
-Give a set of real numbers $\Omega$ with cardinality $N$ and allowed $K$ level quantization. Without the loss of generality, we assume that all real numbers in $\Omega$ is in $[0, 1]$. The goal is to decide the optimal $K$ quantization levels $\{p_1, p_2, \cdots, p_{K-1}\}$ for this set to minimize the mean variance
+
+Give a set of real numbers $\Omega$ 
+with cardinality $N$.
+Without the loss of generality, we assume 
+that all real numbers in $\Omega$ is 
+in $[0, 1]$. The goal is to decide 
+the optimal $s$ quantization 
+levels $\{l_1, l_2, \cdots, l_{s-1}\}$ 
+to minimize the mean variance:
 \begin{align}
-\nonumber \min_{p_1, \cdots, p_{K-1}}\quad & \mathcal{MV}(p_1,\cdots, p_{K-1}) := {1\over N}\sum_{x\in \Omega} \sum_{k=1}^K {\bf 1}_k(x)V_k(x)\\
-\text{s.t.}\quad & 0\leq p_1\leq p_2 \leq \cdots \leq p_{K-1} \leq 1.
+\nonumber \min_{l_1, \cdots, l_{s-1}} \quad & \mathcal{MV}(l_1,\cdots, l_{s-1}) := {1\over N}\sum_{x\in \Omega} \sum_{k=1}^s {\bf 1}_k(x)V_k(x)\\
+\text{s.t.}\quad & 0 = l_0 \leq l_1\leq l_2 \leq \cdots \leq l_{s-1} \leq l_s = 1.
 \label{eq:opt_Q}
 \end{align}
 where ${\bf 1}_k(x)$ is the indicator function
 \[
 {\bf 1}_k(x) = 
 \begin{cases}
-1 & \text{if}~x\in (p_{k-1}, p_k] \\
+1 & \text{if}~x\in (l_{k-1}, l_k] \\
 0 & \text{o.w.}
 \end{cases}
 \]
-with $p_0=0$ and $p_K=1$, and the $V_k(x)$ is the variance function 
+and $V_k(x)$ is the variance function 
 \begin{align}
 V_k(x) = (x-p_{k-1})(p_k - x), \label{eq:var}
 \end{align}
-which is the variance of Bernoulli distribution with probability $p_k-x$ taking value $p_{k-1}$ and probability $x-p_{k-1}$ taking value $p_k$. ${\bf 1}_k(x)V_k(x)$ is the variance if $x$ falls into the interval $(p_{k-1}, p_k]$. 
+which is the variance of Bernoulli distribution with probability $l_k-x$ taking value $l_{k-1}$ and probability $x-l_{k-1}$ taking value $l_k$. ${\bf 1}_k(x)V_k(x)$ is the variance if $x$ falls into the interval $(l_{k-1}, l_k]$. 
 
 \paragraph*{Discretization}
 
-This problem is hard to solve directly due to the non-convexity \textcolor{red}{and non-smoothness}. We discretize the range $[0,1]$ into $M$ intervals, that is, $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. All $p_k$'s are restricted to values in $\{d_1, d_2, \cdots, d_{M-1}\}$ while satisfy the monotonicity. 
+This problem is hard to solve directly due to the non-convexity and non-smoothness. We discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. All $l_k$'s are restricted to values in $\{d_1, d_2, \cdots, d_{M-1}\}$ while satisfy the monotonicity. 
 
 \begin{theorem} \label{thm:optQ}
-Let the maximal number of points in each interval and the maximal interval length defined by $\{d_m\}_{m=1}^{M-1}$ be bounded by $a/M$ and $bN/M$ respectively. Let $\{p^*_k\}_{k=1}^{K-1}$ and $\{\hat{p}^*_k\}_{k=1}^{K-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the approximate solution using discretization technique introduced above. Let $cM/K$ be the upper bound of the number of small intervals (defined by $\{d_m\}_{m=1}^{M-1}$) crossed by any interval defined by $\{p^*_k\}_{k=1}^{K-1}$. Then we have the discretization error bounded by
+Let the maximal number of data points in each ``small interval'' (defined by $\{d_m\}_{m=1}^{M-1}$) and the maximal length of small intervals be bounded by $bN/M$ and $a/M$, respectively. Let $\{l^*_k\}_{k=1}^{s-1}$ and $\{\hat{l}^*_k\}_{k=1}^{s-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the approximate solution with discretization. Let $cM/s$ be the upper bound of the number of small intervals crossed by any ``large interval'' (defined by $\{l^*_k\}_{k=1}^{s-1}$). Then we have the discretization error bounded by
 \[
- \mathcal{MV}(\hat{p}^*_1,\cdots, \hat{p}^*_{K-1}) -  \mathcal{MV}(p^*_1,\cdots, p^*_{K-1}) \leq {a^2b K \over 4 M^3} + {a^2bc^2 \over MK}.
+ \mathcal{MV}(\hat{l}^*_1,\cdots, \hat{l}^*_{s-1}) -  \mathcal{MV}(l^*_1,\cdots, l^*_{s-1}) \leq {a^2b s \over 4 M^3} + {a^2bc^2 \over Ms}.
 \]
 \end{theorem}
-\textcolor{red}{Note that if the numbers of points falling into all intervals defined by $\{d_m\}_{m=1}^{M-1}$ are equal, then constant $a$ is $1$. So $a$ roughly measures the uniformness of the data distribution w.r.t. small intervals. If all intervals defined by $\{d_m\}_{m=1}^{M-1}$ have the equal length, then $b$ is equal to $1$. So $b$ roughly measures the distortion from equal intervals w.r.t. $\{d_m\}_{m=1}^{M-1}$. Similarly, $c$ roughly measures the distortion from equal intervals w.r.t. $\{p^*_k\}_{k=1}^{K-1}$, since $c=1$ means that all intervals defined on $\{p^*_k\}_{k=1}^{K-1}$ roughly cross the same number of small intervals defined by $\{d_m\}_{m=1}^{M-1}$. Theorem~\ref{thm:optQ} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/KM)$.}
 
-\paragraph*{Dynamic Programming.}
+Note that if the numbers of data points falling into all small intervals are equal, then
+the constant $b$ is $1$. So $b$ roughly measures the uniformness of the data distribution w.r.t. small intervals. If all small intervals have the equal length, then $a$ is equal to $1$. So $a$ roughly measures the distortion from equal-length small intervals. 
+Similarly, $c$ roughly measures the distortion from equal-length large intervals since $c=1$ means that all large intervals defined by $\{l^*_k\}_{k=1}^{s-1}$ roughly cross the same number of small intervals defined by $\{d_m\}_{m=1}^{M-1}$. Theorem~\ref{thm:optQ} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/Ms)$.
 
-By introducing this discretization, the following will introduce how to find the optimal solution over the discrete constraint using dynamic programing.  
+\begin{figure}[t]
+\centering    
+\includegraphics[width=0.7\columnwidth]{micro-experiments/dp-level.pdf} 
+\caption{Optimal quantization points calculated with
+dynamic programming given a data distribution. }
+\label{fig:optimalquantization}
+\end{figure} 
 
-Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels. Our goal is to calculate $T(K, M)$. This problem can be solved by dynamic programing using the following recursion
+\paragraph*{Dynamic Programming}
+
+We describe
+a dynamic programming algorithm to 
+find the discretized optimal solution.
+We assume small intervals are of equal length.
+
+Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels. Our goal is to calculate $T(s, M)$. This problem can be solved by dynamic programing using the following recursion
 \[
 T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + V(j,m)
 \]
-where $V(j,m)$ denotes the total variance of points falling into the interval $[d_j, d_m]$. The optimal value for $p_{K-1}^*$ is $ d_{j^*_{K-1}}$ with $j^*_{K-1}$ equal to
+where $V(j,m)$ denotes the total variance of points falling into the interval $[d_j, d_m]$. The optimal value for $l_{s-1}^*$ is $ d_{j^*_{s-1}}$ with $j^*_{s-1}$ equal to
 \[
-j^*_{K-1} = \argmin_{j\in \{K-1, k, \cdots, M-1\}} T(K-1,j) + V(j,M),
+j^*_{s-1} = \argmin_{j\in \{s-1, k, \cdots, M-1\}} T(s-1,j) + V(j,M),
 \]
 and the rest can be retrieved by 
 \begin{align*}
@@ -48,17 +70,12 @@ j^*_{k-1} = \argmin_{j\in \{k-1, k, \cdots, j^*_k-1\}} T(k-1, j) + V(j, j^*_k) \
 \text{for all}~k=2, \cdots, K-2
 \end{align*}
 
-The complexity of calculating matrix $V(\cdot, \cdot)$ is $O(M^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(KM^2)$. The total memory cost is $O(KM + M^2)$. Note that to solve this optimal quantization, we only need to scan all $N$ numbers once.
-
-Figure~\ref{fig:optimalquantization} shows that for such data distribution, after running our dynamic programming algorithm, 
-we get optimal quantization levels.
-\begin{figure}[h]
-\centering    
-\includegraphics[width=\columnwidth]{micro-experiments/dp-level} 
-\caption{An example of using DP to decide optimal quantization levels(16 levels).}
-\label{fig:optimalquantization}
-\end{figure} 
-
+The complexity of calculating matrix $V(\cdot, \cdot)$ is $O(M^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(sM^2)$. The total memory cost is $O(sM + M^2)$. Note that to solve this optimal quantization, we only need to scan all $N$ numbers once.
+The calculation of $V$ is not trivial (it needs
+another dynamic programming algorithm) and we
+describe the details in the full version.
+Figure~\ref{fig:optimalquantization} illlustrates
+the result of our algorithm.
 
 
 \iffalse
