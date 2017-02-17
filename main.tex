@@ -326,9 +326,8 @@ We abuse the notation and let $\a_k = \a_{\pi(k)}$.
 It is not hard to see that $\E [\g_k^{(full)}] = \nabla f(\x_k)$.
 
 \vspace{-1em}
-\paragraph*{Quantization Function $Q$} We define
-the quantization function $Q$ that we will use
-for the rest of this paper. Given a vector
+\paragraph*{Stochastic Quantization} 
+Given a vector
 $\v$, let $M(\v)$ be a scaling factor such that
 $-1 \le \v/M(\v) \le 1$. Without loss of generality,
 let $M(\v)=||\v||_2$. We partition
@@ -337,13 +336,24 @@ $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for
 each number $v$ in $\v/M(\v)$, we always 
 quantize it to one of two nearest 
 separators: $l_i \le v \le l_{i+1}$. 
-We denote the quantization function by $Q(\v, s)$
+We denote the \emph{stochastic quantization} function by $Q(\v, s)$
 and choose the probability of quantizing to
 different separators such that $\E[Q(\v, s)] = \v$.
 We use $Q(\v)$ when $s$ is not relevant.
 We assume that these
 separators are uniformly distributed,
 and revisit this in Section~\ref{sec:optimal}.
+Stochastic quantization ensures the following~\cite{Alistarh:2016:ArXiv}: 
+\begin{lemma}
+\label{lem:quant-facts}
+For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$, and furthermore, we have
+$
+\E [\| Q (\vec{v},s) \|_2^2] \leq (1 + \min( n/s^2,\sqrt{n}/s)) \| \vec{v} \|_2^2 \; .
+$
+\end{lemma} 
+
+
+
 
 \vspace{-1em}
 \subsection{Naive Stochastic Quantization is Biased}
@@ -392,14 +402,14 @@ of the gradient.
 
 \paragraph{Variance}
 
-Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment.
+Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment because of quantization.
 We have:
 \begin{lemma}
 \label{lem:qbound}
     Given $\a_k, \x, b_k$, suppose $\| \a_k \|_2^2 \leq A^2, \| \x \|_2^2 \leq R^2$ and $\max_i |\a_k| \leq M_a$.
     Let $\g_k^{(full)}$ be the unquantized stochastic gradient. We have
     \[
-    E_{Q_1, Q_2} [\| \g_k \|_2^2] \leq r \cdot \left( \| \g_k^{(full)} \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \frac{A^2 M_a^2 R^2}{s^2} \right)\; .
+    \E_{Q_1, Q_2} [\| \g_k \|_2^2] \leq r \cdot \left( \| \g_k^{(full)} \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \frac{A^2 M_a^2 R^2}{s^2} \right)\; .
     \]
 \end{lemma}
 
@@ -420,7 +430,7 @@ This corollary suggests that the quantized stochastic gradient variance is bound
 in the scenario when $M_i (\vec{v}) = \| \vec{v} \|_2 $.
 The first term $\sigma^2$ is introduced by stochastic gradient, while the second term is introduced by quantization. Because the value of $s$ is 
 exponential to the number of bits, to ensure these two terms are comparable (to maintain the same convergence rate of quantized stochastic gradient), the number of bits needs to be greater than $\Theta(\log n / \sigma)$. We see that even for linear models with millions
-of features, 32-bits is likely to be an ``overkill''.
+of features, 32-bits is likely to be  ``overkill.''
 
 \paragraph*{Overhead of Storing Two Samples}
 One system implication of double sampling is the overhead of sending
@@ -475,21 +485,6 @@ where all $Q$'s are independent quantizations.
 %\textcolor{red}{DAN: ADD ONE SENTENCE ABOUT HOW IT WORKS IN PRACTICE?}
 
 
-\paragraph*{The Refetching Heuristic}
-To avoid the overhead of approximation, we develop the following heuristic, whose full description is left to the full version of the paper. 
-Consider for example hinge loss, i.e.  $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$. 
-The idea is to 
-first transmit a single low-precision version of $\a_k$, and to  
-calculate upper and lower bounds on $b_k \a_k^\top \x$.
-If the sign of $1-b_k \a_k^\top \x$ cannot change because of quantization, then we simply apply the approximate gradient. 
-If the sign could change, then we {\em refetch} the data at full precision.
-In practice, this heuristic works for 
-8 bits precision while only refetching $<5\%$
-of the data.
-
-\textcolor{red}{DAN: CAN WE SAY SOMETHING HERE ASSUMING LARGE MARGIN?}
-\textcolor{red}{Will look into this later.}
-
 \section{Optimal Quantization Strategy} \label{sec:optimal}
 
 We now revisit the choice of quantization points
@@ -506,7 +501,7 @@ In this section, we show that it is possible
 to apply optimal quantization to
 training deep neural networks.
 
-\paragraph*{State-of-the-arts} We focus on
+\paragraph*{State-of-the-art} We focus on
 training deep neural networks with quantized
 model. Let $\mathcal{W}$ be the model and 
 $l(\mathcal{W})$ be the loss function. State-of-the-art quantized networks,

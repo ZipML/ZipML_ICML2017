@@ -7,19 +7,19 @@ Although theoretically justified, this framework can become heavyweight for loss
 
 \subsection{Quantizing Arbitrary Polynomials} 
 
-Assume we are given a degree $d$ polynomial $P(x) = \sum_{i = 0}^{d} m_i z^i$, and that 
-we wish to evaluate it at $\vec{a}^\top \vec{x}$, while quantizing $\vec{a}$, so as to preserve the value of $P( \vec{a}^\top \vec{x})$ in expectation. 
+Assume we are given a degree $d$ polynomial $P(x) = \sum_{i = 0}^{d} m_i z^i$, which
+we wish to evaluate at $\vec{a}^\top \vec{x}$, while quantizing $\vec{a}$, so as to preserve the value of $P( \vec{a}^\top \vec{x})$ in expectation. 
 We do so as follows. 
 
 We will use $d$ independent quantizations of $\vec{a}$, $Q_1(\vec{a}), Q_2(\vec{a}), \ldots, Q_d(\vec{a})$. 
-Given these quantizations, our reconstruction of the polynomial will be 
+Given these quantizations, our reconstruction of the polynomial at $( \vec{a}^\top \vec{x})$ will be 
 $$ Q(P) := \sum_{i = 0}^d m_i \prod_{j \leq i} Q_j(\vec{a})^\top \vec{x}.$$
 
-The fact that this is an unbiased estimator of $P( \vec{a}^\top \vec{x} )$ follows from the independence of the quantizations. Extending the analysis in Lemma~\ref{lem:qbound} yields:
+The fact that this is an unbiased estimator of $P( \vec{a}^\top \vec{x} )$ follows from the independence of the quantizations. Using Lemma~\ref{lem:quant-facts} yields:
 
 \begin{lemma}
 \label{lem:poly-sec-moment-bound}
-	$\E[ Q(P)^2 ] \leq 2^d \sum_{i = 0}^d m_i r(s)^i (\vec{a}^\top \vec{x})^i.$
+	$\E[ Q(P)^2 ] \leq \left(\sum_{i = 0}^d m_i r(s)^i (\vec{a}^\top \vec{x})^i\right)^2.$
 \end{lemma} 
 
 
@@ -31,12 +31,12 @@ The fact that this is an unbiased estimator of $P( \vec{a}^\top \vec{x} )$ follo
 
 \subsection{Quantizing Arbitrary Classification Losses}
 
-Assume a standard classification setting, where we have samples $[(\vec{a}_i, b_i)]_i$ drawn from a distribution $\mathcal{D}$, a loss function $\ell: \R \rightarrow \R$, and we wish to find $\vec{x}$ which minimizes $\E_{\mathcal{D}} [ \ell( b \cdot \vec{a}^\top \vec{x} ]$. The gradient of $\ell$ is given by 
+Assume a standard classification setting, where we have samples $[(\vec{a}_i, b_i)]_i$ drawn from a distribution $\mathcal{D}$, a loss function $\ell: \R \rightarrow \R$, and we wish to find $\vec{x}$ which minimizes $\E_{\mathcal{D}} [ \ell( b \cdot \vec{a}^\top \vec{x}) ]$. The gradient of $\ell$ is given by 
 $$ \nabla_\vec{x} (b \cdot \vec{a}^\top \vec{x}) = b \ell' (b \cdot \vec{a}^\top \vec{x}) \vec{a}.$$
 
-Assume normalized samples, i.e. $\| \vec{a}_i \|_2 \leq 1, \forall i$, and that $\vec{x}$ is constrained such that $\| \vec{x} \|_2 \leq R$, for some real value $R > 0$. We are given a target accuracy $\epsilon$, within which we wish to approximate the gradient. 
+Assume normalized samples, i.e. $\| \vec{a}_i \|_2 \leq 1, \forall i$, and that $\vec{x}$ is constrained such that $\| \vec{x} \|_2 \leq R$, for some real value $R > 0$. Further, assume we are given a target accuracy $\epsilon$, within which we wish to approximate the gradient. 
 
-Given this, we fix the minimal-degree polynomial $P$ such that $|P(z) - \ell'(z)| \leq \epsilon, \forall z \leq R$. This polynomial is known to both transmitter (sample source) and receiver (compute device). The protocol is as follows. 
+Given this, we fix a minimal-degree polynomial $P$ such that $|P(z) - \ell'(z)| \leq \epsilon, \forall z \leq R$. This polynomial is known to both transmitter (sample source) and receiver (compute device). The protocol is as follows. 
 \begin{itemize}
 	\item For a given sample $(\vec{a}_i, b_i)$ to be quantized, the source will transmit $b_i$, as well as $d + 1$ independent quantizations $Q_1, Q_2, \ldots, Q_{d + 1}$ of $\vec{a}_i$. 
 	\item The receiver computes $b \cdot Q(P) Q_{d + 1} ( \vec{a}_i )$ and uses it as the gradient.
@@ -74,8 +74,23 @@ Figure~\ref{fig:approximation} shows how close the Chebyshev polynomial aprroxim
 \fi
 
 \paragraph{Practical Considerations} The above strategy introduces a precision-variance trade-off, since increasing the precision of approximation (higher polynomial degree) also increases the variance of the gradient. 
-Fortunately, we can further reduce the variance and increase the approximation quality by increasing the density of the quantization. 
+Fortunately, we can reduce the variance and increase the approximation quality by increasing the density of the quantization. 
 The results in Section~\ref{sec:exp} show that a total of $8$ bits per sample is sufficient to ensure convergence to the same result as the full-precision 
 implementation for both hinge loss and logistic loss. 
 
+
+\paragraph*{The Refetching Heuristic}
+To avoid the overhead of approximation, we develop the following heuristic, whose full description is left to the full version of the paper. 
+Consider for example hinge loss, i.e.  $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$. 
+The idea is to 
+first transmit a single low-precision version of $\a_k$, and to  
+calculate upper and lower bounds on $b_k \a_k^\top \x$ at the receiver.
+If the sign of $1-b_k \a_k^\top \x$ cannot change because of quantization, then we simply apply the approximate gradient. 
+If the sign could change, then we {\em refetch} the data at full precision.
+In practice, this heuristic works for 
+8 bits precision while only refetching $<5\%$
+of the data.
+
+%\textcolor{red}{DAN: CAN WE SAY SOMETHING HERE ASSUMING LARGE MARGIN?}
+%\textcolor{red}{Will look into this later.}
 
