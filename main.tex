@@ -62,7 +62,7 @@
 %\title{Training Generalized Linear Models with End-to-end Low Precision:\\
 %The Cans, the Cannots, and a Little Bit of Deep Learning
 %}
-\title{Training with End-to-end Low Precision:\\
+\title{Training Models with End-to-end Low Precision:\\
 The Cans, the Cannots, and a Little Bit of Deep Learning
 }
 
@@ -76,26 +76,26 @@ There has recently been significant interest in training
 machine-learning models at low precision: by reducing 
 precision, one can reduce computation, communication, and power 
 consumption by one order of magnitude. 
-We examine this from a theoretical and practical 
-perspective. We ask: 
+We examine training at reduced precision both from a theoretical and practical 
+perspective, and ask: 
 {\em is it possible to \emph{train} models at end-to-end low 
 precision with \emph{provable} guarantees?  can this 
 lead to consistent order-of-magnitude speedups?}
 
 For linear models, the answer is yes. We develop a simple 
-framework based on one novel strategy: ``double sampling''. 
-With our framework, it is able 
+framework based on one novel strategy, called double sampling. 
+Our framework, it is able 
 to execute training at low precision with no bias, 
-guaranteeing convergence, while naive stochastic quantization 
-would introduce significant bias. We validate this  
+guaranteeing convergence, whereas naive quantization 
+would introduce significant bias. We validate our framework   
 across a range of applications, and show that it enables an 
-FPGA prototype that is up to one order of magnitude faster 
+FPGA prototype that is an order of magnitude faster 
 than an implementation using full 32-bits precision.
 
 We extend our framework through approximation to non-linear 
 models, such as SVM. We show that, although the bias of using 
 low precision data cannot be avoided, our approach can appropriately 
-control the bias. We find that in practice {\em 8-bits} precision is 
+control the bias. We find that in practice {\em 8 bit} precision is 
 always sufficient to converge to the correct solution. 
 Interestingly, however, in practice, we notice that our framework 
 does not always outperform the naive rounding approach. We discuss 
@@ -107,10 +107,11 @@ strategy and show that
 it can make a significant difference in a variety of settings. 
 When applied to linear models together with 
 double sampling, we can save up to another 
-$2\times$ communications
-compared with uniform quantization. When
+$2\times$ in communication cost.
+%compared with uniform quantization. 
+When
 training deep networks with quantized models, 
-we achieve higher accuracy than state-of-the-art XNOR-Net. 
+we achieve higher accuracy than the state-of-the-art XNOR-Net. 
 
 \end{abstract}
 
@@ -218,10 +219,9 @@ The gradient at the sample $(\a_k, b_k)$ is:
 \]
 We denote the problem dimension by $n$. 
 We consider the properties of the algorithm when a lossy compression scheme is applied to the data (samples), 
-gradient, and model, for the purpose of reducing the communication cost of the algorithm---That is, 
-we consider $Q_1$, $Q_2$, and $Q_3$ in the gradient update rule:
+gradient, and model, to reduce the communication cost of the algorithm---that is, we consider quantization functions $Q_g$, $Q_m$, and $Q_s$, for gradient, model and samples, respectively, in the gradient update:
 \begin{align}
-\x_{t + 1} \leftarrow \text{prox}_{\gamma R(\cdot)}\left(\x_t - \gamma Q_1(\g_k (Q_2(\x_t), Q_3(\vec{a}_t)))\right).
+\x_{t + 1} \leftarrow \text{prox}_{\gamma R(\cdot)}\left(\x_t - \gamma Q_g(\g_k (Q_m(\x_t), Q_s(\vec{a}_t)))\right).
 \label{eq:proxupdate}
 \end{align}
 where the proximal operator is defined as
@@ -233,83 +233,81 @@ where the proximal operator is defined as
 \subsection{Our Results}
 
 We summarize our results as follows. The {\bf (+)}
-sign means ``positive result'' where we achieve
+sign denotes a ``positive result,'' where we achieve
 significant practical speedup, and {\bf (--)} otherwise.
 
 \vspace{-1em}
 \paragraph{(+) Linear Models.} When $l(\cdot,\cdot)$ is 
-the least squares loss, we first prove that
-simply doing stochastic quantization of data 
-(i.e., $Q_3$) introduces bias of the gradient
+the least squares loss, we first notice that
+simply doing stochastic quantization of data samples  
+(i.e., $Q_s$) introduces bias of the gradient
 estimator and therefore SGD would converge
 to a different solution. We propose a simple
-fix to this problem by introducing a
-{\em double sampled} quantization strategy
-$\tilde{Q}_3$ that uses multiple samples to
+solution to this problem, by introducing a
+{\em double sampling} quantization strategy
+$\tilde{Q}_s$ that uses multiple samples to
 eliminate the correlation of samples introduced
 by the non-linearity of the gradient. We
 analyze the additional variance introduced
-by double sampling, we find \textcolor{red}{
-BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH
-BLAH BLAH BLAH BLAH BLAH BLAH}. Using
-stochastic quantization for gradient and model,
-this gives us an end-to-end quantization strategy
-for linear models, whose variance is \textcolor{red}{
-BLAH BLAH BLAH BLAH}.
+by double sampling, we find that its impact is \emph{negligible in terms of convergence time} as long as the 
+number of bits to store a quantized sample is at least $\Theta( \log n / \sigma )$, 
+where $\sigma^2$ is the variance of the standard stochastic gradient. 
+Of note, this implies that the 32 bit precision may be excessive for many practical scenarios. 
+
+We build on this quantization strategy to obtain an \emph{end-to-end quantization} strategy
+for linear models, which compresses all data movements. 
+For certain settings of parameters, end-to-end quantization adds as little as a \emph{constant factor} to the variance of the entire process. 
 
 \vspace{-1em}
 \paragraph{(--) Non-Linear Models.} We extend our
 results to non-linear models such as
-logistic regression and SVM. We observe that
-using multiple samples can, in principle,
-provide unbiased estimators for any polynomials
-(with an increased variance). Our main
-result uses Chebyshev polynomials to
-approximate the gradient and provide theoretical
-bound on the bias introduced by Chebyshev
-approximation and the bias of SGD solution. 
-This provides a way to control the bias given
-users' error tolerance as input.  
-When data is separable,
-we prove that \textcolor{red}{BLAH BLAH 
-BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
-BLAH BLAH BLAH}. With this technique, we are
-able to lower the precision by 4$\times$ with
-rigorous theoretical guarantee; However,
-compared with a strawman approach that just
-do stochastic rounding over input data, 
-\textcolor{red}{BLAH BLAH BLAH BLAH.}.
+logistic regression and SVM. We observe that 
+we can stretch our multiple-sampling strategy to provide 
+provide unbiased estimators for any polynomials, at the cost of increased variance. 
+Building further, we employ Chebyshev polynomials to   
+approximate the gradient of \emph{arbitrary loss functions} within arbitrarily low bias, 
+and to provide bounds on the error of an SGD solution obtained from low precision samples. 
+%Given the user's error tolerance as input, we can set the bit complexity to lower the bias in order to meet the error threshold. 
+%
+%By increasing the bit complexity of the representation, we can lower the bias 
+%
+%This provides a way to control the bias given 
+%users' error tolerance as input.  
+%When data is separable,
+%we prove that \textcolor{red}{BLAH BLAH 
+%BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
+%BLAH BLAH BLAH}. 
+In practice, using this technique, we are
+able to go as low as 8 bit precision for SVM and logistic regression, while providing 
+rigorous theoretical guarantees on the error. However, we notice that the strawman approach, which just
+does naive stochastic rounding over the input data to 8bit precision, converges to similar results in practical settings, 
+without the added complexity. 
+In a nutshell, this negative result is explained by the fact that, to approximate well non-linearities such as the step function or the sigmoid, our framework needs (a) high degree Chebyshev polynomials, and (b) relatively large (4bit) samples. \todo{maybe move this last part later?}
 
 \vspace{-1em}
 \paragraph{(+) Optimal Quantization and Extension to Deep Learning.}
-We then focus on variance reduction for 
-stochastic quantization. We observe that different
-quantization points have different variances---the points chosen
-by standard fixed point representation is uniformly
-distributed but is not optimal.
-We formulate an optimization problem to choose 
-quantization points that minimize the total variance
-introduced by quantization and solve it with 
+We then focus on reducing the variance of  
+stochastic quantization. We notice that different ways of setting the 
+quantization points have different variances---the standard uniformly-distributed quantization strategy is far from optimal in many settings.
+We formulate this as an independent optimization problem, and solve it optimally with 
 a dynamic programming algorithm with time complexity
 $O(BLAH)$ and space complexity $O(BLAH)$.
 When applied to linear models, this optimal 
 strategy can save up to $2\times$ communication
 compared with the uniform strategy.
 
-Our analysis of optimal quantization 
-implies that the uniform quantization approach
+We perform an analysis of the optimal quantizations for various settings, and observe that the uniform quantization approach
 popularly used by state-of-the-art end-to-end
 low-precision deep learning training systems
-when more than 1 bit is used are also suboptimal.
-We then apply optimal quantization to 
+when more than 1 bit is used is suboptimal.
+We apply optimal quantization to 
 model quantization and shows that, with a simple
 standard neural network, we outperforms the
 uniform quantization used by XNOR-Net and a
 range of other recent approaches. This
-is relevant, but slightly different, to some work 
-on model compression for inference~\cite{Han:2016:ICLR}, 
-but to our best knowledge, it is the first time it 
-has been applied to training. 
+is related, but different, to recent work 
+on model compression for inference~\cite{Han:2016:ICLR}. 
+To our best knowledge, this is the first time such optimal quantization strategies have been applied to training. 
 
 \section{Linear Models}
 
@@ -329,7 +327,7 @@ It is not hard to see that $\E [\g_k^{(full)}] = \nabla f(\x_k)$.
 \paragraph*{Stochastic Quantization} 
 Given a vector
 $\v$, let $M(\v)$ be a scaling factor such that
-$-1 \le \v/M(\v) \le 1$. Without loss of generality,
+$-1 \le \v/M(\v) \le 1$\todo{is this standard notation?}. Without loss of generality,
 let $M(\v)=||\v||_2$. We partition
 the interval $[-1, 1]$ using $s+1$ separators:
 $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for
@@ -377,6 +375,7 @@ where $D_{\a}$ is diagonal and its $i$th diagonal element is
 \E[ Q(\a_i)^2 ] - \a_i^2.
 \]
 
+\todo{y axis here is weird}
 \begin{wrapfigure}{r}{0.23\textwidth}
   \begin{center}
     \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
@@ -475,7 +474,7 @@ where all $Q$'s are independent quantizations.
     Let $M_a, M_x$ be as above, and let $\g_k^{(full)}$ be the (unquantized) stochastic gradient.
     We have
     \[
-    \E [\| \g_k \|_2^2] \leq r \cdot \left( r M_a \left( \| \g_k^{(full)} \|_2^2 + \frac{R^2}{s^2} \right)  + \frac{r^2 M_a^2 R^2}{s^2} \right) \; .
+    \E [\| \g_k \|_2^2] \leq r^2 M_a \cdot \left(  \| \g_k^{(full)} \|_2^2 + \frac{R^2}{s^2}   + \frac{r M_a R^2}{s^2} \right) \; .
     \]
 \end{corollary}
 
