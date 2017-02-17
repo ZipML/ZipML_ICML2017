@@ -555,22 +555,6 @@ are the first to apply optimal quantization to
 {\em training}.
 
 
-
-
-\section{Experiments} \label{sec:exp}
-
-In this section, we show the results when
-ZipML is used for: (1) linear models; (2) non-linear models;
-and (3) deep learning.
-\subsection{Experimental Setup}
-
-\paragraph{Datasets} 
-We use a range of real-world
-and synthetic data sets in our experiments. Table~\ref{xxx} shows the data sets we use and their characteristics.
-Because of the limitation of length, we only show the result of one synthetic dataset for regression and one real dataset for classification. The full experiment results would be shown in the appendix.
-\paragraph{Protocal} To measure the quality of training,
-we measured the training loss after each training epoch. We also measure test accuracy for classification problems. We use diminishing stepsizes: the real stepsize is ${initial\_stepsize\over k}$, where k is the current number of epoch.
-
 \begin{table}[t]
 \scriptsize
 \centering
@@ -605,20 +589,82 @@ CIFAR-10        & 50,000        & 10,000             &$32\times 32\times 3$     
 \label{table:dataset}
 \end{table}
 
+\section{Experiments} \label{sec:exp}
+
+We provide empirical validations of
+our framework on a range of
+models, including
+(1) linear models, (2) non-linear models,
+and (3) deep learning.
+
+\vspace{-1em}
+\paragraph{Experiment Setup} 
+Table~\ref{table:dataset} shows the 
+data sets we use. Due to space
+limitation, we only report
+(1) Synthetic 100 for regression, 
+(2) gisette for classification,
+and (3) CIFAR-10 for deep learning.
+We leave the result of other data
+sets to the full version of this paper.
+Without special notice, we always
+use diminishing stepsizes $\alpha/k$
+where $k$ is the current number of
+epoch. We tune the initial step size
+$\alpha$ for the full precision
+implementation, and use the
+same initial step size for 
+our low precision 
+implementation.\footnote{Low precision
+implementation, as implied by
+the theory and our experience, some
+times favors smaller step size. 
+In our experiments, we
+do not tune step sizes for the low precision 
+implementation as this can only make our 
+approach better.}
+
 \subsection{Linear Models}
-In this section, we validate that: (1) ZipML 
-converges to the same solution with comparable
-empirical convergence rate for (i) linear regression;
-and (ii) least squares support vector machines;
-(2) We can observe a speed-up when ZipML is used on FPGA to train a linear regression model;
+
+For linear models, we validate that (1) 
+with double sampling, SGD with low
+precision converges---in
+comparable empirical 
+convergence rates---to the same solution
+as SGD with full precision; and
+(2) implemented on FPGA, our low-precision
+prototype achieves significant speed-up
+because of the decrease of bandwidth
+consumption.
 
 \paragraph{Convergence}
-We run SGD to train linear models, with our end-to-end quantization or with full 32-bit floating-point. We compare the training loss in both settings and their convergence rate to the final training loss.
 
-Figure~\ref{fig:convergence} shows that our quantization framework
-converges to the same solution with comparable
-empirical convergence rate for both linear regression and least square-SVM
-with only 3 or 4-bit end-to-end quantization. We saved 8-10x memory bandwidth compared to using 32-bit floating-point. If we use less bits than what we used in the figure, then the quantized version would either diverge or converge with a lower convergence rate.
+Figure~\ref{fig:convergence} illustrates
+the result of training linear models,
+including both (a) linear
+regression and (b) least squares SVMs,
+with end-to-end low-precision and 
+full precision. For
+low precision, We pick the 
+smallest number of bits that
+result in a smooth convergence
+curve. We compare the final 
+training loss in both settings 
+and the convergence rate.
+
+We see that, for both linear regression 
+and least squares SVM,
+using 3 or 4-bit is always enough
+to converge to the same solution
+with comparable convergence rate. 
+This validates our theory that
+double-sampling indeed provides an
+unbiased estimators of the gradient.
+Considering the size of input
+samples that we need to read---We
+could potentially save 8-10$\times$ 
+memory bandwidth compared to using 
+32-bit. 
 
 \begin{figure}[t]
 \centering
@@ -628,12 +674,36 @@ with only 3 or 4-bit end-to-end quantization. We saved 8-10x memory bandwidth co
 \end{figure}
 
 \paragraph{Speedup}
-We implemented our low-preicision framework for training a linear model on FPGA. We compare the time to converge to the same training loss with 32-bit FPGA implementation and the current fastest multi-thread CPU implementation, Hogwild!.
+We implemented our low-precision 
+framework for training a linear model 
+on FPGA. We leave the detailed 
+implementation and the circuit to
+the full version of this paper. 
+This implementation assumes the input
+data is already quantized and
+stored in memory (these quantized
+data could be generated during the
+first epoch of training.)
 
-Figure~\ref{fig:speedup} shows that with our quantization framework
-implementation on FPGA with quantized data, 
-we get 6x-7x speed up compared to state-of-art
-10-thread CPU or FPGA with full 32-bit floating point data. The speed of FPGA is bounded by memory-bandwidth, and by using our framework to quantize data, we save 8x memory-bandwith, which leads to 6x-7x speed up.
+Figure~\ref{fig:speedup} illustrates 
+the result of (1) our FPGA
+implementation with quantized data,
+(2) FPGA implementation with 32-bit
+data, and (3) Hogwild! running with
+10 CPU cores.
+We see that, all approaches
+converge to the same solution.
+FPGA with quantized data converges
+6-7$\times$ faster
+compared with FPGA with full precision
+or Hogwild!. The FPGA implementation
+with full precision is
+memory-bandwidth bound, and by using our framework on quantized data, we save 
+up to 8$\times$ memory-bandwidth, which
+can be transfered into 6-7$\times$
+speed-up.
+
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{final-experiments/linear-fpga} 
@@ -642,24 +712,36 @@ we get 6x-7x speed up compared to state-of-art
 \end{figure}
 
 \subsection{Non-Linear Models}
-In this section, we validate that: (1) ZipML 
-converges to almost the same solution with comparable
-empirical convergence rate for (i) SVM;
-and (ii) Logistic Regression;
-(2) If we use 8-bit deterministic rounding or naive stochastic rounding, we would also converge to the same solution for (i) SVM;
-and (ii) Logistic Regression.
+
+We validate that (1) with Chebyshev 
+approximation our approach is able to
+converge to almost the same solution 
+with only 8-bit for both SVM
+and logistic regression;
+and (2) however, we are able to construct
+a strawman with 8-bit deterministic 
+rounding or naive stochastic rounding
+to achieve the same quality and convergence 
+rate.
 
 \paragraph{Chebyshev Approximations}
-We run SGD to train models for SVM and logistic regression using:
-(1) original 32-bit data and original gradient; (2) original 32-bit data and gradient approxiamted by Chebyshev polynomials;
-(3) quantized data and gradient approxiamted by Chebyshev polynomails.
-We compare the training loss and test accuracy in these 3 settings.
 
-Figure~\ref{fig:chebyshev} shows that with Chebyshev polynomial approximation to sigmoid 
-or sign function, our quantization framework
-converges to close training loss with comparable
-empirical convergence rate for both SVM and logistic regression
-with only 3 to 5-bit data quantization. We also get no loss in test accuracy.
+Figure~\ref{fig:chebyshev} illustrates
+the result of training SVM
+and logistic regression models
+with Chebyshev approximation. Here,
+we use Chebyshev polynomials up to
+degree 15 (which requires 16 samples
+that can be encoded with 4 extra 
+bits). For each sample, the precision
+is 4-bit, and therefore, in total
+we use 8-bit for each single number
+in input samples. We see that 
+with our quantization framework,
+SGD converges to similar training loss 
+with comparable empirical convergence 
+rate for both SVM and logistic regression.
+We also get no loss in test accuracy.
 
 \begin{figure}[t]
 \centering
@@ -669,14 +751,24 @@ with only 3 to 5-bit data quantization. We also get no loss in test accuracy.
 \end{figure}
 
 \paragraph{Negative Results}
-We compare our previous result with naive 8-bit deterministic or stochastic rounding for data.
 
-Figure~\ref{fig:vsnaive} shows that with 8-bit deterministic rounding or naive
-stochastic rounding, SGD would also converge to same training loss with comparable
-empirical convergence rate. However, we need to send multiple samples if we use the Chebyshev polynomial approximation. 
-Even though these additional samples can be encoded efficiently (since they can only take a limited set of values), 
-in practice the memory-bandwith savings of our framework
-compared to simple 8-bit deterministic rounding are minor. 
+We are able to construct the following,
+much simpler strategy that also
+uses 8-bit to achieve the same quality
+and convergence rate as our
+Chebyshev. In practice, as both
+strategies incur bias on the result,
+we do {\em not} see strong reasons to
+use our Chebyshev approximation, thus
+we view this as a negative result.
+As shown in Figure~\ref{fig:chebyshev},
+if we simply round the input samples
+to the nearest 8-bit fix point
+representation (or do rounding
+stochastically), we achieve the
+same, and sometimes better,
+convergence than our Chebyshev 
+approximation.
 
 \begin{figure}[t]
 \centering
@@ -686,30 +778,39 @@ compared to simple 8-bit deterministic rounding are minor.
 \end{figure}
 
 \subsection{Data-Optimal Quantization Strategy}
-We validate that: with our data-optimal quantization strategy, 
-SGD can converge to the same solution with comparable convergence rate with less bits 
-compared to using uniform quantization levels. We compare the training loss of using data-optimal levels with 3-bit quantization and uniform levels with 3-bit and 5-bit quantization
-
-
-Figure~\ref{fig:optimal}(a) shows that with our data-optimal quantization strategy, on this data set, it is enough to use 3-bit quantization. If we use the uniform quantization levels, we need at least 5-bit data quantization to get the same performance. We save almost half of the bits we need by just allocating markers wisely.
-
+We validate that, with our data-optimal quantization strategy, we can 
+significantly decrease the number of 
+bits that double-sampling requires to 
+achieve the same convergence.
+Figure~\ref{fig:optimal}(a) illustrates
+the result of using 3-bit and 5-bit
+for uniform quantization and optimal 
+quantization on the {\bf YearPrediction}
+dataset. We see that,
+while uniform quantization needs 5-bit
+to converge smoothly, optimal
+quantization only needs 3-bit. 
+We save almost $2\times$ number of 
+bits by just allocating quantization points wisely.
 
 \subsection{Extensions to Deep Learning}
 
 We validate that our data-optimal quantization
 strategy can be used in training deep neural
 networks. We take Caffe's CIFAR-10 tutorial
-and compare four different quantization
-strategies: (1) Full Precision, (2) BNN5, 
-a BNN implementation that quantize data into
+and compare three different quantization
+strategies: (1) Full Precision, (2) XNOR5, 
+a XNOR-Net implementation that, follows
+the multi-bits strategy proposed in
+the original paper, quantizes data into
 five uniformly chosen levels, and (3)
 Optimal5, our quantization strategy with
 five optimal quantization levels. As
 shown in Figure~\ref{fig:optimal}(b), Optimal5
 converges to a significantly lower training 
-loss compared with BNN5. In terms of
+loss compared with XNOR5. In terms of
 testing accuracy, Optimal5 achieves a
-near 10 points improvement over BNN5.
+near 10 points improvement over XNOR5.
 This illustrates the improvement
 one can get by training neural network with
 a carefully chosen quantization strategy.
@@ -759,13 +860,13 @@ DSP community, and there have been research related to
 linear regression models in the presence of quantization
 error or other type of noises. For example,
 \citet{Gopi:2013:ICML} studied compressive sensing
-with quantized measurement, and the \textcolor{red}{XXXXX}
+with quantized measurement, and the \textcolor{red}{Ji? XXXXX}
 algorithm focuses on getting a high-precision solution
 with low-precision computation. Also, the
 classic errors-in-variable model~\cite{Hall:2008:Book}
-could also be related if quantization is treated 
+could also be relevant if quantization is treated 
 as a source of ``error''. In this paper, we scope
-ourselves in the context of stochastic gradient descent, 
+ourselves to the context of stochastic gradient descent, 
 and our insights go beyond simple linear models.
 
 \vspace{-1em}
