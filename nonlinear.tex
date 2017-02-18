@@ -76,11 +76,11 @@ Figure~\ref{fig:approximation} shows how close the Chebyshev polynomial aprroxim
 \paragraph{Practical Considerations} The above strategy introduces a precision-variance trade-off, since increasing the precision of approximation (higher polynomial degree) also increases the variance of the gradient. 
 Fortunately, we can reduce the variance and increase the approximation quality by increasing the density of the quantization. 
 The results in Section~\ref{sec:exp} show that a total of $8$ bits per sample is sufficient to ensure convergence to the same result as the full-precision 
-implementation for both hinge loss and logistic loss. 
+implementation for both hinge and logistic loss. 
 
 
 \paragraph*{The Refetching Heuristic}
-To avoid the overhead of approximation, we develop the following heuristic, whose full description is left to the full version of the paper. 
+To avoid the overhead of approximation, we develop the following heuristic, whose full description is left to the full version. 
 Consider for example hinge loss, i.e.  $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$. 
 The idea is to 
 first transmit a single low-precision version of $\a_k$, and to  
