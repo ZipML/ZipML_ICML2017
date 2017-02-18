@@ -92,7 +92,7 @@ lead to consistent order-of-magnitude speedups?}
 \vspace{-0.1em}
 For linear models, the answer is yes. We develop a simple 
 framework based on one novel strategy, called double sampling. 
-With our framework, it is able 
+Our framework it is able 
 to execute training at low precision with no bias, 
 guaranteeing convergence, whereas naive quantization 
 would introduce significant bias. We validate our framework   
@@ -289,7 +289,7 @@ able to go as low as 8 bit precision for SVM and logistic regression, while prov
 rigorous theoretical guarantees on the error. However, we notice that the strawman approach, which just
 does naive stochastic rounding over the input data to 8bit precision, converges to similar results in practical settings, 
 without the added complexity. 
-In a nutshell, this negative result is explained by the fact that, to approximate well non-linearities such as the step function or the sigmoid, our framework needs (a) high degree Chebyshev polynomials, and (b) relatively large (4bit) samples. \todo{maybe move this last part later?}
+In a nutshell, this negative result is explained by the fact that, to approximate well non-linearities such as the step function or the sigmoid, our framework needs both high degree Chebyshev polynomials, and relatively large (4bit) samples. 
 
 %\vspace{-1em}
 \paragraph{(+) Optimal Quantization and Extension to Deep Learning.}
