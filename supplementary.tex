@@ -173,7 +173,7 @@ Suppose we run projected SGD on $f$ with access to independent stochastic gradie
 \label{eq:sgd-conv}
 T = O \left( R^2 \cdot \max \left( \frac{2 \sigma^2}{\epsilon^2} , \frac{L}{\epsilon} \right) \right) \; .
 \end{equation}
-Then $\E \left[ f \left( \frac{1}{T} \sum_{t = 0}^T \x_t \right) \right] - \min_{\x \in \mathcal{X}} f(\x) \leq \epsilon + \left( R^2 +  \frac{\eta}{2} \right) \beta^2$.
+Then $\E \left[ f \left( \frac{1}{T} \sum_{t = 0}^T \x_t \right) \right] - \min_{\x \in \mathcal{X}} f(\x) \leq \epsilon + R \beta + \frac{\eta}{2} \beta^2$.
 \end{theorem} 
 
 In particular, note that the complexity the SGD method is mainly controlled by the variance bound $\sigma^2$ we may obtain. If $\sigma = 0$, the complexity is consistent with the stochastic gradient.
