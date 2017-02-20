@@ -1,19 +1,17 @@
 %!TEX root = main.tex
 Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ 
-with cardinality $N$, where $x_1 \leq x_2 \leq \ldots, x_N$.
+with cardinality $N$, where $x_1 \leq x_2 \leq \ldots \leq x_N$.
 Without loss of generality, assume 
 that all real numbers in $\Omega$ are 
 in $[0, 1]$. 
 
-The goal is to find an partition $\setI = \{I_j\}_{j = 1}^s$ of $[0, 1]$ into $s$ disjoint intervals, so that if we quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $s$ intervals.
+The goal is to find an partition $\setI = \{I_j\}_{j = 1}^k$ of $[0, 1]$ into $k$ disjoint intervals, so that if we quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
 Formally:
-
 \begin{align}
-\nonumber \min_{\setI: |\setI| = s} \quad & \mathcal{MV}(\setI) := {1\over N}\sum_{j = 1}^s \sum_{x_i \in I_j} \err(x_i, I_j)\\
-\text{s.t.}\quad & \bigcup_{j = 1}^s I_j = [0, 1].
+\nonumber \min_{\setI: |\setI| = s} \quad & \mathcal{MV}(\setI) := {1\over N}\sum_{j = 1}^k \sum_{x_i \in I_j} \err(x_i, I_j)\\
+\text{s.t.}\quad & \bigcup_{j = 1}^k I_j = [0, 1],
 \label{eq:opt_Q}
 \end{align}
-
 where $\err (x, I) = (b - x) (x - a)$ is the variance for point $x \in I$ if we quantize $x$ to an endpoint of $I = [a, b]$.
 That is, $\err (x, I)$ is the variance of the (unique) distribution $D$ supported on ${a, b}$  so that $\E_{X \sim D} [X] = x$.
 
@@ -27,10 +25,11 @@ That is, $\err (x, I)$ is the variance of the (unique) distribution $D$ supporte
 Given an interval $I \subseteq [0, 1]$, we let $\setX_I$ be the set of $x_j \in \setX$ contained in $I$.
 We also define $\err (\setX, I) = \sum_{x_j \in I} \err (x_j, I)$.
 Given a partition $\setI$ of $[0, 1]$, we let $\err (\setX, \setI) = \sum_{I \in \setI} \err (\setX, I)$.
-We also let $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$ (if there are multiple, then choose one arbitrarily), and we let $\OPT_s = \err(\setX, \setI^*)$.
-
-The following lemma allows us to discretize the problem:
+We also let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$ (if there are multiple, then choose one arbitrarily), and we let $\OPT_k = \err(\setX, \setI^*)$.
+\paragraph{Discretization} 
+One key observation is that we can \emph{discretize} the problem by noticing that there exists an optimal solution which places endpoints at input points:
 \begin{lemma}
+\label{lem:discrete}
 There is a $\setI^*$ so that all endpoints of any $I \in \setI^*$ are in $\Omega \cup \{0, 1\}$.
 \end{lemma}
 
@@ -52,8 +51,49 @@ Hence we may choose $b \in \Omega$.
 \end{proof}
 \fi
 
-Thus, it suffices to look for partitions who have endpoints at the points in our set.
-This allows us to bring to bear combinatorial optimization techniques to this problem.
+%Thus, it suffices to look for partitions who have endpoints at the points in our set. 
+%This allows us to bring to bear combinatorial optimization techniques to this problem.
+
+With this in mind, it will be useful to rephrase the problem as follows. 
+Given a set of initial candidate points $\mathcal{M}$, which is understood from context, let $T(k, N)$ be the optimal variance for a set of $N$ points $x_1, \ldots, x_N$, 
+starting from a set of candidate points $\mathcal{M}$, using $k$ quantization levels. 
+In particular, by Lemma~\ref{lem:discrete}, the original problem can be phrased as finding $T(k, N)$ given initial candidate set $\Omega$. 
+In the following, we will give two different solutions to this problem: an approximate greedy algorithm, and an exact one using dynamic programming (DP). 
+
+ \paragraph*{A Greedy Approximation Algorithm}
+We now describe a nearly linear time algorithm for this problem, which we can show is provably competitive with the optimal solution.
+This algorithm is similar to the one given in \cite{ADHLS15} for the histogram recovery problem, although the cost function we consider is different. 
+
+Our algorithm, at a high level, proceeds as follows.
+Suppose we wish to compete with the best quantization that uses $k$ points.
+Initially, we form the partition $\setI$ so that each point in $\setX$ is in its own interval.
+Then, we repeatedly do the following procedure:
+\begin{enumerate}
+\item
+Pair up consecutive intervals in the partition, so that we form $|\setI| / 2$ ``candidate'' intervals, which we propose to merge.
+For each such candidate interval $J$, compute $\err(\setX, J)$.
+\item
+Find the $2 k$ candidate intervals with largest $\err (\setX, J)$.
+\emph{Keep} these intervals, and merge the remaining ones.
+\end{enumerate}
+
+The full pseudocode of this procedure is deferred to the full version. 
+Note that each step requires only a single pass through the data. 
+Moreover, we show in the full version that we can do at most $O(\log N )$ many iterations. 
+Thus, the algorithm runs in $O(N \log N)$ iterations.
+In the full version of the paper, we show the following guarantee on the number of remaining candidate points, and on the approximation ratio:
+\begin{theorem}
+\label{thm:approx}
+Given any $\setX, k$, let $\setI$ be the output of the above algorithm.
+Then $\setI$ has at most $4k + 1$ intervals, and we have that $\err (\setX, \setI) \leq 2 \OPT_k$.
+\end{theorem}
+We can tune these parameters to get a tradeoff between how many intervals remain, and how much error we tolerate. 
+Theorem~\ref{thm:approx} yields a solution for $T(4k + 1, N)$ given initial candidate set $\Omega$.
+Next, we define a dynamic programming solution, which can help us get a tight solution in $k$. 
+
+%Moreover, to get the output of the algorithm down to size exactly $k$, we may also do an additional dynamic programming postprocessing routine on the output of this algorithm.
+%This postprocessing now looks for the best partition with $s$ pieces at endpoints given by endpoints of $\setI$, and so runs in time $O(k^2 N)$, i.e., nearly-linear in the number of samples.
+
 
 %The goal is to find  
 %the optimal set of $s$ quantization 
@@ -101,19 +141,31 @@ dynamic programming given a data distribution. }
 
 \paragraph*{Dynamic Programming}
 
-We describe
+We now describe
 a dynamic programming algorithm to 
-find the optimal solution.
-
-Define $T(k, m)$ be the optimal total variance for points in $[x_1, x_m]$ with $k$ quantization levels. Our goal is to calculate $T(s, N)$. This problem can be solved by dynamic programing using the following recursion
+find the optimal solution given an arbitrary set of initial candidates. 
+Our goal is to calculate $T(k, N)$, where $S$ is an arbitrary initial set of candidates among the points $[x_1 \ldots x_n]$. 
+This problem can be solved by dynamic programing using the following recursion
 \[
 T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + \err (\Omega, [x_j, x_m]).
 \]
-The term $\err (\Omega, [x_j, x_m])$ can obviously be computed in linear time, and so the time complexity of this program is dominated by the complexity of filling in $T(\cdot, \cdot)$, which is $O(s N^2)$.
+Notice that the term $\err (\Omega, [x_j, x_m])$ can be computed in linear time. So, the time complexity of this program is dominated by the complexity of filling in $T(\cdot, \cdot)$, which is $O(k M^2)$, where $M$ is the size of the initial candidate set $\mathcal{M}$. 
 After filling in this matrix, we can find the optimal partition by classical backtracking techniques.
+Figure~\ref{fig:optimalquantization} illustrates
+an example output for this algorithm. 
 
-Figure~\ref{fig:optimalquantization} illlustrates
-an example output for our algorithm.
+\paragraph{Applications.} 
+A natural way to combine the two algorithms is to first run the greedy approximation to get a candidate set of size $O(k)$, and then run the DP solution to obtain a tight solution in the number of intervals, using $k$ points. 
+The total running time of this procedure is $O( N \log N + k^3 )$. 
+
+Another alternative, which we employ in practice, is to first discretize the range $[0, 1]$ into $M$ intervals of uniform length, where $M$ is assumed to be a large constant, and restrict the set of initial candidates $\mathcal{M}$ to points from this set. (Notice that we can safely add points in $\mathcal{M}$ to the initial set, since their variance is $0$.) We then apply the DP approach described above to this instance of the problem. 
+We obtain a solution which \emph{approximates} the optimal variance, but uses a tight set of $k$ candidates. The running time of this approach is $O( N + k M^2 )$, and bounds on its approximation guarantees are given in the supplementary material.  
+
+ 
+
+
+
+
 
 %\paragraph*{Approximate dynamic programming}
 %This program requires quadratic time in $N$ to run, which is often infeasible in practice.
@@ -201,7 +253,7 @@ Similarly, we quantitize $p^2_2$ in $\{Q(p^*_1), p^*_2, \cdots, p^*_{K-1}\}$ to 
 \end{align*}
 Using the fact that $ \mathcal{MV}(p^*_1,\cdots, p^*_{K-1})$ is smaller than $\mathcal{MV}(Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1}))$ proves the claim.
 \end{proof}
-\fi
+
 
 \paragraph*{A Greedy Approximation Algorithm}
 We now describe a nearly linear time algorithm for this problem, which we can show is provably competitive with the optimal solution.
@@ -232,6 +284,7 @@ Then $\setI$ has at most $4s + 1$ intervals, and we have that $\err (\setX, \set
 We can tune these parameters, to get a tradeoff between how many intervals remain, and how much error we tolerate.
 Moreover, to get the output of the algorithm down to size exactly $s$, we may also do an additional dynamic programming postprocessing routine on the output of this algorithm.
 This postprocessing now looks for the best partition with $s$ pieces at endpoints given by endpoints of $\setI$, and so runs in time $O(s^2 N)$, i.e., nearly-linear in the number of samples.
+\fi
 
 %We require the following lemma, whose proof is trivial and omitted.
 %\begin{lemma}
