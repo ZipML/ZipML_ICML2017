@@ -904,12 +904,39 @@ representation is a key design decision
 for configurable hardwares such as FPGA. There are attempts to
 lower the precision when training machine learning models
 on these hardware~\cite{Kim:2011:ICASSP}. 
-These results are mostly empirical; We
+These results are mostly empirical; we
 aim at providing a theoretical understanding, which 
 enables new practical algorithms that are not covered 
-by these work.
+by these references.
+
+
+\section{Discussion and Future Work}
+\label{sec:conclusions}
+
+The motivating question of this paper was whether end-to-end low-precision data representation can enable efficient computation, 
+while maintaining convergence guarantees. 
+We have shown that a relatively simple stochastic quantization framework can achieve this for linear models. 
+Moreover, for this setting, as little as two bits per model dimension are sufficient for good accuracy, and can enable a high-performance FPGA implementation.  
+
+For non-linear models, the picture we observe is more nuanced. 
+In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8 bit precision is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
+However, in this setting, naive rounding achieves similar practical performance. 
+
+It is interesting to consider the rationale behind these results. On the one hand, our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we must focus on guaranteeing arbitrarily low bias. 
+However, for a variety of interesting functions, such as hinge loss, guaranteeing low bias requires high polynomial approximations. In turn, these increase the variance (since variance bounds are exponential in the degree). These two constraints force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. 
+
+In future work, we plan to examine compressed data representations which are not necessarily (approximate) unbiased estimators of the high-precision process. 
+Such representations, for instance based on naive rounding with feedback error correction~\cite{1BitSGD}, have been successfully employed for gradient compression, although they currently are not known not provide any guarantees. Since the resulting processes no longer approximate standard SGD, the analysis appears non-trivial. 
+
+An independent contribution of our work is a set of algorithms for finding an optimal quantization with respect to variance. 
+We show that improved quantizations can significantly improve accuracy for training in both convex and non-convex settings. 
+In future work, we plan to further explore the potential of these techniques in the context of training and inference.  
 
 \cleardoublepage
+
+
+
+
 
 \bibliographystyle{icml2017}
 \bibliography{low-precision.bib}
