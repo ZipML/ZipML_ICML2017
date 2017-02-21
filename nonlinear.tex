@@ -25,11 +25,9 @@ The fact that this is an unbiased estimator of $P( \vec{a}^\top \vec{x} )$ follo
 
 
 
-
-
-
-
+\vspace{-0.5em}
 \subsection{Quantizing Arbitrary Classification Losses}
+\vspace{-0.5em}
 
 Assume a standard classification setting, where we have samples $[(\vec{a}_i, b_i)]_i$ drawn from a distribution $\mathcal{D}$, a loss function $\ell: \R \rightarrow \R$, and we wish to find $\vec{x}$ which minimizes $\E_{\mathcal{D}} [ \ell( b \cdot \vec{a}^\top \vec{x}) ]$. The gradient of $\ell$ is given by 
 $$ \nabla_\vec{x} (b \cdot \vec{a}^\top \vec{x}) = b \ell' (b \cdot \vec{a}^\top \vec{x}) \vec{a}.$$
@@ -37,11 +35,15 @@ $$ \nabla_\vec{x} (b \cdot \vec{a}^\top \vec{x}) = b \ell' (b \cdot \vec{a}^\top
 Assume normalized samples, i.e. $\| \vec{a}_i \|_2 \leq 1, \forall i$, and that $\vec{x}$ is constrained such that $\| \vec{x} \|_2 \leq R$, for some real value $R > 0$. Further, assume we are given a target accuracy $\epsilon$, within which we wish to approximate the gradient. 
 
 Given this, we fix a minimal-degree polynomial $P$ such that $|P(z) - \ell'(z)| \leq \epsilon, \forall z \leq R$. This polynomial is known to both transmitter (sample source) and receiver (compute device). The protocol is as follows. 
+\vspace{-0.5em}
 \begin{itemize}
+    \vspace{-0.5em}
 	\item For a given sample $(\vec{a}_i, b_i)$ to be quantized, the source will transmit $b_i$, as well as $d + 1$ independent quantizations $Q_1, Q_2, \ldots, Q_{d + 1}$ of $\vec{a}_i$. 
+    \vspace{-0.5em}
 	\item The receiver computes $b \cdot Q(P) Q_{d + 1} ( \vec{a}_i )$ and uses it as the gradient.
 \end{itemize}
 
+\vspace{-0.5em}
 It is easy to see that the bias in each step is bounded by $\epsilon$. 
 We can extend Lemma~\ref{lem:poly-sec-moment-bound} to obtain a general guarantee on convergence. 
 
@@ -49,6 +51,7 @@ We can extend Lemma~\ref{lem:poly-sec-moment-bound} to obtain a general guarante
 	For any $\epsilon > 0$ and any convex classification loss function $\ell: \R \rightarrow \R$, there exists a polynomial degree $D(\epsilon, \ell)$ such that the polynomial approximation framework converges to within $\epsilon$ of OPT.  
 \end{lemma}
 
+\vspace{-0.5em}
 \paragraph{Chebyshev Approximations} 
 For \emph{hinge loss}, the gradient is the step function, which is hard to approximate generally by polynomials. 
 However, the problem is well studied for intervals of the type  $[-R, R] \setminus [-\delta, \delta]$, for some small parameter $\delta > 0$~\cite{frostig2016principal, allen2016faster}; the latter reference provides the optimal approximation via Chebyshev polynomials, which we use in our experiments. 
@@ -73,12 +76,13 @@ Figure~\ref{fig:approximation} shows how close the Chebyshev polynomial aprroxim
 \end{figure} 
 \fi
 
+\vspace{-0.5em}
 \paragraph{Practical Considerations} The above strategy introduces a precision-variance trade-off, since increasing the precision of approximation (higher polynomial degree) also increases the variance of the gradient. 
 Fortunately, we can reduce the variance and increase the approximation quality by increasing the density of the quantization. 
 The results in Section~\ref{sec:exp} show that a total of $8$ bits per sample is sufficient to ensure convergence to the same result as the full-precision 
 implementation for both hinge and logistic loss. 
 
-
+\vspace{-0.5em}
 \paragraph*{The Refetching Heuristic}
 To avoid the overhead of approximation, we develop the following heuristic, whose full description is left to the full version. 
 Consider for example hinge loss, i.e.  $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$. 

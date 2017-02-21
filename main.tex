@@ -96,35 +96,38 @@ lead to consistent order-of-magnitude speedups?}
 
 \vspace{-0.1em}
 For linear models, the answer is yes. We develop a simple 
-framework based on one novel strategy, called double sampling. 
-Our framework it is able 
+framework based on one simple, but novel strategy, called double sampling. 
+Our framework is able 
 to execute training at low precision with no bias, 
 guaranteeing convergence, whereas naive quantization 
 would introduce significant bias. We validate our framework   
 across a range of applications, and show that it enables an 
-FPGA prototype that is up to $10\times$ faster 
+FPGA prototype that is up to $6.5\times$ faster 
 than an implementation using full 32-bits precision.
 
 \vspace{-0.1em}
-We extend our framework through approximation to non-linear 
-models, such as SVM. We show that, although the bias of using 
-low precision data cannot be avoided, our approach can appropriately 
-control the bias. We find in practice {\em 8 bit} 
-precision is often sufficient to converge to the correct solution. 
-Interestingly, however, in practice, we notice that our framework does not always outperform the naive rounding approach. We discuss this negative result in detail. 
-
-\vspace{-0.1em}
-Further, we develop a variance-optimal 
+We further develop a variance-optimal 
 stochastic quantization
 strategy and show that 
 it can make a significant difference in a variety of settings. 
 When applied to linear models together with 
 double sampling, we save up to another 
-$2\times$ in data movement.
+$1.7\times$ in data movement.
 %compared with uniform quantization. 
 When
 training deep networks with quantized models, 
 we achieve higher accuracy than the state-of-the-art XNOR-Net. 
+
+\vspace{-0.1em}
+Last, we extend our framework through approximation to non-linear 
+models, such as SVM. We show that, although the bias of using 
+low precision data cannot be avoided, 
+\textcolor{red}{
+our approach can appropriately 
+control the bias.} We find in practice {\em 8 bit} 
+precision is often sufficient to converge to the correct solution. 
+Interestingly, however, in practice, we notice that our framework does not always outperform the naive rounding approach. We discuss this negative result in detail. 
+
 
 \end{abstract}
 
@@ -190,9 +193,9 @@ present both  positive and negative results
  obtained in the context of this framework. 
  Figure~\ref{fig:highlight} encapsulates our results: 
 (a) for linear models, we are able to lower the precision of both computation and communication, including input samples, gradients, and model, by up to $16$ times, while still providing rigorous theoretical guarantees; 
-(b) our FPGA implementation of this framework achieves up to $10\times$ speedup compared with
+(b) our FPGA implementation of this framework achieves up to $6.5\times$ speedup compared with
 a 32-bit FPGA implementation, or with a 10-cores CPU running Hogwild!;  
-(c) we are able to decrease data movement by $3\times$ for
+(c) we are able to decrease data movement by $2.7\times$ for
 tomographic reconstruction, while getting negligible quality decrease. 
 Elements of our framework generalize to (d) non-linear models and  (e) model compression for training deep learning models. 
 In the following, we describe our technical contributions in more detail. 
@@ -222,7 +225,7 @@ In the following, we describe our technical contributions in more detail.
 \vspace{-0.5em}
 \subsection{Summary of Technical Contributions}
 
-We first consider the following problem in training generialized linear models: 
+We consider the following problem in training generialized linear models: 
 \begin{align}
 \min_{\x}:\quad {1\over 2K}\sum_{k=1}^K l(\a_k^\top \x, b_k)^2 + R(\x)
 \label{eqn:leastsquares}
@@ -265,36 +268,11 @@ analyze the additional variance introduced
 by double sampling, we find that its impact is \emph{negligible in terms of convergence time} as long as the 
 number of bits to store a quantized sample is at least $\Theta( \log n / \sigma )$, 
 where $\sigma^2$ is the variance of the standard stochastic gradient. 
-Of note, this implies that the 32 bit precision may be excessive for many practical scenarios. 
+This implies that the 32 bit precision may be excessive for many practical scenarios. 
 
 We build on this quantization strategy to obtain an \emph{end-to-end quantization} strategy
 for linear models, which compresses all data movements. 
 For certain settings of parameters, end-to-end quantization adds as little as a \emph{constant factor} to the variance of the entire process. 
-
-%\vspace{-1em}
-\paragraph{(--) Non-Linear Models.} We extend our
-results to non-linear models such as SVM. We observe that 
-we can stretch our multiple-sampling strategy to provide 
-provide unbiased estimators for any polynomials, at the cost of increased variance. 
-Building further, we employ Chebyshev polynomials to   
-approximate the gradient of \emph{arbitrary loss functions} within arbitrarily low bias, 
-and to provide bounds on the error of an SGD solution obtained from low precision samples. 
-%Given the user's error tolerance as input, we can set the bit complexity to lower the bias in order to meet the error threshold. 
-%
-%By increasing the bit complexity of the representation, we can lower the bias 
-%
-%This provides a way to control the bias given 
-%users' error tolerance as input.  
-%When data is separable,
-%we prove that \textcolor{red}{BLAH BLAH 
-%BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
-%BLAH BLAH BLAH}. 
-In practice, using this technique, we are
-able to go as low as 8 bit precision for SVM and logistic regression, while providing 
-rigorous theoretical guarantees on the error. However, we notice that the strawman approach, which just
-does naive stochastic rounding over the input data to 8bit precision, converges to similar results in practical settings, 
-without the added complexity. 
-In a nutshell, this negative result is explained by the fact that, to approximate well non-linearities such as the step function or the sigmoid, our framework needs both high degree Chebyshev polynomials, and relatively large (4bit) samples. 
 
 %\vspace{-1em}
 \paragraph{(+) Optimal Quantization and Extension to Deep Learning.}
@@ -304,7 +282,7 @@ We formulate this as an independent optimization problem, and solve it optimally
 an efficient dynamic programming algorithm 
 that only need to scan the data in a single pass.
 When applied to linear models, this optimal 
-strategy can save up to $2\times$ communication
+strategy can save up to $1.6\times$ communication
 compared with the uniform strategy.
 
 We perform an analysis of the optimal quantizations for various settings, and observe that the uniform quantization approach
@@ -319,6 +297,34 @@ range of other recent approaches. This
 is related, but different, to recent work 
 on model compression for inference~\cite{Han:2016:ICLR}. 
 To our best knowledge, this is the first time such optimal quantization strategies have been applied to training. 
+
+%\vspace{-1em}
+\paragraph{(--) Non-Linear Models.} We extend our
+results to non-linear models such as SVM. We observe that 
+we can stretch our multiple-sampling strategy to provide 
+unbiased estimators for any polynomials, at the cost of increased variance. 
+Building further, we employ Chebyshev polynomials to   
+\textcolor{red}{
+approximate the gradient of \emph{arbitrary loss functions} within arbitrarily low bias, 
+and to provide bounds on the error of an SGD solution obtained from low precision samples. }
+%Given the user's error tolerance as input, we can set the bit complexity to lower the bias in order to meet the error threshold. 
+%
+%By increasing the bit complexity of the representation, we can lower the bias 
+%
+%This provides a way to control the bias given 
+%users' error tolerance as input.  
+%When data is separable,
+%we prove that \textcolor{red}{BLAH BLAH 
+%BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
+%BLAH BLAH BLAH}. 
+In practice, using this technique, we are
+able to go as low as 8 bit precision for SVM and logistic regression, \textcolor{red}{while providing 
+rigorous theoretical guarantees on the error.} However, we notice that the strawman approach, which just
+does naive stochastic rounding over the input data to 8bit precision, converges to similar results in practical settings, 
+without the added complexity. 
+In a nutshell, this negative result is explained by the fact that, to approximate non-linearities such as the step function or the sigmoid well, our framework needs both high degree Chebyshev polynomials, and relatively large (4bit) samples. 
+
+
 
 \vspace{-0.5em}
 \section{Linear Models}
@@ -339,7 +345,7 @@ We have $\E [\g_k^{(full)}] = \nabla f(\x_k)$.
 \paragraph*{Stochastic Quantization} 
 Given a vector
 $\v$, let $M(\v)$ be a scaling factor such that
-$-1 \le \v/M(\v) \le 1$\todo{is this standard notation?}. Without loss of generality,
+$-1 \le \v/M(\v) \le 1$. Without loss of generality,
 let $M(\v)=||\v||_2$. We partition
 the interval $[-1, 1]$ using $s+1$ separators:
 $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for
@@ -498,21 +504,13 @@ where all $Q$'s are independent quantizations.
 \end{corollary}
 
 
-\input{nonlinear.tex}
-
-%\textcolor{red}{DAN: ADD ONE SENTENCE ABOUT HOW IT WORKS IN PRACTICE?}
-
-\vspace{-0.5em}
+\vspace{-2em}
 \section{Optimal Quantization Strategy} \label{sec:optimal}
 
 \vspace{-0.5em}
 We now revisit the choice of quantization points
 and present an optimal strategy to minimize 
 the variance term introduced by quantization.
-
-\vspace{-0.5em}
-\subsection{Variance-Optimal Quantization}
-\vspace{-0.5em}
 
 \input{OQS.tex}
 
@@ -545,6 +543,7 @@ XNOR-Net searches the optimal quantization point. However, for multiple bits,
 XNOR-Net, as well as other approaches such as QNN, resort
 to uniform quantization.
 
+\vspace{-0.5em}
 \paragraph*{Optimal Model Quantization for Deep Learning}
 
 We can apply our optimal quantization strategy 
@@ -573,8 +572,15 @@ are the first to apply optimal quantization to
 {\em training}.
 
 
+
+\input{nonlinear.tex}
+
+%\textcolor{red}{DAN: ADD ONE SENTENCE ABOUT HOW IT WORKS IN PRACTICE?}
+
+
+
 \begin{table}[t]
-\small
+\scriptsize
 \centering
 \begin{tabular}{crrrr}
 \hline
@@ -620,37 +626,52 @@ and (3) deep learning.
 \vspace{-1em}
 \paragraph{Experimental Setup} 
 Table~\ref{table:dataset} shows the 
-datasets we use. Due to space
-limitations, we only report
-(1) Synthetic 100 for regression, 
-(2) gisette for classification,
-and (3) CIFAR-10 for deep learning.
-The full version of the paper contains a wide range of additional experiments.
+datasets we use. 
 Unless otherwise noted, we always
 use diminishing stepsizes $\alpha/k$
 where $k$ is the current number of
-epoch. We tune the initial step size
-$\alpha$ for the best performance of the full precision
+epoch. We tune 
+$\alpha$ for the full precision
 implementation, and use the
 same initial step size for 
 our low precision 
-implementation. 
-
-We note that the low precision
-implementation, as implied by
-the theory and our experience, often favors smaller step size. 
-In our experiments, we do not tune step sizes for the low precision 
+implementation (Theory and
+experiments imply that the low precision
+implementation often favors smaller step size. 
+Thus we do not tune step sizes for the low precision 
 implementation, as this can only make our 
-approach better. 
+approach better.) 
+
+\vspace{-1em}
+\paragraph*{Summary of Experiments in Full Version}
+Due to space limitations, we only
+report a very small subset of result, and
+we summarize the result in the full
+version here: (1) In the body we only report
+{\bf Synthetic 100} for regression and 
+{\bf gisette} for classification---we
+report the result of other data sets 
+in the full version; In the
+full version, we also report (2) different
+factors such as the number of features
+to low-precision algorithms, (3) FPGA
+implementation details and design
+decisions there, and (4) refetching
+heuristics.
+
+
+
+
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{final-experiments/linearmodel} 
+\includegraphics[width=0.7\columnwidth]{final-experiments/linearmodel} 
+\vspace{-1em}
 \caption{Linear models with end-to-end low precision.}
 \label{fig:convergence}
 \end{figure}
 
-\vspace{-0.5em}
+\vspace{-1em}
 \subsection{Linear Models}
 \vspace{-0.5em}
 
@@ -665,6 +686,7 @@ prototype achieves significant speed-up
 because of the decrease of bandwidth
 consumption.
 
+\vspace{-1em}
 \paragraph{Convergence}
 
 Figure~\ref{fig:convergence} illustrates
@@ -694,10 +716,11 @@ could potentially save 8-10$\times$
 memory bandwidth compared to using 
 32-bit. 
 
+\vspace{-1em}
 \paragraph{Speedup}
 We implemented our low-precision 
-framework for training a linear model 
-on a state-of-the-art FPGA platform. We leave the detailed 
+framework on a state-of-the-art 
+FPGA platform. We leave the detailed 
 implementation and the circuit to
 the full version of this paper. 
 This implementation assumes the input
@@ -726,12 +749,13 @@ explains the speedup.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{final-experiments/linear-fpga} 
+\includegraphics[width=0.7\columnwidth]{final-experiments/linear-fpga} 
+\vspace{-1em}
 \caption{FPGA implementation of linear models.}
 \label{fig:speedup}
 \end{figure}
 
-\vspace{-0.5em}
+\vspace{-1em}
 \subsection{Non-Linear Models}
 \vspace{-0.5em}
 
@@ -746,6 +770,7 @@ rounding or naive stochastic rounding
 to achieve the same quality and convergence 
 rate.
 
+\vspace{-0.5em}
 \paragraph{Chebyshev Approximations}
 
 Figure~\ref{fig:chebyshev} illustrates
@@ -767,11 +792,13 @@ We also get no loss in test accuracy.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{final-experiments/chebyshev} 
+\includegraphics[width=0.7\columnwidth]{final-experiments/chebyshev} 
+\vspace{-1em}
 \caption{Non-linear models with Chebyshev approximation.}
 \label{fig:chebyshev}
 \end{figure}
 
+\vspace{-0.5em}
 \paragraph{Negative Results}
 
 We are able to construct the following,
@@ -794,7 +821,8 @@ approximation.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{final-experiments/optimal} 
+\includegraphics[width=0.7\columnwidth]{final-experiments/optimal} 
+\vspace{-1em}
 \caption{Optimal quantization strategy.}
 \label{fig:optimal}
 \end{figure}
@@ -843,14 +871,11 @@ one can get by training neural network with
 a carefully chosen quantization strategy.
 
 
-
-
-
-\vspace{-0.5em}
+\vspace{-1em}
 \section{Related Work} 
 
 \vspace{-0.5em}
-There has been significant work on ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
+There are work on ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
 Most of them provide
 theoretical guarantee when the gradients are quantized.
 The model and input samples, on the other hand, are much more difficult
@@ -864,7 +889,7 @@ quantization for all components.
 
 Low-precision training of deep neural networks has been studied
 intensively and many heuristics work well for a subset of networks.
-For example, OneBit SGD~\cite{Frank:2014:Interspeech} provides
+OneBit SGD~\cite{Frank:2014:Interspeech} provides
 a gradient compression heuristic developed in the context of deep 
 neural networks for speech recognition. There are successful 
 application of end-to-end quantization to training neural networks
@@ -905,23 +930,22 @@ lower the precision when training machine learning models
 on these hardware~\cite{Kim:2011:ICASSP}. 
 These results are mostly empirical; we
 aim at providing a theoretical understanding, which 
-enables new practical algorithms that are not covered 
+enables new algorithms that are not covered 
 by these references.
 
-
+\vspace{-1em}
 \section{Discussion and Future Work}
 \label{sec:conclusions}
 
-The motivating question of this paper was whether end-to-end low-precision data representation can enable efficient computation, 
-while maintaining convergence guarantees. 
+The motivating question of this paper was whether end-to-end low-precision data representation can enable efficient computation, while maintaining convergence guarantees. 
 We have shown that a relatively simple stochastic quantization framework can achieve this for linear models. 
 Moreover, for this setting, as little as two bits per model dimension are sufficient for good accuracy, and can enable a high-performance FPGA implementation.  
 
 For non-linear models, the picture we observe is more nuanced. 
 In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8 bit precision is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
-However, in this setting, naive rounding achieves similar practical performance. 
+However, in this setting, naive rounding has similar performance. 
 
-It is interesting to consider the rationale behind these results. On the one hand, our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we must focus on guaranteeing arbitrarily low bias. 
+It is interesting to consider the rationale behind these results. On one hand, our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we must focus on guaranteeing arbitrarily low bias. 
 However, for a variety of interesting functions, such as hinge loss, guaranteeing low bias requires high polynomial approximations. In turn, these increase the variance (since variance bounds are exponential in the degree). These two constraints force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. 
 
 In future work, we plan to examine compressed data representations which are not necessarily (approximate) unbiased estimators of the high-precision process. 
@@ -929,7 +953,7 @@ Such representations, for instance based on naive rounding with feedback error c
 
 An independent contribution of our work is a set of algorithms for finding an optimal quantization with respect to variance. 
 We show that improved quantizations can significantly improve accuracy for training in both convex and non-convex settings. 
-In future work, we plan to further explore the potential of these techniques in the context of training and inference.  
+In future work, we plan to explore the potential of these techniques for training and inference.  
 
 \cleardoublepage
 
