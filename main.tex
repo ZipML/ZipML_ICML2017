@@ -611,38 +611,37 @@ CIFAR-10        & 50,000        & 10,000             &$32\times 32\times 3$     
 \section{Experiments} \label{sec:exp}
 
 \vspace{-0.5em}
-We provide empirical validations of
+We provide empirical validation of
 our framework on a range of
 models, including
 (1) linear models, (2) non-linear models,
 and (3) deep learning.
 
 \vspace{-1em}
-\paragraph{Experiment Setup} 
+\paragraph{Experimental Setup} 
 Table~\ref{table:dataset} shows the 
-data sets we use. Due to space
-limitation, we only report
+datasets we use. Due to space
+limitations, we only report
 (1) Synthetic 100 for regression, 
 (2) gisette for classification,
 and (3) CIFAR-10 for deep learning.
-We leave the result of other data
-sets to the full version of this paper.
-Without special notice, we always
+The full version of the paper contains a wide range of additional experiments.
+Unless otherwise noted, we always
 use diminishing stepsizes $\alpha/k$
 where $k$ is the current number of
 epoch. We tune the initial step size
-$\alpha$ for the full precision
+$\alpha$ for the best performance of the full precision
 implementation, and use the
 same initial step size for 
 our low precision 
-implementation.\footnote{Low precision
+implementation. 
+
+We note that the low precision
 implementation, as implied by
-the theory and our experience, some
-times favors smaller step size. 
-In our experiments, we
-do not tune step sizes for the low precision 
-implementation as this can only make our 
-approach better.}
+the theory and our experience, often favors smaller step size. 
+In our experiments, we do not tune step sizes for the low precision 
+implementation, as this can only make our 
+approach better. 
 
 \begin{figure}[t]
 \centering
@@ -674,7 +673,7 @@ the result of training linear models:
 regression and (b) least squares SVMs,
 with end-to-end low-precision and 
 full precision. For
-low precision, We pick the 
+low precision, we pick the 
 smallest number of bits that
 result in a smooth convergence
 curve. We compare the final 
@@ -686,11 +685,11 @@ and least squares SVM,
 using 3 or 4-bit is always enough
 to converge to the same solution
 with comparable convergence rate. 
-This validates our theory that
-double-sampling indeed provides an
+This validates our prediction that
+double-sampling provides an
 unbiased estimators of the gradient.
 Considering the size of input
-samples that we need to read---We
+samples that we need to read, we
 could potentially save 8-10$\times$ 
 memory bandwidth compared to using 
 32-bit. 
@@ -698,13 +697,13 @@ memory bandwidth compared to using
 \paragraph{Speedup}
 We implemented our low-precision 
 framework for training a linear model 
-on FPGA. We leave the detailed 
+on a state-of-the-art FPGA platform. We leave the detailed 
 implementation and the circuit to
 the full version of this paper. 
 This implementation assumes the input
 data is already quantized and
-stored in memory (these quantized
-data could be generated during the
+stored in memory (quantized
+data can be generated during the
 first epoch of training.)
 
 Figure~\ref{fig:speedup} illustrates 
@@ -713,7 +712,7 @@ implementation with quantized data,
 (2) FPGA implementation with 32-bit
 data, and (3) Hogwild! running with
 10 CPU cores.
-We see that, all approaches
+Observe that all approaches
 converge to the same solution.
 FPGA with quantized data converges
 6-7$\times$ faster
@@ -722,7 +721,7 @@ or Hogwild!. The FPGA implementation
 with full precision is
 memory-bandwidth bound, and by using our framework on quantized data, we save 
 up to 8$\times$ memory-bandwidth, which
-lead to the speed-up.
+explains the speedup.
 
 
 \begin{figure}[t]
@@ -736,10 +735,10 @@ lead to the speed-up.
 \subsection{Non-Linear Models}
 \vspace{-0.5em}
 
-We validate that (1) with Chebyshev 
-approximation our approach is able to
+We validate that (1) our Chebyshev 
+approximation approach is able to
 converge to almost the same solution 
-with only 8-bit for both SVM
+with 8-bit precision for both SVM
 and logistic regression;
 and (2) however, we are able to construct
 a strawman with 8-bit deterministic 
@@ -851,7 +850,7 @@ a carefully chosen quantization strategy.
 \section{Related Work} 
 
 \vspace{-0.5em}
-There has been intensive study about ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
+There has been significant work on ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
 Most of them provide
 theoretical guarantee when the gradients are quantized.
 The model and input samples, on the other hand, are much more difficult
