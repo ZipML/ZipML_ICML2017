@@ -15,7 +15,7 @@ We will use $d$ independent quantizations of $\vec{a}$, $Q_1(\vec{a}), Q_2(\vec{
 Given these quantizations, our reconstruction of the polynomial at $( \vec{a}^\top \vec{x})$ will be 
 $$ Q(P) := \sum_{i = 0}^d m_i \prod_{j \leq i} Q_j(\vec{a})^\top \vec{x}.$$
 
-The fact that this is an unbiased estimator of $P( \vec{a}^\top \vec{x} )$ follows from the independence of the quantizations. Using Lemma~\ref{lem:quant-facts} yields:\todo{probably not exactly what we need}
+The fact that this is an unbiased estimator of $P( \vec{a}^\top \vec{x} )$ follows from the independence of the quantizations. Using Lemma~\ref{lem:quant-facts} yields:
 
 \begin{lemma}
 \label{lem:poly-sec-moment-bound}
@@ -43,10 +43,10 @@ Given this, we fix a minimal-degree polynomial $P$ such that $|P(z) - \ell'(z)| 
 \end{itemize}
 
 It is easy to see that the bias in each step is bounded by $\epsilon$. 
-We can extend Lemma~\ref{lem:poly-sec-moment-bound} to obtain a general bound on convergence. 
+We can extend Lemma~\ref{lem:poly-sec-moment-bound} to obtain a general guarantee on convergence. 
 
 \begin{lemma}
-	\textcolor{red}{DAN: TODO here}
+	For any $\epsilon > 0$ and any convex classification loss function $\ell: \R \rightarrow \R$, there exists a polynomial degree $D(\epsilon, \ell)$ such that the polynomial approximation framework converges to within $\epsilon$ of OPT.  
 \end{lemma}
 
 \paragraph{Chebyshev Approximations} 
