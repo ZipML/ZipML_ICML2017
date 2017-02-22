@@ -25,7 +25,7 @@
 \newcommand{\R}{\mathsf{R}}
 \newcommand{\sgn}[1]{\mbox{sgn}(#1)}
 \renewcommand{\vec}[1]{\mathbf{#1}}
-
+\newcommand{\poly}{\mathrm{poly}}
 
 \def\a{{\bf a}}
 \def\g{{\bf g}}
@@ -156,7 +156,7 @@ We assume repeated access to stochastic gradients, which on (possibly random) in
 Formally:
 \begin{definition}
 Fix $f: \mathcal{X} \to \R$.
-A \emph{stochastic gradient} for $f$ with bias bound $\beta$ is a random function $g (\x)$ so that $\E [g (\x) ] = G( \x)$, where $\| G(x) - \nabla f(x) \|_2 \leq \beta$ for all $x \in \mathcal{X}$.
+A \emph{stochastic gradient} for $f$ with bias bound $\beta$ is a random function $g (\x)$ so that $\E [g (\x) ] = G( \x)$, where $\| G(\x) - \nabla f(\x) \|_2 \leq \beta$ for all $x \in \mathcal{X}$.
 %A \emph{stochastic oracle} for $f$ is an oracle which on (possibly random) input $\vec{x}$, outputs a stochastic gradient for $f$ at $\vec{x}$.
 We say the stochastic gradient has second moment at most $B$ if $\E [\| g \|_2^2] \leq B$ for all $\x \in \mathcal{X}$.
 We say it has variance at most $\sigma^2$ if $\E [\| g (\x) - \nabla f(\x) \|_2^2] \leq \sigma^2$ for all $\x \in \mathcal{X}$. 
@@ -166,6 +166,7 @@ For simplicity, if $\beta = 0$ we will simply refer to such a random function as
 Under these conditions, the following convergence rate for SGD is well-known:
 
 \begin{theorem}[e.g. \cite{Bubeck15}, Theorem 6.3]
+\label{thm:sgd}
 Let $\mathcal{X} \subseteq \R^n$ be convex, and let $f: \mathcal{X} \to \R$ be an unknown, convex, and $L$-smooth.
 Let $\x_0 \in \mathcal{X}$ be given, and let $R^2 = \sup_{\x \in \mathcal{X}} \| \x - \x_0 \|_2^2$.
 Suppose we run projected SGD on $f$ with access to independent stochastic gradients with bias bound $\beta$ and variance bound $\sigma^2$ for $T$ steps, with step size $\eta_t = 1 / ( L + \gamma^{-1})$, where $\gamma = \frac{R}{\sigma} \sqrt{\frac{2}{T}}$, and
@@ -367,6 +368,7 @@ as claimed, since $\| \g'_k \|_2^2 = \| \a_k \|_2^2 (\a_k^T \x + b_k)^2$.
 \end{proof}
 In particular, this implies the following variance bound on our quantized updates:
 \begin{corollary}
+\label{cor:var-bound}
     Let $\a_k, \x, b_k, \g'_k$ be as above.
     Suppose moreover $\E [\| \g'_k - \nabla f(\x_k) \|_2^2 ] \leq \sigma^2$ and $\E [\| \g'_k \|_2^2] \leq B$.
     Then, we have
@@ -377,7 +379,7 @@ In particular, this implies the following variance bound on our quantized update
 \end{corollary}
 \begin{proof}
     Observe that $\| \g_k - \nabla f(\x_k) \|_2^2 = \| \g_k - \g'_k \|_2^2 + 2 (\g_k - \g'_k)^\top (\g'_k - \nabla f(\x_k)) + \| g'_k + \nabla f(\x_k) \|_2^2$.
-    Since $\E [(\g_k - \g'_k)^\top (\g'_k - \nabla f(\x_k))] = 0$, and by assumption $\E [ \| g'_k + \nabla f(\x_k) \|_2^2] \leq \sigma^2$, it suffices the bound the expectation of the first term.
+    Since $\E [(\g_k - \g'_k)^\top (\g'_k - \nabla f(\x_k))] = 0$, and by assumption $\E [ \| g'_k + \nabla f(\x_k) \|_2^2] \leq \sigma^2$, it suffices to bound the expectation of the first term.
     We have
     \[
      \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq 2 \sigma^2 + 2\E_{\g'_k} \left[ \E_{Q_1, Q_2} [ \| \g'_k - \g_k \|_2^2 \left| \right. \g'_k ] \right] \; .
@@ -402,9 +404,10 @@ The first term $\sigma^2$ is due to using stochastic gradient, while the second 
 We now assume the setting where the processor can only work with the model in \emph{quantized} form when computing the gradients. 
 However, the gradient is stored in full precision---the model is quantized only when communicated. 
 The gradient computation in this case is:
-\[
+\begin{equation}
+\label{eqn:leastsquares}
 \g_k := \a_k \a_k^\top Q( \x , s) + \a_k b_k.
-\]
+\end{equation}
 It is easy to see that this gradient is unbiased, as the quantizer commutes with the (linear) gradient. 
 \[
 \E[ \g_k ]  := \a_k \a_k^\top \E [ Q( \x, s ) ]  + \a_k b_k = \a_k \a_k^\top \x   + \a_k b_k = \g_k .
@@ -484,6 +487,18 @@ The iteration then is:
     \]
 \end{corollary}
 
+By a calculation identical to the proof of Cor \ref{cor:var-bound}, we obtain:
+\begin{corollary}
+    \label{cor:full-quantizationVar}
+    Let $\a_k, \x, b_k$ be so that $\| \a_k \|_2^2 \leq 1, \| \x \|_2^2 \leq R^2$.
+    Let $M_a, M_x$ be as above, and let $\g'_k = \a_k (\a_k^\top \x + b_k)$ be the (unquantized) stochastic gradient.
+    Then, we have
+    \[
+    \E [\| \g_k - \nabla f(\x_k) \|_2^2] \leq \sigma^2 + \rrow \cdot \left( r M_a \left( \| \g'_k \|_2^2 + \frac{R^2}{s^2} \right)  + \frac{r^2 M_a^2 R^2}{s^2} \right) \; .
+    \]
+\end{corollary}
+Plugging this into Theorem \ref{thm:sgd} gives the bounds for convergence of these end-to-end quantization methods with SGD.
+
 \section{Extension to Classification Models}
 
 \subsection{Least Squares Support Vector Machines}
@@ -493,7 +508,7 @@ least squares support vector machines--a model
 popularly used for classification tasks and
 often showing comparable accuracy to
 SVM~\cite{SvmVsLssvm}.
-The  Least Squares SVM optimization problem of is formally defined as follows: 
+The  Least Squares SVM optimization problem is formally defined as follows: 
 
 \begin{align*}
 \min_{\x}:\quad {1\over 2K}\sum_{k=1}^K (1-b_k\a_k^\top \x)^2 + {c\over 2}\|\x\|^2
@@ -507,39 +522,224 @@ We now have:
 \end{align*}
 where $c$ is the regularization parameter. The gradient at a randomly selected sample$(\a_k, b_k)$ is: 
 \[
-\g_k := \a_k \a_k^\top \x + \a_k b_k + {c\over k} \x.
+\g'_k := \a_k \a_k^\top \x + \a_k b_k + {c\over k} \x.
 \]
 
-The gradient is similar to regularized linear regression (Eq.~\ref{eqn:leastsquares}). Therefore, we can still use 
+The gradient is similar to regularized linear regression (Eq.~\ref{eqn:leastsquares}). 
+In particular, the only difference is the additional $\x$ term.
+Since we can quantize this term separately using an additional quantization, and we can quantize first term using the techniques above, we can still use 
 the same quantization framework we developed
 for linear regression.
 
-\subsection{Support Vector Machines}
+\section{Support Vector Machines}
 
-Consider solving the following regularized hinge loss optimization problem for Support Vector Machines(SVM):
+Consider solving the following hinge loss optimization problem for Support Vector Machines(SVM):
 \begin{align*}
-\min_{\x}:\quad \sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x) + R(\x).
+\min_{\| \x \|_2 \leq R}:\quad \sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x) \; .
 \end{align*}
 The gradient at a randomly selected sample $(\a_k, b_k)$ is: 
 
 \[
-\g_k := \left\{ \begin{array}{ll}
-         -b_k \a_k^\top & \mbox{if $b_k \a_k^\top \x < 1$};\\
+\g'_k := \left\{ \begin{array}{ll}
+         -b_k \a_k & \mbox{if $b_k \a_k^\top \x < 1$};\\
          0 & \mbox{otherwise}. \end{array} \right.
 \]
-This loss function is not smooth. When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^\top \x)$ and $(1 - b_k Q(\a_k)^\top \x)$ may have different signs, in which case the two procedures will apply different gradients. We say that in this case the gradient is \emph{flipped}. 
- 
-To eliminate gradient flips, after getting the quantized sample $Q(\a_k)$, we can compute  upper and lower bounds on $1 - b_k \a_k^\top \x$. 
+Observe that this loss function is not smooth. 
+When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^\top \x)$ and $(1 - b_k Q(\a_k)^\top \x)$ may have different signs, in which case the two procedures will apply different gradients. We say that in this case the gradient is \emph{flipped}. 
+We have two approaches to dealing with this: the first provides rigorous guarantees, however, requires some fairly heavy algorithmic machinery (in particular, Johnson-Lindenstrauss matrices with little randomness).
+The latter is a simpler heuristic that we find works well in practice.
+
+\subsection{Polynomial approximation and $\ell_2$-refetching via Johnson-Lindenstrauss}
+Let $H(x)$ be the Heaviside function, i.e. $H(x) = 1$ if $x \geq 0$ and $H(x) = 0$ if $x < 0$. 
+For some fixed parameters $\epsilon, \delta$, we take a degree $d$ polynomial $P$ so that $| P(x) - H(x) | \leq \epsilon$ for all $x \in [-(R^2 + 1), R^2 + 1] \setminus [-\delta, \delta]$, and so that $|P(x)| \leq 1$ for all $x \in  [-(R^2 + 1), R^2 + 1]$.
+Since the gradient of the SVM loss may be written as $\g'_k = -H(1 - b_k \a_k^\top \x) b_k \a_k$, we will let $Q$ be a random quantization of $P(1 - b_k \a_k^\top \x)$ (as described in the main paper), and our quantized gradient will be written as $\g_k = -Q(1 - b_k \a_k^\top \x) b_k Q_2 (\a_k)$, where $Q_2$ is an independent quantization of $\a_k$.
+
+However, this will not work in general.
+In particular, the polynomial approximation offers no guarantees when $1 - b_k \a_k^\top \x \in [-\delta, \delta]$.
+Our approach will be to estimate this quantity using little communication per round, and then refetch the data points if $1 - b_k \a_k^\top \x \in [-\delta, \delta]$.
+We show that under reasonable generative assumptions on the $\a_k$, we will not have to refetch very often.
+
+\subsubsection{$\ell_2$-refetching using Johnson-Lindenstrauss}
+For scalars $a, b$ and $\gamma \in [0, 1)$, we will use $a \leq_\gamma b$ to mean $a \leq e^\gamma b$, and $a \approx_\gamma b$ to denote that $e^{-\gamma} a \leq b \leq e^\gamma a$.
+
+We require the following theorem:
+\begin{theorem}
+\label{thm:JL}
+Fix $\gamma, \tau > 0$, $d$. 
+Let $r = O(\log (1 / \tau) / \gamma^2)$.
+Then, there is a distribution $\mathcal{D}$ over $n \times r$ matrices which take values in $\pm 1$ so that if $M$  is drawn from $\mathcal{D}$, then for any $x \in \R^n$, we have $\| x \|_2 \approx_\gamma \| M x \|_2$ with probability $1 - \tau$.
+If the processors have shared randomness, the distribution can be sampled in time $O(n r)$.
+
+Otherwise, the distribution can be sampled from in time $O(n \log n + \poly (r))$, and using only 
+\[
+\alpha (n, \gamma, \tau) := O \left( \log n + \log (1 / \tau) \cdot \log \left( \frac{\log 1 / \tau}{\gamma} \right) \right)
+\]
+bits of randomness.
+\end{theorem}
+\noindent
+If $M \sim \mathcal{D}$, we will call $M$ a \emph{JL matrix}.
+In the remainder, we will assume that the processors have shared randomness.
+We will use this shared randomness solely to sample the same $M$ between the two processors.
+Otherwise, one processor may simply send $\alpha (n, \gamma, \tau)$ random bits to the other, and it is easily verified this does not change the asymptotic amount of communication required.
+
+As a corollary of this, we have:
+\begin{corollary}
+\label{cor:l2-refetch}
+Fix $\delta, \tau$. Suppose one processor has $\a_k$ and another has $\x$.
+Suppose furthermore that $\| \a_k \|_2^2 \leq 1$, and $\| \x \|_2^2 \leq R^2$, where $R \geq 1$.
+ There is a protocol which with probability $1 - \tau$ outputs a $c$ so that $|c - (1 - b_k \a_k^\top \x_k)| \leq \delta$ that requires each processor to send 
+ \[
+ O\left( R^2 \frac{\log (1 / \tau) \log (n / \delta)}{\gamma^2} \right)
+ \]
+ bits.
+\end{corollary}
+\begin{proof}
+The protocol is as follows.
+Let $\gamma' = O(\gamma / R)$, and let $r$ be as above, except with $\gamma'$.
+Using these shared random bits, have both processors sample the same $M \sim \mathcal{D}$.
+Then, have the processors send $M \a_k$ and $M \x$ up to $O(\log n / \delta)$ bits of precision per coordinate.
+Using these vectors, compute the quantities $\| M (\a_k - \x) \|_2^2, \| M \a_k \|_2^2, \| M \x \|_2^2$ up to additive error $O(\delta)$.
+Then, output 
+$c = 1 - b_k (\| M \a_k - M \x \|_2^2 - ( \| M \a_k \|_2^2 + \| M \x \|_2^2 ))$.
+
+That this protocol sends the correct number of bits follows from the description of the algorithm.
+Thus it suffices to prove correctness.
+By Theorem \ref{thm:JL} and a union bound, we have that $\| M (\a_k - \x) \|_2^2 \approx_{2 \gamma} \| \a_k - \x \|_2^2$, $ \| M \a_k \|_2^2 \approx_{2 \gamma} \| \a_k \|_2^2, \| M \x \|_2^2 \approx_{2 \gamma} \| \x \|_2^2$ with probability $1-\tau$.
+Let us condition on this event for the rest of the proof.
+We have $\| x \|_2^2 \leq R^2$ and so by a triangle inequality, $\| \a_k - x \|_2^2 \leq (\sqrt{R} + 1)^2$.
+Thus, by our choice of $\gamma$, we have that $|\| M v \|_2^2 - \| v \|_2^2 | \leq O(\delta)$, for all $v \in \{\a_k - x, \a_k, \x \}$.
+Thus, since $2 \a_k^\top \x = \| \a_k - \x \|_2^2 - ( \| \a_k \|_2^2 + \| \x \|_2^2 )$, this implies that by an appropriate setting of parameters, we have that $|c - (1 - b_k \a_k^\top \x_k)| \leq \delta$, as claimed.
+\end{proof}
+
+Thus, our algorithm for computing the gradient for SVM is as follows.
+\begin{itemize}
+\item
+Use the protocol from Corollary \ref{cor:l2-refetch} with $\tau = O(\delta)$ to compute a $c$  so that with probability $1 - \delta$ we have $|c - (1 - b_k \a_k^\top \x) | \leq \delta$.
+\item
+If $|c| \leq 2 \delta$, we refetch and compute the full (unquantized) gradient.
+\item
+Otherwise, we output $\g_k$.
+\end{itemize}
+Then, our result is the following:
+\begin{theorem}
+Let $\hat{\g}_k$ be the estimator produced by the above procedure.
+Then, $\hat{\g}_k$ is a stochastic gradient for $\nabla f(\x)$ with bias $\epsilon$, and with variance $\sigma^2 + \delta + r(s)$, where $r(s) = \E [\| \g_k \|_2^2]$.
+\end{theorem}
+\begin{proof}
+We first prove the bias bound.
+Fix any choice of $k$.
+Let us say the above procedure \emph{succeeds} if the estimator $c$ it produces satisfies $|c - (1 - b_k \a_k^\top \x) | \leq \delta$, and say it fails otherwise.
+
+There are two cases, depending on $c$.
+Suppose we have $c \in [-2 \delta, 2 \delta]$.
+Then, we have
+\begin{align*}
+\E [\hat{\g}_k \mid c \in [-2 \delta, 2 \delta]] &= \g'_k \; ,
+\end{align*}
+so obviously in this case we are unbiased.
+
+On the other hand, if $c \not\in [-2 \delta, 2 \delta]$, then we have
+\begin{equation}
+\label{eq:l2-refetch}
+\E [\hat{\g}_k \mid c \not\in [-2 \delta, 2 \delta]] = (\g'_k + \w_k) \Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{success}] + \g_k  \Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{failure}] \; ,
+\end{equation}
+where $\| \w_k \|_2 \leq O(\delta)$, since if $c \not\in [-2 \delta, 2 \delta]$ and we succeed, this implies that $1 - b_k \a_k^\top \x_k \not\in [\delta, \delta]$, and thus in this case 
+\begin{align*}
+\left\| \E [\hat{\g}_k \mid c \not\in [-2 \delta, 2 \delta], \mathrm{success}] - \g'_k \right\| &= \left\| \left( \E [Q(1 - b_k \a_k^\top \x)] - H(1 - b_k \a_k^\top \x) \right)  (- b_k \a_k) \right\| \\
+&\leq \left| \E [Q(1 - b_k \a_k^\top \x)] - H(1 - b_k \a_k^\top \x)) \right| \\
+&= \left| P(1 - b_k \a_k^\top \x) - H(1 - b_k \a_k^\top \x ) \right| \\
+&\leq O(\delta) \; ,
+\end{align*}
+by assumption.
+
+Finally, since $\Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{failure}] \leq O(\delta)$, and $\| g_k \|_2 \leq 1$, (\ref{eq:l2-refetch}) implies that $\| \E [\hat{\g}_k] - \g'_k \|_2 \leq O(\delta)$.
+By an appropriate choice of constants, this implies the desired bias bound for any fixed $\a_k$.
+Taking an expectation over all $\a_k$ yields the desired result.
+
+We now turn our attention to the variance bound.
+We again split into two cases, depending on $c$.
+Clearly, we have
+\[
+\E [\| \hat{\g}_k - \nabla f(\x) \|_2^2 \mid c \in [-2 \delta, 2 \delta]] = \sigma^2 \; .
+\]
+The interesting case is when $c \not\in [-2 \delta, 2 \delta]$.
+In this case, we have
+\begin{align*}
+\E [\| \hat{\g}_k - \nabla f(\x) \|_2^2 \mid c \not\in [-2 \delta, 2 \delta]] &= \E [\| \hat{\g}_k - \nabla f(\x) \|_2^2 \mid c \not\in [-2 \delta, 2 \delta], \mathrm{success}] \Pr [\mathrm{success}]  \\
+ &~~~~ +\E [\| \hat{\g}_k - \nabla f(\x) \|_2^2 \mid c \not\in [-2 \delta, 2 \delta], \mathrm{failure}] \Pr [\mathrm{failure}] \; ,
+\end{align*}
+as before.
+We analyze each term separately.
+As before, observe that if $c \not\in [-2 \delta, 2 \delta]$ and we succeed, then $1 - b_k \a_k^\top \x \not\in [- \delta, \delta]$.
+Hence, we have
+\begin{align*}
+\E [\| \hat{\g}_k - \nabla f(\x) \|_2^2 \mid c \in [-2 \delta, 2 \delta], \mathrm{success}] &= \E_{\g_k} \E_{\a_k} [\| \g_k - \nabla f(\x) \|_2^2 \mid c \in [-2 \delta, 2 \delta], \mathrm{success}] \\
+&= \sigma^2 + \E_{\a_k} \left[ \E_{\g_k} [\| \g_k - \g'_k \|_2^2 \mid c \in [-2 \delta, 2 \delta], \mathrm{success}, \a_k] \right] \\
+&\sigma^2 + \E_{\a_k} \left[ \| \w_k \|_2^2 + \E_{\g_k} [\| \g_k \|_2^2 \mid c \in [-2 \delta, 2 \delta], \mathrm{success}, \a_k] \right] \\
+&\leq \sigma^2 + \delta^2 + r(s) \; .
+\end{align*}
+Moreover, since $(a + b)^2 \leq 2 a^2 + 2 b^2$, we have
+\begin{align*}
+\E [\| \hat{\g}_k - \nabla f(\x) \|_2^2 \mid c \in [-2 \delta, 2 \delta], \mathrm{failure}] &\leq \E [\| \hat{\g}_k \|_2^2 \mid c \in [-2 \delta, 2 \delta], \mathrm{failure}] + 2 \\
+&\leq r(s) + 2 \; .
+\end{align*}
+Hence the variance if $c \not\in [-2 \delta, 2 \delta]$ is upper bounded by 
+\[
+\E [\| \hat{\g}_k - \nabla f(\x) \|_2^2 \mid c \not\in [-2 \delta, 2 \delta]] \leq \sigma^2 + \delta^2 + r(s) + \delta (1 + r(s)) \; ,
+\]
+which simplifies to the claimed bound.
+%There are two cases, depending on $(1 - b_k \a_k^\top \x)$.
+%Suppose $|1 - b_k \a_k^\top \x| \leq \delta$.
+%Then, we have 
+%\begin{align*}
+%\E [\hat{\g}_k] &= \E [\hat{\g}_k | \mathrm{success}] \Pr [\mathrm{success}] +  \E [\hat{\g}_k | \mathrm{failure}] \Pr [\mathrm{failure}]\\
+%&= \g'_k  \Pr [\mathrm{success}] + \g_k \Pr [\mathrm{failure}] \; .
+%\end{align*}
+%By assumption, we have $ \Pr [\mathrm{success}]  \geq 1 - O(\epsilon / r(s))$ and $\Pr [\mathrm{failure}] \leq O(\epsilon / r(s))$.
+%Moreover, we have $\| \g'_k \|_2 \leq 1$ and $\| \g_k \|_2^2 \leq O(r(s))$, and thus, 
+%\[
+%\left\| \E [\hat{\g}_k] - \g'_k \right\|_2 \leq \Pr [\mathrm{success}] + O(r(s)) \Pr [\mathrm{failure}] \leq O(\epsilon) \; ,
+%\]
+%and so in this case, we satisfy the bias bound by an appropriate choice of constants.
+%
+%Similarly, if $|1 - b_k \a_k^\top \x| > \delta$, we have that since the probability of failure is $O(\epsilon / r(s))$, then in the case of failure, we are off by at most $O(\epsilon)$ no matter what we do.
+%Thus, it suffices to bound the error in the case of success.
+\end{proof}
+
+\subsubsection{A bound on refetching probability}
+We now show that under a reasonable generative model, we will not have to refetch very often.
+Specifically, we will show that under a spectral norm bound on the second moment of the data points, we should not refetch often.
+Such an assumption is quite natural: it should happen for instance if (before rescaling) the data comes from any distribution whose covariance has bounded second moment.
+Under this assumption, we show:
+\begin{theorem}
+Suppose $\a_k$ satisfy $\| \sum_{i = 1}^m \a_i \a_i^\top \| \leq C$.
+Then, the probability we refetch at any iteration under the $\ell_2$-refetching scheme is at most $\frac{R}{n C(1 - 3 \delta)^2} + O(\delta)$.
+\end{theorem}
+\begin{proof}
+Fix any $\x$ with $\| \x \|_2 \leq R$.
+We first bound the fraction of points which satisfy $1 - b_k \a_k^\top \x \in [-3 \delta, \delta]$.
+Let $L$ be the number of such points.
+Observe that any such point satisfies $(\a_k^\top \x)^2 \geq (1 - 3 \delta)^2$.
+Then, by the spectral norm assumption, we have $C \| \x \|_2^2 \geq \sum_{i = 1}^m (\a_i^\top \x)^2 \geq L (1 - 3 \delta)^2$, which implies that $L \leq \frac{R}{C(1 - 3 \delta)^2}$.
+Since if we succeed, and $1 - b_k \a_k^\top \x \not\in [-3 \delta, 3\delta]$, then by definition we do not refetch, the probability we refetch is bounded by the sum of the probability we choose a point with $1 - b_k \a_k^\top \x \in [-3 \delta, \delta]$ and the probability of failure.
+By the above, this is bounded by $\frac{R}{n C(1 - 3 \delta)^2} + O(\delta)$, as claimed.
+\end{proof}
+
+\subsection{$\ell_1$-refetching}
+A simpler algorithmic to ensure we do not have any gradient flips is as follows.
+After getting the quantized sample $Q(\a_k)$, we can compute  upper and lower bounds on $1 - b_k \a_k^\top \x$. 
 The upper bound is given by:
-\[1 - b_k Q(\a_k)^\top \x + {abs(\x)\over s}.
+\[1 - b_k Q(\a_k)^\top \x + \frac{\| \x \|_1}{s} \; ,
 \]
 and the lower bound is given by:
-\[1 - b_k Q(\a_k)^\top \x - {abs(\x)\over s}.
+\[1 - b_k Q(\a_k)^\top \x - \frac{\| \x \|_1}{s} \; ,
 \]
 where $1/s$ is ``resolution'' of the quantization.
 If the upper and lower bounds of a quantized sample have the same sign, then we can be certain that  no ``flipping'' will occur, and we can use the quantized sample. otherwise we send a request to fetch the original data and use it to  compute the gradient.
+This seems to work well in practice, however, we could not prove any guarantees about how often we refetch with this guarantee, under any reasonable generative models.
 
-\paragraph*{Importance Sampling}  Another heuristic
+
+\subsection{Importance Sampling}  Another heuristic
  used to decrease the amount of original data that
 we fetch during training is to use {\em importance
 sampling}, instead of standard uniform sampling for SGD~\cite{ImportantSampling}. 
