@@ -36,17 +36,16 @@ In this section, we focus on linear models with possibly nonsmooth regularizatio
 F(\x) = \underbrace{\frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x - b_k \|_2^2}_{=: f(\x)} + R(\x) \; ,
 \label{eq:linear}
 \end{align}
-i.e., minimize the empirical least squares loss plus a nonsmooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). The full-precision SGD works as follows: at step $\x_t$, given gradient estimator 
-\begin{align}
-\g_t^{(full)} = \a_{\pi(t)} (\a_{\pi(t)}^\top \x - b_{\pi(t)})
-\label{eq:sgfull}
-\end{align} 
-($\pi(t)$ is a uniformly random integer from $1$ to $K$), update $\x_{t+1}$ by
+i.e., minimize the empirical least squares loss plus a nonsmooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). The generic SGD works as follows: at step $\x_t$, given an unbiased gradient estimator $\g_t$, that is, 
 \[
-\x_{t+1} = \text{prox}_{\gamma_t R(\cdot)}\left( \x_t - \gamma_t \g_t^{(full)}\right)
+\E(\g_t) = \nabla f(\x_t)
 \]
-where $\gamma_t$ is the predefined steplength. We abuse the notation and let $\a_t = \a_{\pi(t)}$. Note that $\g_t^{(full)}$ is an unbiased estimator $\E [\g_t^{(full)}] = \nabla f(\x_t)$, which is the key to lead the following well recognized convergence result
-\begin{theorem}[e.g., \cite{2014arXiv1405.4980B}, Theorem 6.3]
+and update $\x_{t+1}$ by
+\[
+\x_{t+1} = \text{prox}_{\gamma_t R(\cdot)}\left( \x_t - \gamma_t \g_t\right)
+\]
+where $\gamma_t$ is the predefined steplength.
+\begin{theorem}\label{thm:sgd-conv}[e.g., \cite{2014arXiv1405.4980B}, Theorem 6.3]
 Let the sequence $\{\x_t\}_{t=1}^T$ be bounded. Appropriately choosing the steplength,% (e.g., $\gamma_t = 1 / ( L + \sqrt{T})$), 
 we have the following convergence rate for solving \eqref{eq:linear}
 % 
@@ -58,31 +57,203 @@ F\left(\frac{1}{T} \sum_{t = 0}^T \x_t\right) - \min_{\x}F(\x) \leq \Theta\left(
 \end{equation}
 where $\sigma$ is the upper bound of the mean variance 
 \[
-\sigma^2 \geq {1\over T}\sum_{t=1}^T \E\|\g_t^{(full)} - \nabla f(\x_t)\|^2. 
+\sigma^2 \geq {1\over T}\sum_{t=1}^T \E\|\g_t - \nabla f(\x_t)\|^2. 
 \]
 %Then $\E \left[ f \left( \frac{1}{T} \sum_{t = 0}^T \x_t \right) \right] - \min_{\x \in \mathcal{X}} f(\x) \leq \epsilon$.
 \end{theorem} 
+There are three key factors to ensure the SGD
+\begin{enumerate}
+\item The cost of computing stochastic gradient $\g_t$ is cheap;
+\item The stochastic gradient $\g_t$ should be unbiased;
+\item The stochastic gradient variance $\sigma$ dominants the convergence efficiency, so it needed to be controlled appropriately.
+\end{enumerate}
+The common choice for $\g_t$ is to uniformly select one sample (or a mini-batch):
+\begin{align}
+\g_t = \g_t^{(full)} := \a_{\pi(t)} (\a_{\pi(t)}^\top \x - b_{\pi(t)})
+\label{eq:sgfull}
+\end{align} 
+($\pi(t)$ is a uniformly random integer from $1$ to $K$). We abuse the notation and let $\a_t = \a_{\pi(t)}$. Note that $\g_t^{(full)}$ is an unbiased estimator $\E [\g_t^{(full)}] = \nabla f(\x_t)$. Although it has received success in many applications, the issue of high cost of reading the sample $\a_{t}$ remains.\footnote{Ce, please help make a better motivation: why we want to quantize $\a_t$.} This motivates us to use low precision sample points to train the model. The following will introduce the proposed low precision SGD framework by meeting all three factors for SGD.
 
-The key communication burden per iteration is to read the sample $\a_{t}$.\footnote{Ce, please help make a better motivation: why we want to quantize $\a_t$.} To compress $\a_t$ to save bandwidth, we propose to use the stochastic quantization to generate a low precision version of a arbitrary vector $\v$ in the following 
-\paragraph*{Stochastic Quantization} 
+
+%\paragraph*
+\subsection{Stochastic Quantization for Saving Bandwidth} 
+We propose to use the stochastic quantization to generate a low precision version of an arbitrary vector $\v$ in the following 
 Given a vector
 $\v$, let $M(\v)$ be a scaling factor such that $-1 \le \v/M(\v) \le 1$. Without loss of generality, let $M(\v)=||\v||_2$. We partition the interval $[-1, 1]$ using $s+1$ separators: $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for each number $v$ in $\v/M(\v)$, we 
-quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote the \emph{stochastic quantization} function by $Q(\v, s)$ and choose the probability of quantizing to different separators such that $\E[Q(\v, s)] = \v$.
-We use $Q(\v)$ when $s$ is not relevant. We assume that these
+quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote the \emph{stochastic quantization} function by $Q(\v, s)$ and choose the probability of quantizing to different separators such that $\E[Q(\v, s)] = \v$. We use $Q(\v)$ when $s$ is not relevant. 
+
+\subsection{Double Sampling for Unbiased Stochastic Gradient}
+\vspace{-0.5em}
+%\subsection
+%\paragraph{Naive Stochastic Quantization does not Work}
+The naive way to use the low precision sample $\hat{\a}_t := Q(\a_t)$ is 
+\[
+\hat{\g}_t := \hat{\a}_t \hat{\a}_t^\top \x - \hat{\a}_t b_t.
+\]
+However, \emph{the naive way does not work} (even cannot guarantee the convergence), because it is biased: 
+\[
+\E[\hat{\g}_t] := \a_t \a_t^\top \x - \a_t b_t + D_{\a} \x, 
+\]
+where $D_{\a}$ is diagonal and its $i$th diagonal element is 
+\[
+\E[ Q(\a_i)^2 ] - \a_i^2.
+\]
+%
+%\vspace{-0.5em}
+%We focus on quantizing the input samples.
+%We first establish that, when we quantize $\a_t$
+%using the stochastic quantization methods designed
+%for gradient, it introduces significant bias.
+%Let $\hat{\a}_t = Q(\a_t)$ be the quantized
+%sample, the gradient becomes
+%\[
+%\g_t := \hat{\a}_t \hat{\a}_t^\top \x - \hat{\a}_t b_t.
+%\]
+%It is not hard to see that the expected gradient is: 
+%\[
+%\E[\g_t] := \a_t \a_t^\top \x - \a_t b_t + D_{\a} \x, 
+%\]
+%where $D_{\a}$ is diagonal and its $i$th diagonal element is 
+%\[
+%\E[ Q(\a_i)^2 ] - \a_i^2.
+%\]
+
+%\todo{y axis here is weird}
+\begin{wrapfigure}{r}{0.23\textwidth}
+  \begin{center}
+    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
+  \end{center}
+  \label{fig:gap}
+\end{wrapfigure}
+
+\vspace{-0.5em}
+Since $D_{\a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
+The figure on the right illustrates the bias caused by a non-zero $D_{\a}$. In fact, it is easy to see that in instances where the minimizer $\x$ is large and gradients become small, we will simply diverge. 
+
+%\vspace{-0.5em}
+%\subsection{Double Sampling}
+%\vspace{-0.5em}
+%\paragraph{Double Sampling}
+We now present a simple method to fix the biased gradient estimator. We generate two independent random quantizations and revise the gradient:
+\begin{align}
+\g_t := Q_1 (\a_t) (Q_2 (\a_t)^\top \x + b_t) \; .
+\label{eq:double}
+\end{align}
+This gives us an unbiased estimator of the gradient $\E(\g_t) = \nabla f(\x)$. 
+
+\subsection{Variance Reduction}
+From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t - \g_t^{(full)}\|^2$ will dominate the convergence efficiency. It is not hard to see that the variance of using the double sampling based stochastic gradient can be decomposed into
+\begin{align*}
+\E\|\g_t - \nabla f(\x_t)\|^2 & \leq \E \|\g_t^{(full)}- \nabla f(\x_t)\|^2 
+\\
+&+ \E \|\g_t^{(full)}- \nabla f(\x_t)\|^2
+\end{align*}
+The first term is from the full stochastic gradient, which can be reduced by using strategies such as mini-batch, weight sampling, etc. How to reduce the first term is an orthogonal issue to this paper. We are more interested in the second term, which is the additional cost for using low precision samples. The additional cost can be bounded by
+\begin{lemma} 
+The stochastic gradient variance using double sampling in \eqref{eq:double} can be bounded by
+\begin{align*}
+&\E\|\g_t - \g_t^{(full)}\|^2 \leq \\
+&\Theta\left(\mathcal{TV}(\a_t) (\mathcal{TV}(\a_t)\|\x\odot \x\| + \|\a_t^\top \x\|^2 + \|\x\odot \x\|\|\a_t\|^2)\right).
+\end{align*}
+where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$.
+\end{lemma}
+We assume that these
 separators are uniformly distributed, and revisit this in Section~\ref{sec:optimal}.
 We have~\cite{Alistarh:2016:ArXiv}: 
 \begin{lemma}
 \label{lem:quant-facts}
-For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$, and furthermore, we have
+For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$, and furthermore, we have the total variance using uniform quantization with level $s$ is bounded by
 \[
-\E [\| Q (\vec{v},s) - \v\|_2^2] \leq \min( n/s^2,\sqrt{n}/s)) \| \vec{v} \|_2^2 \; .
+\mathcal{TV}_s(\v):=\E [\| Q (\vec{v},s) - \v\|_2^2] \leq \min( n/s^2,\sqrt{n}/s)) \| \vec{v} \|_2^2. \;
 \]
+\footnote{Dan and Jerry: I changed the statement a little bit. Please double check.}
 \end{lemma} 
 
+\vspace{-0.5em}
+\paragraph{Variance}
 
-Another important implication is that the mean variance upper bound $\sigma$ will dominate the convergence efficiency. 
+Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment because of quantization:
+\begin{lemma}
+\label{lem:qbound}
+    Given $\a_k, \x, b_k$, suppose $\| \a_k \|_2^2 \leq A^2, \| \x \|_2^2 \leq R^2$ and $\max_i |\a_k| \leq M_a$.
+    Let $\g_k^{(full)}$ be the unquantized stochastic gradient. We have
+    \[
+    \E_{Q_1, Q_2} [\| \g_k \|_2^2] \leq r \cdot \left( \| \g_k^{(full)} \|_2^2 \cdot \frac{M_a^2}{\| \a_k \|_2^2} + \frac{A^2 M_a^2 R^2}{s^2} \right)\; .
+    \]
+\end{lemma}
 
-============
+This implies the following variance bound:
+\begin{corollary}
+    Let $\a_k, \x, b_k, \g_k^{(full)}$ be as above.
+    Suppose $\E [\| \g_k^{(full)} - \nabla f(\x_k) \|_2^2 ] \leq \sigma^2$ and $\E [\| \g_k^{(full)} \|_2^2] \leq B$. We have
+    \[
+    \E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq  \sigma^2 + \left(r \frac{M_a^2}{\| \a_k \|_2^2} - 1\right) B + \frac{r A^2 M_a^2 R^2}{s^2} \; ,
+    \]
+    where the expectation is taken over $\g_k^{(full)}$ and the randomness of the quantization.
+\end{corollary}
+
+This corollary suggests that the quantized stochastic gradient variance is bounded by
+\[
+\E \left[ \| \g_k - \nabla f(\x_k) \|_2^2 \right] \leq \sigma^2 + \Theta(n/s^2) \;
+\]
+in the scenario when $M_i (\vec{v}) = \| \vec{v} \|_2 $.
+The first term $\sigma^2$ is introduced by stochastic gradient, while the second term is introduced by quantization. Because the value of $s$ is 
+exponential to the number of bits, to ensure these two terms are comparable (to maintain the same convergence rate), the number of bits needs to be greater than $\Theta(\log n / \sigma)$. We see that even for linear models with millions
+of features, 32-bits is likely to be  ``overkill.''
+
+
+
+\vspace{-0.5em}
+\paragraph*{Overhead of Storing Two Samples}
+One system implication of double sampling is the overhead of sending
+two samples instead of one. We note that this will not introduce $2\times$
+overhead in terms of data communication, instead, just a single more bit
+for the second sample because of the correlation (these two samples 
+are only different by at most one bit). More generally, because samples
+are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
+
+\vspace{-0.5em}
+\paragraph*{Extensions}
+
+All of our results can be applied to 
+ problems 
+with possibly non-smooth regularization term. The key substitution is to use the proximal update defined in \eqref{eq:proxupdate}.
+Also, extending our result to least-squares SVMs for classification is trivial~\cite{Suykens:1999:Book}.
+We leave these details to the full version
+of this paper.
+
+\vspace{-0.5em}
+\subsection{End-to-end Quantization}
+\vspace{-0.5em}
+
+We can now develop an end-to-end quantization strategy that
+quantizes gradients, model, and input samples all 
+at the same time. The gradient becomes:
+\[
+\g_k := Q_1 \left( Q_2(\a_k, s ) ( Q_3(\a_k, s)^\top Q_4(\x, s) + b_k) , s \right),
+\]
+\noindent 
+where all $Q$'s are independent quantizations.
+
+%  $Q_3$ and 
+%The iteration becomes: 
+%
+%\begin{eqnarray}
+%	\x = \x - \gamma \g_k.
+%\end{eqnarray}
+
+\noindent From combining the previous results, we have:
+
+\begin{corollary}
+    \label{cor:full-quantization}
+    Let $\a_k, \x, b_k$ be so that $\| \a_k \|_2^2 \leq 1, \| \x \|_2^2 \leq R^2$.
+    Let $M_a, M_x$ be as above, and let $\g_k^{(full)}$ be the (unquantized) stochastic gradient.
+    We have
+    \[
+    \E [\| \g_k \|_2^2] \leq r^2 M_a \cdot \left(  \| \g_k^{(full)} \|_2^2 + \frac{R^2}{s^2}   + \frac{r M_a R^2}{s^2} \right) \; .
+    \]
+\end{corollary}
+
 
 
 
