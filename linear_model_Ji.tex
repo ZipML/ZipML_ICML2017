@@ -44,7 +44,7 @@ and update $\x_{t+1}$ by
 \[
 \x_{t+1} = \text{prox}_{\gamma_t R(\cdot)}\left( \x_t - \gamma_t \g_t\right)
 \]
-where $\gamma_t$ is the predefined steplength.
+where $\gamma_t$ is the predefined steplength. The generic SGD admits the following convergence property:
 \begin{theorem}\label{thm:sgd-conv}[e.g., \cite{2014arXiv1405.4980B}, Theorem 6.3]
 Let the sequence $\{\x_t\}_{t=1}^T$ be bounded. Appropriately choosing the steplength,% (e.g., $\gamma_t = 1 / ( L + \sqrt{T})$), 
 we have the following convergence rate for solving \eqref{eq:linear}
