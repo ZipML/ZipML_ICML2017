@@ -446,7 +446,7 @@ as claimed.
 
 \section{Quantizing the Gradients}
 
-Recent work, including some by the authors~\cite{QSGD,BUCKWILD}, has focused on quantizing the gradients 
+Recent work~\cite{QSGD,BUCKWILD} has focused on quantizing the gradients 
 with low-precision representation.
 We omit the description of this direction
 because it is relatively well-studied and is orthogonal
@@ -549,6 +549,8 @@ When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^
 We have two approaches to dealing with this: the first provides rigorous guarantees, however, requires some fairly heavy algorithmic machinery (in particular, Johnson-Lindenstrauss matrices with little randomness).
 The latter is a simpler heuristic that we find works well in practice.
 
+\textcolor{red}{Dan: you might want to change the notation of original gradient and the approximation, since it's a bit confusing later in the game.}
+
 \subsection{Polynomial approximation and $\ell_2$-refetching via Johnson-Lindenstrauss}
 Let $H(x)$ be the Heaviside function, i.e. $H(x) = 1$ if $x \geq 0$ and $H(x) = 0$ if $x < 0$. 
 For some fixed parameters $\epsilon, \delta$, we take a degree $d$ polynomial $P$ so that $| P(x) - H(x) | \leq \epsilon$ for all $x \in [-(R^2 + 1), R^2 + 1] \setminus [-\delta, \delta]$, and so that $|P(x)| \leq 1$ for all $x \in  [-(R^2 + 1), R^2 + 1]$.
@@ -565,7 +567,7 @@ For scalars $a, b$ and $\gamma \in [0, 1)$, we will use $a \leq_\gamma b$ to mea
 We require the following theorem:
 \begin{theorem}
 \label{thm:JL}
-Fix $\gamma, \tau > 0$, $d$. 
+Fix $\gamma, \tau > 0$, $d$\todo{what is $d$ used for? also, you might want to give some idea of what $\delta$ and $\tau$ mean. Also, citation for this Theorem.}. 
 Let $r = O(\log (1 / \tau) / \gamma^2)$.
 Then, there is a distribution $\mathcal{D}$ over $n \times r$ matrices which take values in $\pm 1$ so that if $M$  is drawn from $\mathcal{D}$, then for any $x \in \R^n$, we have $\| x \|_2 \approx_\gamma \| M x \|_2$ with probability $1 - \tau$.
 If the processors have shared randomness, the distribution can be sampled in time $O(n r)$.
@@ -578,7 +580,7 @@ bits of randomness.
 \end{theorem}
 \noindent
 If $M \sim \mathcal{D}$, we will call $M$ a \emph{JL matrix}.
-In the remainder, we will assume that the processors have shared randomness.
+In the remainder, we will assume that the processors have shared randomness, for instance by using a pseudo-random number generator initialized with the same seed.
 We will use this shared randomness solely to sample the same $M$ between the two processors.
 Otherwise, one processor may simply send $\alpha (n, \gamma, \tau)$ random bits to the other, and it is easily verified this does not change the asymptotic amount of communication required.
 
@@ -589,9 +591,8 @@ Fix $\delta, \tau$. Suppose one processor has $\a_k$ and another has $\x$.
 Suppose furthermore that $\| \a_k \|_2^2 \leq 1$, and $\| \x \|_2^2 \leq R^2$, where $R \geq 1$.
  There is a protocol which with probability $1 - \tau$ outputs a $c$ so that $|c - (1 - b_k \a_k^\top \x_k)| \leq \delta$ that requires each processor to send 
  \[
- O\left( R^2 \frac{\log (1 / \tau) \log (n / \delta)}{\gamma^2} \right)
+ O\left( R^2 \frac{\log (1 / \tau) \log (n / \delta)}{\gamma^2} \right) \text{  bits.}
  \]
- bits.
 \end{corollary}
 \begin{proof}
 The protocol is as follows.
@@ -616,9 +617,9 @@ Thus, our algorithm for computing the gradient for SVM is as follows.
 \item
 Use the protocol from Corollary \ref{cor:l2-refetch} with $\tau = O(\delta)$ to compute a $c$  so that with probability $1 - \delta$ we have $|c - (1 - b_k \a_k^\top \x) | \leq \delta$.
 \item
-If $|c| \leq 2 \delta$, we refetch and compute the full (unquantized) gradient.
+If $|c| \leq 2 \delta$\todo{you mean $<$ here?}, we refetch and compute the full (unquantized) gradient $\vec{g}_k'$.
 \item
-Otherwise, we output $\g_k$.
+Otherwise, we output the polynomial approximation $\g_k$.
 \end{itemize}
 Then, our result is the following:
 \begin{theorem}
@@ -630,15 +631,15 @@ We first prove the bias bound.
 Fix any choice of $k$.
 Let us say the above procedure \emph{succeeds} if the estimator $c$ it produces satisfies $|c - (1 - b_k \a_k^\top \x) | \leq \delta$, and say it fails otherwise.
 
-There are two cases, depending on $c$.
+\noindent There are two cases, depending on $c$.
 Suppose we have $c \in [-2 \delta, 2 \delta]$.
 Then, we have
 \begin{align*}
-\E [\hat{\g}_k \mid c \in [-2 \delta, 2 \delta]] &= \g'_k \; ,
+\E [\hat{\g}_k \mid c \in [-2 \delta, 2 \delta]] &= \E [{\g}_k] = \g'_k \; ,
 \end{align*}
 so obviously in this case we are unbiased.
 
-On the other hand, if $c \not\in [-2 \delta, 2 \delta]$, then we have
+\noindent On the other hand, if $c \not\in [-2 \delta, 2 \delta]$, then we have
 \begin{equation}
 \label{eq:l2-refetch}
 \E [\hat{\g}_k \mid c \not\in [-2 \delta, 2 \delta]] = (\g'_k + \w_k) \Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{success}] + \g_k  \Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{failure}] \; ,
@@ -652,7 +653,7 @@ where $\| \w_k \|_2 \leq O(\delta)$, since if $c \not\in [-2 \delta, 2 \delta]$ 
 \end{align*}
 by assumption.
 
-Finally, since $\Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{failure}] \leq O(\delta)$, and $\| g_k \|_2 \leq 1$, (\ref{eq:l2-refetch}) implies that $\| \E [\hat{\g}_k] - \g'_k \|_2 \leq O(\delta)$.
+Finally, since $\Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{failure}] \leq O(\delta)$, and $\| \vec{g}_k \|_2 \leq 1$\todo{why?}, (\ref{eq:l2-refetch}) implies that $\| \E [\hat{\g}_k] - \g'_k \|_2 \leq O(\delta)$.
 By an appropriate choice of constants, this implies the desired bias bound for any fixed $\a_k$.
 Taking an expectation over all $\a_k$ yields the desired result.
 
