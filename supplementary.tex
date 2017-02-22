@@ -537,7 +537,7 @@ Consider solving the following hinge loss optimization problem for Support Vecto
 \begin{align*}
 \min_{\| \x \|_2 \leq R}:\quad \sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x) \; .
 \end{align*}
-The gradient at a randomly selected sample $(\a_k, b_k)$ is: 
+The (sub-)gradient at a randomly selected sample $(\a_k, b_k)$ is: 
 
 \[
 \g'_k := \left\{ \begin{array}{ll}
@@ -555,9 +555,93 @@ The latter is a simpler heuristic that we find works well in practice.
 Let $H(x)$ be the Heaviside function, i.e. $H(x) = 1$ if $x \geq 0$ and $H(x) = 0$ if $x < 0$. 
 For some fixed parameters $\epsilon, \delta$, we take a degree $d$ polynomial $P$ so that $| P(x) - H(x) | \leq \epsilon$ for all $x \in [-(R^2 + 1), R^2 + 1] \setminus [-\delta, \delta]$, and so that $|P(x)| \leq 1$ for all $x \in  [-(R^2 + 1), R^2 + 1]$.
 Since the gradient of the SVM loss may be written as $\g'_k = -H(1 - b_k \a_k^\top \x) b_k \a_k$, we will let $Q$ be a random quantization of $P(1 - b_k \a_k^\top \x)$ (as described in the main paper), and our quantized gradient will be written as $\g_k = -Q(1 - b_k \a_k^\top \x) b_k Q_2 (\a_k)$, where $Q_2$ is an independent quantization of $\a_k$.
+We also define
+\[
+r(s) = \max_{\a_k} \E [\| \g_k \|_2^2] \; 
+\]
+to be a bound on the second moment of our $\g_k$, for any random choice of $\a_k$.
 
-However, this will not work in general.
-In particular, the polynomial approximation offers no guarantees when $1 - b_k \a_k^\top \x \in [-\delta, \delta]$.
+However, the polynomial approximation offers no guarantees when $1 - b_k \a_k^\top \x \in [-\delta, \delta]$, and thus this provides no black box guarantees on error convergence.
+We have two approaches to avoid this problem.
+Our first result shows that under reasonable generative conditions, SGD without additional tricks still provides somewhat non-trivial guarantees. However, in general it cannot provide guarantees up to error $\epsilon$, as one would naively hope.
+We then describe a technique which always allows us to obtain error $\epsilon$, however, requires refetching.
+We show that under the same generative conditions, we do not need to refetch very often.
+
+Throughout this subsection, we will assume that the a spectral norm bound on the second moment of the data points, we should not refetch often.
+Such an assumption is quite natural: it should happen for instance if (before rescaling) the data comes from any distribution whose covariance has bounded second moment.
+Formally:
+\begin{definition}
+A set of data points $\a_1, \ldots, \a_m$ is \emph{$C$-isotropic} if $\| \sum_{i = 1}^m \a_i \a_i^\top \| \leq C$, where $\| \cdot \|$ denotes the operator norm of the matrix.
+\end{definition}
+
+\subsection{SGD for $C$-isotropic data}
+Our first result is the following:
+\begin{theorem}
+\label{thm:sgd-C}
+Suppose the data $\a_i$ is $C$-isotropic, and $\| \a_i \|_2 \leq 1$ for all $i$.
+Suppose $\g'_k$ is an unbiased stochastic gradient for $f$ with variance bound $\sigma^2$.
+Then $\g_k$ is a $\epsilon + \frac{R}{m C (1 - \delta)^2}$ biased stochastic gradient for $\nabla f (\x)$ with variance bound $\sigma^2 + r(s) + \epsilon^2 +   (r(s) + 4)\frac{R}{m C (1 - \delta)^2} $.
+\end{theorem}
+
+In particular, this implies that if $\frac{R}{m C (1 - \delta)^2} = O(\epsilon)$, this bias does not asymptotically change our error, and the variance bound increases by as much as we would expect without the biased-ness of the gradient.
+Before we prove Theorem \ref{thm:sgd-C}, we need the following lemma:
+
+\begin{lemma}
+\label{lem:C-isotropic}
+Suppose $\a_1, \ldots, \a_m$ are $C$-isotropic, and let $\| \x \|_2 \leq R$.
+Then, the number of points $L$ satisfying $1 - b_k \a_k \x \in [-\delta, \delta]$ satisfies $L \leq \frac{R}{C(1 - \delta)^2}$.
+\end{lemma}
+\begin{proof}
+Observe that any such point satisfies $(\a_k^\top \x)^2 \geq (1 - \delta)^2$.
+Then, by the spectral norm assumption, we have $C \| \x \|_2^2 \geq \sum_{i = 1}^m (\a_i^\top \x)^2 \geq L (1 - \delta)^2$, which implies that $L \leq \frac{R}{C(1 - \delta)^2}$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{thm:sgd-C}]
+We first prove the bias bound.
+Let $\mathcal{S}$ be the set of points $\a_k$ so that $1 - b_k \a_k \x \in [-\delta, \delta]$.
+By the above, we have that $|\mathcal{S}| \leq \frac{R}{C(1 - \delta)^2}$.
+Moreover, if $\a_k \not\in \mathcal{S}$, we have by assumption 
+\begin{align*}
+\| \E_{\g_k} [\g_k | \a_k] - \g'_k \| &= |P(1 - b_k \a_k \x) - H(1 - b_k \a_k \x) | \| \a_k \|_2 \\
+ &\leq \epsilon \; .
+\end{align*}
+Moreover, for any $\a_k$, we always have $\| \E_{\g_k} [\g_k | \a_k] \|_2 \leq  \E_{\g_k} [ \| \g_k \| | \a_k] \leq 1$.
+Therefore, we have
+\begin{align*}
+\left\| \E_{\a_k} \E_{\g_k} [  \g_k ] - \nabla f(\x) \right\| &=  \left\| \E_{\a_k} \E_{\g_k} [  \g_k - \g'_k] \right\|_2 \\
+&\leq \frac{1}{m} \left( \sum_{\a_k \not\in \mathcal{S}} \| \E_{\g_k} [  \g_k - \g'_k| \a_k ] \|_2 + \sum_{\a_k \in \mathcal{S}} \| \E_{\g_k} [  \g_k - \g'_k | | \a_k] \|_2  \right) \\
+&\leq \frac{1}{m} \left( \epsilon |\mathcal{S}^c|  + |\mathcal{S}| \right) \\
+&\leq \epsilon + \frac{R}{m C (1 - \delta)^2} \; .
+\end{align*}
+
+We now prove the variance bound.
+Observe that if $\a_k \not\in \mathcal{S}$, then 
+\begin{align*}
+\E [\| \g_k - \g'_k \|_2^2 | \a_k ] &=  \E [\| \g_k - \E[\g_k | \a_k] \|_2^2 | \a_k] + \|  \E[\g_k | \a_k] - \g'_k \|_2^2 \\
+&\leq r(s) + \epsilon^2 \; .
+\end{align*}
+On the other hand, if $\a_k \in \mathcal{S}$, then by the inequality $(a + b)^2 \leq 2a^2 + b^2$ we still have the weaker bound
+\begin{align*}
+\E [\| \g_k - \g'_k \|_2^2 | \a_k ] &= \E [\| \g_k - \E[\g_k | \a_k] \|_2^2 | \a_k] + \|  \E[\g_k | \a_k] - \g'_k \|_2^2 \\
+&\leq r(s) + 2 \E [\| \g_k \|_2^2 | \a_k] + 2 \| \g'_k \|_2^2 \\
+&\leq r(s) + 4 \; ,
+\end{align*}
+since $\| \g_k \|_2^2 \leq \| \a_k \|_2^2 \leq 1$ and similarly for $\g'_k$.
+Thus, we have 
+\begin{align*}
+\E [\| \g_k - \nabla f(\x) \|_2^2] &= \sigma^2 + \E [\| \g_k - \g'_k \|_2^2 ] \\
+&= \sigma^2 + \frac{1}{m} \left( \sum_{\a_k \not\in \mathcal{S}} \| \E_{\g_k} [ \| \g_k - \g'_k \|_2^2 | \a_k] \|_2 + \sum_{\a_k \in \mathcal{S}} \| \E_{\g_k} [  \| \g_k - \g'_k \|_2^2 | | \a_k \in \mathcal{S}] \|_2  \right) \\
+&\leq \sigma^2 + \frac{1}{m} \left( (r(s) + \epsilon^2) \cdot |\mathcal{S}^c| + (r(s) + 4) \cdot | \mathcal{S} | \right) \\
+&\leq \sigma^2 + r(s) + \epsilon^2 +   (r(s) + 4)\frac{R}{m C (1 - \delta)^2} \; ,
+\end{align*}
+as claimed.
+\end{proof}
+
+\subsection{$\ell_2$-refetching}
+
+One drawback of the approach outlined above is that in general, if $\frac{R}{m C (1 - \delta)^2}$ is large, then this method does not provide any provable guarantees.
+In this section, we show that it is still possible, with some additional preprocessing, to provide non-trivial guarantees in this setting, without increasing the communication that much.
+
 Our approach will be to estimate this quantity using little communication per round, and then refetch the data points if $1 - b_k \a_k^\top \x \in [-\delta, \delta]$.
 We show that under reasonable generative assumptions on the $\a_k$, we will not have to refetch very often.
 
@@ -567,8 +651,7 @@ For scalars $a, b$ and $\gamma \in [0, 1)$, we will use $a \leq_\gamma b$ to mea
 We require the following theorem:
 \begin{theorem}
 \label{thm:JL}
-Fix $\gamma, \tau > 0$, $d$\todo{what is $d$ used for? also, you might want to give some idea of what $\delta$ and $\tau$ mean. Also, citation for this Theorem.}. 
-Let $r = O(\log (1 / \tau) / \gamma^2)$.
+Fix $\gamma, \tau > 0$, $n$.
 Then, there is a distribution $\mathcal{D}$ over $n \times r$ matrices which take values in $\pm 1$ so that if $M$  is drawn from $\mathcal{D}$, then for any $x \in \R^n$, we have $\| x \|_2 \approx_\gamma \| M x \|_2$ with probability $1 - \tau$.
 If the processors have shared randomness, the distribution can be sampled in time $O(n r)$.
 
@@ -617,14 +700,15 @@ Thus, our algorithm for computing the gradient for SVM is as follows.
 \item
 Use the protocol from Corollary \ref{cor:l2-refetch} with $\tau = O(\delta)$ to compute a $c$  so that with probability $1 - \delta$ we have $|c - (1 - b_k \a_k^\top \x) | \leq \delta$.
 \item
-If $|c| \leq 2 \delta$\todo{you mean $<$ here?}, we refetch and compute the full (unquantized) gradient $\vec{g}_k'$.
+If $|c| \leq 2 \delta$, we refetch and compute the full (unquantized) gradient $\vec{g}_k'$.
 \item
 Otherwise, we output the polynomial approximation $\g_k$.
 \end{itemize}
 Then, our result is the following:
 \begin{theorem}
 Let $\hat{\g}_k$ be the estimator produced by the above procedure.
-Then, $\hat{\g}_k$ is a stochastic gradient for $\nabla f(\x)$ with bias $\epsilon$, and with variance $\sigma^2 + \delta + r(s)$, where $r(s) = \E [\| \g_k \|_2^2]$.
+Assume that $\| \a_k \|_2 \leq 1$ for all $k$.
+Then, $\hat{\g}_k$ is a stochastic gradient for $\nabla f(\x)$ with bias $\epsilon$, and with variance $\sigma^2 + \delta + r(s)$.
 \end{theorem}
 \begin{proof}
 We first prove the bias bound.
@@ -653,7 +737,7 @@ where $\| \w_k \|_2 \leq O(\delta)$, since if $c \not\in [-2 \delta, 2 \delta]$ 
 \end{align*}
 by assumption.
 
-Finally, since $\Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{failure}] \leq O(\delta)$, and $\| \vec{g}_k \|_2 \leq 1$\todo{why?}, (\ref{eq:l2-refetch}) implies that $\| \E [\hat{\g}_k] - \g'_k \|_2 \leq O(\delta)$.
+Finally, since $\Pr [c \not\in [-2 \delta, 2 \delta], \mathrm{failure}] \leq O(\delta)$, and $\| \vec{g}_k \|_2 = \| \a_k \|_2 \leq 1$ by assumption, (\ref{eq:l2-refetch}) implies that $\| \E [\hat{\g}_k] - \g'_k \|_2 \leq O(\delta)$.
 By an appropriate choice of constants, this implies the desired bias bound for any fixed $\a_k$.
 Taking an expectation over all $\a_k$ yields the desired result.
 
@@ -709,21 +793,16 @@ which simplifies to the claimed bound.
 
 \subsubsection{A bound on refetching probability}
 We now show that under a reasonable generative model, we will not have to refetch very often.
-Specifically, we will show that under a spectral norm bound on the second moment of the data points, we should not refetch often.
-Such an assumption is quite natural: it should happen for instance if (before rescaling) the data comes from any distribution whose covariance has bounded second moment.
 Under this assumption, we show:
 \begin{theorem}
-Suppose $\a_k$ satisfy $\| \sum_{i = 1}^m \a_i \a_i^\top \| \leq C$.
-Then, the probability we refetch at any iteration under the $\ell_2$-refetching scheme is at most $\frac{R}{n C(1 - 3 \delta)^2} + O(\delta)$.
+Suppose $\a_k$ are $C$-isotropic.
+Then, the probability we refetch at any iteration under the $\ell_2$-refetching scheme is at most $\frac{R}{n C(1 - \delta)^2} + O(\delta)$.
 \end{theorem}
 \begin{proof}
 Fix any $\x$ with $\| \x \|_2 \leq R$.
-We first bound the fraction of points which satisfy $1 - b_k \a_k^\top \x \in [-3 \delta, \delta]$.
-Let $L$ be the number of such points.
-Observe that any such point satisfies $(\a_k^\top \x)^2 \geq (1 - 3 \delta)^2$.
-Then, by the spectral norm assumption, we have $C \| \x \|_2^2 \geq \sum_{i = 1}^m (\a_i^\top \x)^2 \geq L (1 - 3 \delta)^2$, which implies that $L \leq \frac{R}{C(1 - 3 \delta)^2}$.
-Since if we succeed, and $1 - b_k \a_k^\top \x \not\in [-3 \delta, 3\delta]$, then by definition we do not refetch, the probability we refetch is bounded by the sum of the probability we choose a point with $1 - b_k \a_k^\top \x \in [-3 \delta, \delta]$ and the probability of failure.
-By the above, this is bounded by $\frac{R}{n C(1 - 3 \delta)^2} + O(\delta)$, as claimed.
+By Lemma \ref{lem:C-isotropic}, the number of points with $1 - b_k \a_k^\top \x \in [-3 \delta, 3\delta]$ is at most $\frac{R}{C(1 - \delta)^2} $.
+If we succeed, and $1 - b_k \a_k^\top \x \not\in [-3 \delta, 3\delta]$, then by definition we do not refetch, the probability we refetch is bounded by the sum of the probability we choose a point with $1 - b_k \a_k^\top \x \in [-3 \delta, \delta]$ and the probability of failure.
+By the above, this is bounded by $\frac{R}{n C(1 - \delta)^2} + O(\delta)$, as claimed.
 \end{proof}
 
 \subsection{$\ell_1$-refetching}
