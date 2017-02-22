@@ -1,6 +1,3 @@
-{\color{red} 
-Alternative logic to compile the whole story:
-
 \begin{itemize}
 \item Show the convergence rate of SGD something like
 \[
@@ -32,6 +29,60 @@ where the total variance is
 which is shown in Section 3.
 \end{itemize}
 
-}
+
+\vspace{-0.5em}
+In this section, we focus on linear models with possibly nonsmooth regularization. We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
+\begin{align}
+F(\x) = \underbrace{\frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x - b_k \|_2^2}_{=: f(\x)} + R(\x) \; ,
+\label{eq:linear}
+\end{align}
+i.e., minimize the empirical least squares loss plus a nonsmooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). The full-precision SGD works as follows: at step $\x_t$, given gradient estimator 
+\begin{align}
+\g_t^{(full)} = \a_{\pi(t)} (\a_{\pi(t)}^\top \x - b_{\pi(t)})
+\label{eq:sgfull}
+\end{align} 
+($\pi(t)$ is a uniformly random integer from $1$ to $K$), update $\x_{t+1}$ by
+\[
+\x_{t+1} = \text{prox}_{\gamma_t R(\cdot)}\left( \x_t - \gamma_t \g_t^{(full)}\right)
+\]
+where $\gamma_t$ is the predefined steplength. We abuse the notation and let $\a_t = \a_{\pi(t)}$. Note that $\g_t^{(full)}$ is an unbiased estimator $\E [\g_t^{(full)}] = \nabla f(\x_t)$, which is the key to lead the following well recognized convergence result
+\begin{theorem}[e.g., \cite{2014arXiv1405.4980B}, Theorem 6.3]
+Let the sequence $\{\x_t\}_{t=1}^T$ be bounded. Appropriately choosing the steplength,% (e.g., $\gamma_t = 1 / ( L + \sqrt{T})$), 
+we have the following convergence rate for solving \eqref{eq:linear}
+% 
+%Let $\mathcal{X} \subseteq \R^n$ be convex, and let $f: \mathcal{X} \to \R$ be an unknown, convex, and $L$-smooth. Let $\x_0 \in \mathcal{X}$ be given, and let $R^2 = \sup_{\x \in \mathcal{X}} \| \x - \x_0 \|^2$. Suppose we run projected SGD on $f$ with access to independent stochastic gradients with variance bound $\sigma^2$ for $T$ steps, with step size $\eta_t = 1 / ( L + \gamma^{-1})$, where $\gamma = \frac{R}{\sigma} \sqrt{\frac{2}{T}}$, and
+\begin{equation}
+F\left(\frac{1}{T} \sum_{t = 0}^T \x_t\right) - \min_{\x}F(\x) \leq \Theta\left({1\over T} + {\sigma \over \sqrt{T}}\right) 
+\label{eq:sgd-conv}
+%T = O \left( R^2 \cdot \max \left( \frac{2 \sigma^2}{\epsilon^2} , \frac{L}{\epsilon} \right) \right).
+\end{equation}
+where $\sigma$ is the upper bound of the mean variance 
+\[
+\sigma^2 \geq {1\over T}\sum_{t=1}^T \E\|\g_t^{(full)} - \nabla f(\x_t)\|^2. 
+\]
+%Then $\E \left[ f \left( \frac{1}{T} \sum_{t = 0}^T \x_t \right) \right] - \min_{\x \in \mathcal{X}} f(\x) \leq \epsilon$.
+\end{theorem} 
+
+The key communication burden per iteration is to read the sample $\a_{t}$.\footnote{Ce, please help make a better motivation: why we want to quantize $\a_t$.} To compress $\a_t$ to save bandwidth, we propose to use the stochastic quantization to generate a low precision version of a arbitrary vector $\v$ in the following 
+\paragraph*{Stochastic Quantization} 
+Given a vector
+$\v$, let $M(\v)$ be a scaling factor such that $-1 \le \v/M(\v) \le 1$. Without loss of generality, let $M(\v)=||\v||_2$. We partition the interval $[-1, 1]$ using $s+1$ separators: $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for each number $v$ in $\v/M(\v)$, we 
+quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote the \emph{stochastic quantization} function by $Q(\v, s)$ and choose the probability of quantizing to different separators such that $\E[Q(\v, s)] = \v$.
+We use $Q(\v)$ when $s$ is not relevant. We assume that these
+separators are uniformly distributed, and revisit this in Section~\ref{sec:optimal}.
+We have~\cite{Alistarh:2016:ArXiv}: 
+\begin{lemma}
+\label{lem:quant-facts}
+For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$, and furthermore, we have
+\[
+\E [\| Q (\vec{v},s) - \v\|_2^2] \leq \min( n/s^2,\sqrt{n}/s)) \| \vec{v} \|_2^2 \; .
+\]
+\end{lemma} 
+
+
+Another important implication is that the mean variance upper bound $\sigma$ will dominate the convergence efficiency. 
+
+============
+
 
 
