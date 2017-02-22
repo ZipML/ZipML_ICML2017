@@ -1,0 +1,37 @@
+{\color{red} 
+Alternative logic to compile the whole story:
+
+\begin{itemize}
+\item Show the convergence rate of SGD something like
+\[
+f(\x_T) - f^* \leq \Theta\left({L\over T} + {\sum_{t=1}^T \E\|\g_t^{(full)} - \nabla f(\x_t)\|^2/T \over \sqrt{T}}\right) 
+\]
+and emphasize two things: 1) the unbiased stochastic gradient is required for convergence; and 2) the key to improve the convergence is to reduce the variance of stochastic gradient.
+\item Using naive quantization does not work as shown in Section 2.1, since it is biased.
+\item Using the proposed double sampling can ensure unbiased sampling, that is, $\E(\g_t) = \nabla f(\x_t)$ and the stochastic variance of using double sampling can be estimated by
+\begin{align*}
+\E\left[\|\g_t - \nabla f(\x_t)\|^2\right] \leq &\underbrace{\E \|\g_t^{(full)}- \nabla f(\x_t)\|^2}_{\text{from the standard stochastic gradient variance}}
+\\
+&+ \underbrace{\E\|\g_t - \g_t^{(full)}\|^2}_{\text{from the quantization}}
+\end{align*}
+Key point: 1) the first term cannot be avoid and the second term is due to using quantization; 2) in order to not degrade the convergence rate, need to make sure the second term is comparable to the first term. 
+\item Estimate the second term by something like
+\begin{align*}
+&\E\|\g_t - \g_t^{(full)}\|^2 \leq \\
+&\Theta\left(\mathcal{TV}(\a_t) (\mathcal{TV}(\a_t)\|\x\odot \x\| + \|\a_t^\top \x\|^2 + \|\x\odot \x\|\|\a_t\|^2)\right)
+\end{align*}
+where the total variance is 
+\[
+\mathcal{TV}(\a_t) := \E \|Q(\a_t) - \a_t\|^2
+\]
+\item Estimate the upper bound of $\mathcal{TV}(\a_t)$ by something like $n/s^2$ (maybe using uniform quantization), which basically suggests the conclusion in Corollary 1.
+\item In the meantime, we can perform the optimal quantization (not necessarily uniform) to minimize the empirical total variance or mean variance equivalently 
+\[
+\mathcal{TV}(\a_t) = n\mathcal{MV}(\a_t),
+\]
+which is shown in Section 3.
+\end{itemize}
+
+}
+
+
