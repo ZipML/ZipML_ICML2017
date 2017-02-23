@@ -305,7 +305,7 @@ we can stretch our multiple-sampling strategy to provide
 unbiased estimators for any polynomials, at the cost of increased variance. 
 Building further, we employ Chebyshev polynomials to   
 \textcolor{red}{
-approximate the gradient of \emph{arbitrary loss functions} within arbitrarily low bias, 
+approximate the gradient of \emph{arbitrary smooth loss functions} within arbitrarily low bias, 
 and to provide bounds on the error of an SGD solution obtained from low precision samples. }
 %Given the user's error tolerance as input, we can set the bit complexity to lower the bias in order to meet the error threshold. 
 %
@@ -317,6 +317,10 @@ and to provide bounds on the error of an SGD solution obtained from low precisio
 %we prove that \textcolor{red}{BLAH BLAH 
 %BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
 %BLAH BLAH BLAH}. 
+We also develop machinery for quantizing SGD for SVM with provable guarantees, even though SVM is not smooth.
+In particular, this implies that none of the machinery developed previously applies, for fundamental reasons.
+However, we show that under reasonable assumptions, this can either be ignored, or we can remove its influence using a sublinear number of additional bits, via ideas from streaming and dimensionality reduction.
+
 In practice, using this technique, we are
 able to go as low as 8 bit precision for SVM and logistic regression, \textcolor{red}{while providing 
 rigorous theoretical guarantees on the error.} However, we notice that the strawman approach, which just

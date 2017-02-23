@@ -544,7 +544,7 @@ The (sub-)gradient at a randomly selected sample $(\a_k, b_k)$ is:
          -b_k \a_k & \mbox{if $b_k \a_k^\top \x < 1$};\\
          0 & \mbox{otherwise}. \end{array} \right.
 \]
-Observe that this loss function is not smooth. 
+Observe that this loss function is not smooth.\footnote{Technically this implies that Theorem \ref{thm:sgd} does not apply in this setting, but other well-known and similar results still do, see \cite{Bubeck15}.}
 When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^\top \x)$ and $(1 - b_k Q(\a_k)^\top \x)$ may have different signs, in which case the two procedures will apply different gradients. We say that in this case the gradient is \emph{flipped}. 
 We have two approaches to dealing with this: the first provides rigorous guarantees, however, requires some fairly heavy algorithmic machinery (in particular, Johnson-Lindenstrauss matrices with little randomness).
 The latter is a simpler heuristic that we find works well in practice.

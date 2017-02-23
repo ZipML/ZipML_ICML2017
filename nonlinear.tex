@@ -26,10 +26,10 @@ The fact that this is an unbiased estimator of $P( \vec{a}^\top \vec{x} )$ follo
 
 
 \vspace{-0.5em}
-\subsection{Quantizing Arbitrary Classification Losses}
+\subsection{Quantizing Smooth Classification Losses}
 \vspace{-0.5em}
 
-Assume a standard classification setting, where we have samples $[(\vec{a}_i, b_i)]_i$ drawn from a distribution $\mathcal{D}$, a loss function $\ell: \R \rightarrow \R$, and we wish to find $\vec{x}$ which minimizes $\E_{\mathcal{D}} [ \ell( b \cdot \vec{a}^\top \vec{x}) ]$. The gradient of $\ell$ is given by 
+Assume a standard classification setting, where we have samples $[(\vec{a}_i, b_i)]_i$ drawn from a distribution $\mathcal{D}$, a smooth loss function $\ell: \R \rightarrow \R$, and we wish to find $\vec{x}$ which minimizes $\E_{\mathcal{D}} [ \ell( b \cdot \vec{a}^\top \vec{x}) ]$. The gradient of $\ell$ is given by 
 $$ \nabla_\vec{x} (b \cdot \vec{a}^\top \vec{x}) = b \ell' (b \cdot \vec{a}^\top \vec{x}) \vec{a}.$$
 
 Assume normalized samples, i.e. $\| \vec{a}_i \|_2 \leq 1, \forall i$, and that $\vec{x}$ is constrained such that $\| \vec{x} \|_2 \leq R$, for some real value $R > 0$. Further, assume we are given a target accuracy $\epsilon$, within which we wish to approximate the gradient. 
@@ -53,10 +53,21 @@ We can extend Lemma~\ref{lem:poly-sec-moment-bound} to obtain a general guarante
 
 \vspace{-0.5em}
 \paragraph{Chebyshev Approximations} 
-For \emph{hinge loss}, the gradient is the step function, which is hard to approximate generally by polynomials. 
+For \emph{logistic loss}, with sigmoid gradient, we notice that polynomial approximations have been well studied. In particular, we use the optimal Chebyshev polynomial approximation of~\cite{vlcek2012chebyshev}. 
+
+\subsection{Quantizing Non-Smooth Classification Losses}
+We also show how our techniques can be extended to the non-smooth case.
+We focus on SVM, where the error is the \emph{hinge loss}.
+Because it is discontinuous, hinge loss is hard to approximate generally by polynomials. 
 However, the problem is well studied for intervals of the type  $[-R, R] \setminus [-\delta, \delta]$, for some small parameter $\delta > 0$~\cite{frostig2016principal, allen2016faster}; the latter reference provides the optimal approximation via Chebyshev polynomials, which we use in our experiments. 
 
-For \emph{logistic loss}, with sigmoid gradient, we again notice that polynomial approximations have been well studied. In particular, we use the optimal Chebyshev polynomial approximation of~\cite{vlcek2012chebyshev}. 
+However, in general, these results fail to provide any non-trivial guarantees for our setting, since gradients within the interval $[-\delta, \delta]$ can differ from the true gradient by $\Omega (1)$ in expectation.
+We show two approaches for controlling the error resulting from this.
+The first is to just ignore it---we show that under reasonable generative assumptions on the data, namely, that the data is not too ``spiky'' in any one direction, this will not contribute much to the error, and can be made to disappear by taking more data points.
+The second is to use ideas from dimensionality reduction, specifically, low randomness Johnson-Lindenstrauss projections, to detect (with high probability) if our gradient is within this range, and then refetch the full data points if we are within this range.
+We show that this always provably converges, however, requires more communication.
+Under the same generative assumptions as before, we show that the additional communication required can be made to be \emph{sublinear} in the dimension.
+The details are quite involved and we defer them to the supplementary material.
 
 \iffalse
 Figure~\ref{fig:approximation} shows how close the Chebyshev polynomial aprroximations with different degrees are to those two kind of functions.
