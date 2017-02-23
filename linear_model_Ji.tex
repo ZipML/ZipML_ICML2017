@@ -60,17 +60,17 @@ where $\sigma$ is the upper bound of the mean variance
 \]
 %Then $\E \left[ f \left( \frac{1}{T} \sum_{t = 0}^T \x_t \right) \right] - \min_{\x \in \mathcal{X}} f(\x) \leq \epsilon$.
 \end{theorem} 
-\vspace{-0.5em}
+\vspace{-2em}
 There are three key factors to ensure for SGD:
 \begin{enumerate}
-\vspace{-0.5em}
+\vspace{-0.75em}
 \item Computing stochastic gradient $\g_t$ is cheap;
-\vspace{-0.5em}
+\vspace{-0.75em}
 \item The stochastic gradient $\g_t$ should be unbiased;
-\vspace{-0.5em}
+\vspace{-0.75em}
 \item The stochastic gradient variance $\sigma$ dominants the convergence efficiency, so it needed to be controlled appropriately.
 \end{enumerate}
-\vspace{-0.5em}
+\vspace{-1.5em}
 The common choice is to uniformly select one sample:
 \vspace{-0.5em}
 \begin{align}
@@ -100,9 +100,7 @@ quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote
 \vspace{-0.5em}
 %\subsection
 %\paragraph{Naive Stochastic Quantization does not Work}
-<<<<<<< HEAD
-The naive apprach to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
-=======
+
 \begin{wrapfigure}{r}{0.23\textwidth}
   \begin{center}
     \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
@@ -110,7 +108,6 @@ The naive apprach to use low precision samples $\hat{\a}_t := Q(\a_t)$ is
   \label{fig:gap}
 \end{wrapfigure}
 The naive way to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
->>>>>>> 53ed983bc6f25525cd7066584eeb6ee23e197e6f
 \[
 \hat{\g}_t := \hat{\a}_t \hat{\a}_t^\top \x - \hat{\a}_t b_t.
 \]
@@ -189,7 +186,7 @@ The stochastic gradient variance using double sampling in \eqref{eq:double} $\E\
 \end{align*}
 where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the element product.
 \end{lemma}
-It suggests that minimizing $\mathcal{TV}(\a_t)$ is key for reducing variance. 
+Thus minimizing $\mathcal{TV}(\a_t)$ is key for reducing variance. 
 
 \vspace{-0.5em}
 \paragraph{Uniform quantization} Intuitively, more levels of quantization, the lower the variance. The following result shows the quantitative dependence between the variance and the number of uniformly distributed levels. 
@@ -208,9 +205,10 @@ Together with other results, it suggests the stochastic gradient variance of usi
 \[
 \E\|\g_t - \nabla f(\x_t)\|^2 \leq \sigma^2_{(full)} + \Theta \left( {n /s^2} \right)
 \]
-where $\sigma^2_{(full)} \geq \E \|\g_t^{(full)} - \nabla f(\x)\|^2$ is the upper bound of using full stochastic gradient, assuming that $\x$ and all $\a_k$'s are bounded. Because the quantization level $s$ is exponential to the number of bits, to ensure these these two terms are comparable (using low precision sample does not degrade the convergence rate), the number of bits only needs to be greater than $\Theta (\log n /\sigma_{(full)})$. We see that even for linear models with millions
+where $\sigma^2_{(full)} \geq \E \|\g_t^{(full)} - \nabla f(\x)\|^2$ is the upper bound of using full stochastic gradient, assuming that $\x$ and all $\a_k$'s are bounded. Because the quantization level $s$ is exponential to the number of bits, to ensure these two terms are comparable (using low precision sample does not degrade the convergence rate), the number of bits only needs to be greater than $\Theta (\log n /\sigma_{(full)})$: Even for linear models with millions
 of features, 32-bits is likely to be  ``overkill.''
 
+\vspace{-0.5em}
 The uniform quantization provides us an intuitive dependence between variance and the level of quantization. However, in practice, we can do better by designing the optimal quantization separation given the quantization level $s$. This motivates
 our study in the next section.
  

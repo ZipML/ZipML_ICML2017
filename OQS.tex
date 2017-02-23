@@ -69,10 +69,11 @@ where $V(j,m)$ denotes the total variance of points falling into $[d_j, d_m]$. T
 \vspace{-1em}
 \caption{Optimal quantization points calculated with
 dynamic programming given a data distribution. }
+\vspace{-1em}
 \label{fig:optimalquantization}
 \end{figure} 
 
-
+\vspace{-0.5em}
 \subsection{Heuristics}
 \vspace{-0.5em}
 
@@ -109,7 +110,8 @@ Figure~\ref{fig:optimalquantization} illustrates an example output for our algor
 
 \vspace{-0.5em}
 \paragraph*{$2$-Approximation in Almost-Linear Time} 
-In the supplementary material, we present an algorithm which, given $\Omega$ and $k$, provides a split using at most $4 k$ intervals, which guarantees a $2$-approximation of the optimal variance for $k$ intervals, using $O( N \log N )$ time. The algorithm is a new variant of that by (Acharya et al., 2015) for the histogram recovery problem. 
+In the supplementary material, we present an algorithm which, given $\Omega$ and $k$, provides a split using at most $4 k$ intervals, which guarantees a $2$-approximation of the optimal variance for $k$ intervals, using $O( N \log N )$ time. This 
+is a new variant of that by (Acharya et al., 2015) for the histogram recovery problem. 
 We can use the $4k$ intervals given by this algorithm as candidates for the DP solution, to get a general $2$-approximation using $k$ intervals in time $O( N \log N + k^3)$. 
 
 %%%%

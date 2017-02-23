@@ -333,19 +333,9 @@ This negative result is explained by the fact that, to approximate non-lineariti
 \begin{figure}[t]
 \centering   
 \includegraphics[scale=0.27]{compmodel-pdfcrop}
-\caption{(a) A schematic representation of the computation model and (b) An example realisation
-of the computation model. Three types of
-data, namely (1) sample, (2) model, and (3)
-gradient, move in the system in three
-steps as illustrated in (a). The bottleneck may
-vary depending on the
- system parameters,
-such as computational power and memory bandwidth. For example, in 
-realisation (b) having a hard drive, DRAM, and a
-modern CPU, it is likely that the  bottleneck when training 
-a dense generalized linear model is the
-memory bandwidth between SampleStore
-and GradientDevice.} 
+\vspace{-1em}
+\caption{A schematic representation of the computation model.}
+\vspace{-0.5em}
 \label{fig:model}
 \end{figure}
 
@@ -361,7 +351,7 @@ and GradientDevice.}
 
 
 
-%\vspace{-2em}
+\vspace{-1em}
 \section{Optimal Quantization Strategy for Reducing Variance} \label{sec:optimal}
 
 \vspace{-0.5em}
@@ -371,7 +361,7 @@ and GradientDevice.}
 
 \input{OQS.tex}
 
-\vspace{-0.5em}
+\vspace{-1.0em}
 \subsection{Extension to Deep Learning}
 \vspace{-0.5em}
 
@@ -394,15 +384,13 @@ With a properly defined
 $\frac{\partial Q}{\partial{\mathcal{W}}}$, we can
 apply the standard backprop 
 algorithm.
-
-\vspace{-0.5em}
 Choosing the quantization function $Q$ is
 an important design decision. For 1-bit quantization,
 XNOR-Net searches the optimal quantization point. However, for multiple bits,
 XNOR-Net, as well as other approaches such as QNN, resort
 to uniform quantization.
 
-\vspace{-0.5em}
+\vspace{-1.0em}
 \paragraph*{Optimal Model Quantization for Deep Learning}
 
 We can apply our optimal quantization strategy 
@@ -410,8 +398,6 @@ and use it as the quantization function $Q$
 in XNOR-Net. Empirically, this results in 
 quality improvement
 over with the default {\em multi-bits} quantizer in XNOR-Net. 
-
-\vspace{-0.5em}
 In spirit, our approach is similar to the 1-bit quantizer of
 XNOR-Net, which is equivalent to our approach when the data
 distribution is symmetric---we extend this
@@ -437,7 +423,7 @@ programming algorithm to do optimal stochastic quantization efficiently.
 
 
 \begin{table}[t]
-\scriptsize
+\tiny
 \centering
 \begin{tabular}{crrrr}
 \hline
@@ -496,7 +482,7 @@ Thus we do not tune step sizes for the low precision
 implementation, as this can only improve the accuracy of our approach.) 
 
 \vspace{-1em}
-\paragraph*{\textcolor{red}{Summary of Experiments}}
+\paragraph*{Summary of Experiments}
 Due to space limitations, we only report on {\bf Synthetic 100} for regression, and on 
 {\bf gisette} for classification. 
 The additional material contains (1) several other datasets, 
@@ -657,9 +643,9 @@ a carefully chosen quantization strategy.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.7\columnwidth]{final-experiments/chebyshev} 
-\vspace{-1em}
+\vspace{-1.2em}
 \caption{Non-linear models with Chebyshev approximation.}
-\vspace{-1.5em}
+\vspace{-1.9em}
 \label{fig:chebyshev}
 \end{figure}
 
@@ -723,8 +709,8 @@ approximation.
 
 \vspace{-1em}
 \section{Related Work} 
+\vspace{-1em}
 
-\vspace{-0.5em}
 There has been significant work on ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
 These results provide
 theoretical guarantees only for quantized gradients.
@@ -761,7 +747,7 @@ DSP community, and there has been research on
 linear regression models in the presence of quantization
 error or other types of noise. For example,
 \citet{Gopi:2013:ICML} studied compressive sensing
-with \textcolor{red}{binary} quantized measurement, and \textcolor{red}{a two stage algorithm was proposed to recover the sparse high precision solution up to a scale factor.}
+with binary quantized measurement, and a two stage algorithm was proposed to recover the sparse high precision solution up to a scale factor.
 %algorithm focuses on getting a high-precision solution with low-precision computation. 
 Also, the
 classic errors-in-variable model~\cite{Hall:2008:Book}
@@ -769,37 +755,42 @@ could also be relevant if quantization is treated
 as a source of ``error''. In this paper, we scope
 ourselves to the context of stochastic gradient descent, 
 and our insights go beyond simple linear models.
+For SVM the strawman approach 
+can also be seen as a very simple case of kernel 
+approximation~\cite{Cortes:2010:AISTATS}.
 
 \vspace{-1.2em}
 \paragraph{Other Related Work.} Precision of data
 representation is a key design decision
 for configurable hardwares such as FPGA. There have been attempts to
-lower the precision when training machine learning models
-on such hardware~\cite{Kim:2011:ICASSP}. 
+lower the precision when training on such hardware~\cite{Kim:2011:ICASSP}. 
 These results are mostly empirical; we
 aim at providing a theoretical understanding, which 
 enables new algorithms.
 
-\vspace{-1em}
+\vspace{-1.5em}
 \section{Discussion}
 \label{sec:conclusions}
 
-\vspace{-0.5em}
+\vspace{-1em}
 Our motivating question was whether end-to-end low-precision data representation can enable efficient computation with convergence guarantees. 
-We have shown that a relatively simple stochastic quantization framework can achieve this for linear models. 
-Moreover, for this setting, as little as two bits per model dimension are sufficient for good accuracy, and can enable a high-performance FPGA implementation.  
+We show that a relatively simple stochastic quantization framework can achieve this for linear models. 
+With this setting, as little as two bits per model dimension are sufficient for good accuracy, and can enable a fast FPGA implementation.  
 
-\vspace{-0.3em}
-For non-linear models, the picture we observe is more nuanced. 
-In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8-bit precision is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
+\vspace{-0.5em}
+For non-linear models, the picture is more nuanced. 
+In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8-bit is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
 However, in this generalized setting, naive rounding has similar performance on many practical tasks. 
 
-\vspace{-0.3em}
+\vspace{-0.5em}
 It is interesting to consider the rationale behind these results. Our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we  focus on guaranteeing arbitrarily low bias. 
 However, for a variety of interesting functions, such as hinge loss, guaranteeing low bias requires complex approximations. In turn, these increase the variance. The complexity of the approximation and the resulting variance increase force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. 
 
 %In future work, we plan to examine compressed data representations which are not necessarily (approximate) unbiased estimators of the high-precision process. 
-%Such representations, for instance based on naive rounding with feedback error correction~\cite{1BitSGD}, have been successfully employed for gradient compression, although they currently are not known not provide any guarantees. Since the resulting processes no longer approximate standard SGD, the analysis appears non-trivial. 
+%Such representations, for instance based on naive rounding with feedback error correction~\cite{1BitSGD}, have been successfully employed for gradient compression, although they currently are not known not provide any guarantees. Since the resulting processes no longer approximate standard SGD, the analysis appears non-trivial. Moreover, we plan to
+%look into the theortical guarantees for the strawman approach
+%used for non-linear mdoels, which can be related
+%to kernel approximation~\cite{Cortes:2010:AISTATS}.
 
 %An independent contribution of our work is a set of algorithms for finding an optimal quantization with respect to variance. 
 %We show that improved quantizations can significantly improve accuracy for training in both convex and non-convex settings. 
