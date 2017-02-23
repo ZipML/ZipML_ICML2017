@@ -1,11 +1,13 @@
 %!TEX root = main.tex
-We investigate the choice of of quantization points and present an optimal strategy to minimize the variance term $\mathcal{TV}(\a_t)$ introduced by quantization.
-%\vspace{-0.5em}
+We now investigate the choice of of quantization points and present an optimal strategy to minimize the variance term $\mathcal{TV}(\a_t)$ introduced by quantization.
+
+\vspace{-1em}
 \paragraph*{Problem Setting}
-Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. W.l.o.g, assume that all real numbers in $\Omega$ are in $[0, 1]$ and sorted $x_1 \leq x_2 \leq \ldots \leq x_N$. 
+Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. WLOG, assume that all real numbers in $\Omega$ are in $[0, 1]$ and sorted $x_1 \leq \ldots \leq x_N$. 
 
 The goal is to find an partition $\setI = \{I_j\}_{j = 1}^k$ of $[0, 1]$ into $k$ disjoint intervals, so that if we randomly quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
 Formally:
+\vspace{-0.5em}
 \begin{align}
 \nonumber \min_{\setI: |\setI| = s} \quad & \mathcal{MV}(\setI) := {1\over N}\sum_{j = 1}^k \sum_{x_i \in I_j} \err(x_i, I_j)\\
 \text{s.t.}\quad & \bigcup_{j = 1}^k I_j = [0, 1],
@@ -23,21 +25,22 @@ That is, $\err (x, I)$ is the variance of the (unique) distribution $D$ supporte
 Given an interval $I \subseteq [0, 1]$, we let $\setX_I$ be the set of $x_j \in \setX$ contained in $I$.
 We also define $\err (\setX, I) = \sum_{x_j \in I} \err (x_j, I)$.
 Given a partition $\setI$ of $[0, 1]$, we let $\err (\setX, \setI) = \sum_{I \in \setI} \err (\setX, I)$.
-We also let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$ (randomly break the tie). %, and we let $\OPT_k = \err(\setX, \setI^*)$.
+We let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$ (break the tie randomly). %, and we let $\OPT_k = \err(\setX, \setI^*)$.
 
 
-\vspace{-0.5em}
+\vspace{-1em}
 \subsection{Dynamic Programming}
 \vspace{-0.5em}
 
-We first present a dynamic programming algorithm that solves the above problem in an exact way. In the next subsection, we present a more practical approximation algorithm that only needs to scan all data point \emph{once}.
+We first present a dynamic programming algorithm that solves the above problem in an exact way. In the next subsection, we present a more practical approximation algorithm that only needs to scan all data points \emph{once}.
 
+\vspace{-0.5em}
 One challenging to solve this problem is due to non-convexity and non-smoothness. Our algorithm is based on the observation that
 there exists an optimal solution which places endpoints at input points. We have
 
 \begin{lemma}
 \label{lem:discrete}
-There is a $\setI^*$ so that all endpoints of any $I \in \setI^*$ are in $\Omega \cup \{0, 1\}$.
+There is an $\setI^*$ so that all endpoints of any $I \in \setI^*$ are in $\Omega \cup \{0, 1\}$.
 \end{lemma}
 
 
@@ -52,12 +55,12 @@ where $A, C$ are constants which do not depend on $b$. Hence, this is a linear o
 \end{proof}
 \fi
 
+\vspace{-0.5em}
 Therefore, to solve the problem in an exact way, we just need to select a subset of data points in $\Omega$ as quantization points. Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels choosing $d_m=x_m$ for all $m=1,2,\cdots, N$. Our goal is to calculate $T(s, N)$. This problem can be solved by dynamic programing using the following recursion
 \[
 T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + V(j,m),
 \]
-where $V(j,m)$ denotes the total variance of points falling into the interval $[d_j, d_m]$. The complexity of calculating the matrix $V(\cdot, \cdot)$ is $O(N^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(sN^2)$. The  memory cost is $O(sN + N^2)$. 
-We describe the details in the full version. \footnote{Personally, I do not suggest saying something like this, since ICML allows unlimited length for supplemental material.}
+where $V(j,m)$ denotes the total variance of points falling into $[d_j, d_m]$. The complexity of calculating the matrix $V(\cdot, \cdot)$ is $O(N^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(sN^2)$. The  memory cost is $O(sN + N^2)$. 
 
 \begin{figure}[t]
 \centering    
@@ -69,7 +72,7 @@ dynamic programming given a data distribution. }
 \end{figure} 
 
 
-\vspace{-0.5em}
+\vspace{-2em}
 \subsection{Practical Heuristics}
 \vspace{-0.5em}
 
@@ -83,6 +86,7 @@ We can discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_
 
 \begin{theorem} \label{thm:optQ}
 Let the maximal number of data points in each ``small interval'' (defined by $\{d_m\}_{m=1}^{M-1}$) and the maximal length of small intervals be bounded by $bN/M$ and $a/M$, respectively. Let ${\mathcal{I}^*} := \{l^*_k\}_{k=1}^{s-1}$ and $\hat{\mathcal{I}}^* :=\{\hat{l}^*_k\}_{k=1}^{s-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the solution with discretization. Let $cM/s$ be the upper bound of the number of small intervals crossed by any ``large interval'' (defined by ${\mathcal{I}}^*$). Then we have the discretization error bounded by
+\vspace{-0.5em}
 \[
  \mathcal{MV}(\hat{\mathcal{I}}^*) -  \mathcal{MV}({\mathcal{I}}^*) \leq {a^2b s \over 4 M^3} + {a^2bc^2 \over Ms}.
 \]
@@ -93,7 +97,7 @@ Let the maximal number of data points in each ``small interval'' (defined by $\{
 %from equal-length small intervals'' (more details in 
 %the full version). 
 %Similarly, $c$ roughly measures the distortion from equal-length large intervals since $c=1$ means that all large intervals defined by $\{l^*_k\}_{k=1}^{s-1}$ roughly cross the same number of small intervals defined by $\{d_m\}_{m=1}^{M-1}$. 
-
+\vspace{-0.5em}
 Theorem~\ref{thm:optQ} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/Ms)$.
 
 \vspace{-0.5em}
@@ -108,9 +112,7 @@ Figure~\ref{fig:optimalquantization} illustrates
 an example output for our algorithm.
 
 \vspace{-0.5em}
-\subsection{Even Faster (More in the Full Version)} \footnote{Do not suggest to do so. We should include it as well as Jerry's approximation bound in the supplement.}
-\vspace{-0.5em}
-
+\paragraph*{Even Faster} 
 We can further bring the complexity 
 down to linear to $M$ by applying
 one more layer of approximation. This algorithm is similar 
@@ -127,7 +129,7 @@ starting from a set of candidate points $\mathcal{M}$, using $k$ quantization le
 In particular, by Lemma~\ref{lem:discrete}, the original problem can be phrased as finding $T(k, N)$ given initial candidate set $\Omega$. 
 In the following, we will give two different solutions to this problem: an approximate greedy algorithm, and an exact one using dynamic programming (DP). 
 
- \paragraph*{A Greedy Approximation Algorithm}
+\paragraph*{A Greedy Approximation Algorithm}
 We now describe a nearly linear time algorithm for this problem, which we can show is provably competitive with the optimal solution.
 This algorithm is similar to the one given in \cite{ADHLS15} for the histogram recovery problem, although the cost function we consider is different. 
 

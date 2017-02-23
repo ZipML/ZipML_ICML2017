@@ -32,6 +32,7 @@
 
 \vspace{-0.5em}
 In this section, we focus on linear models with possibly nonsmooth regularization. We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
+\vspace{-0.5em}
 \begin{align}
 F(\x) = \underbrace{\frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x - b_k \|_2^2}_{=: f(\x)} + R(\x) \; ,
 \label{eq:linear}
@@ -47,7 +48,7 @@ and update $\x_{t+1}$ by
 where $\gamma_t$ is the predefined steplength. The generic SGD admits the following convergence property:
 \begin{theorem}\label{thm:sgd-conv}[e.g., \cite{2014arXiv1405.4980B}, Theorem 6.3]
 Let the sequence $\{\x_t\}_{t=1}^T$ be bounded. Appropriately choosing the steplength,% (e.g., $\gamma_t = 1 / ( L + \sqrt{T})$), 
-we have the following convergence rate for solving \eqref{eq:linear}
+we have the following convergence rate for \eqref{eq:linear}
 % 
 %Let $\mathcal{X} \subseteq \R^n$ be convex, and let $f: \mathcal{X} \to \R$ be an unknown, convex, and $L$-smooth. Let $\x_0 \in \mathcal{X}$ be given, and let $R^2 = \sup_{\x \in \mathcal{X}} \| \x - \x_0 \|^2$. Suppose we run projected SGD on $f$ with access to independent stochastic gradients with variance bound $\sigma^2$ for $T$ steps, with step size $\eta_t = 1 / ( L + \gamma^{-1})$, where $\gamma = \frac{R}{\sigma} \sqrt{\frac{2}{T}}$, and
 \begin{equation}
@@ -61,32 +62,47 @@ where $\sigma$ is the upper bound of the mean variance
 \]
 %Then $\E \left[ f \left( \frac{1}{T} \sum_{t = 0}^T \x_t \right) \right] - \min_{\x \in \mathcal{X}} f(\x) \leq \epsilon$.
 \end{theorem} 
-There are three key factors to ensure the SGD
+\vspace{-0.5em}
+There are three key factors to ensure for SGD:
 \begin{enumerate}
-\item The cost of computing stochastic gradient $\g_t$ is cheap;
+\vspace{-0.5em}
+\item Computing stochastic gradient $\g_t$ is cheap;
+\vspace{-0.5em}
 \item The stochastic gradient $\g_t$ should be unbiased;
+\vspace{-0.5em}
 \item The stochastic gradient variance $\sigma$ dominants the convergence efficiency, so it needed to be controlled appropriately.
 \end{enumerate}
-The common choice for $\g_t$ is to uniformly select one sample (or a mini-batch):
+\vspace{-0.5em}
+The common choice is to uniformly select one sample:
+\vspace{-0.5em}
 \begin{align}
 \g_t = \g_t^{(full)} := \a_{\pi(t)} (\a_{\pi(t)}^\top \x - b_{\pi(t)})
 \label{eq:sgfull}
 \end{align} 
-($\pi(t)$ is a uniformly random integer from $1$ to $K$). We abuse the notation and let $\a_t = \a_{\pi(t)}$. Note that $\g_t^{(full)}$ is an unbiased estimator $\E [\g_t^{(full)}] = \nabla f(\x_t)$. Although it has received success in many applications, the issue of high cost of reading the sample $\a_{t}$ remains.\footnote{Ce, please help make a better motivation: why we want to quantize $\a_t$.} This motivates us to use low precision sample points to train the model. The following will introduce the proposed low precision SGD framework by meeting all three factors for SGD.
+($\pi(t)$ is a uniformly random integer from $1$ to $K$). We abuse the notation and let $\a_t = \a_{\pi(t)}$. Note that $\g_t^{(full)}$ is an unbiased estimator $\E [\g_t^{(full)}] = \nabla f(\x_t)$. Although it has received success in many applications, 
+if the precision of sample $\a_{t}$ can be further decreased,
+we can save, potentially one order of magnitude, bandwidth
+of reading $\a_{t}$ (e.g., in sensor networks) and the associated computation (e.g.,
+each register can hold more numbers). 
+This motivates us to use low precision sample points to train the model. The following will introduce the proposed low precision SGD framework by meeting all three factors for SGD.
 
 
 %\paragraph*
+\vspace{-0.5em}
 \subsection{Stochastic Quantization for Saving Bandwidth} 
-We propose to use the stochastic quantization to generate a low precision version of an arbitrary vector $\v$ in the following 
-Given a vector
-$\v$, let $M(\v)$ be a scaling factor such that $-1 \le \v/M(\v) \le 1$. Without loss of generality, let $M(\v)=||\v||_2$. We partition the interval $[-1, 1]$ using $s+1$ separators: $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for each number $v$ in $\v/M(\v)$, we 
-quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote the \emph{stochastic quantization} function by $Q(\v, s)$ and choose the probability of quantizing to different separators such that $\E[Q(\v, s)] = \v$. We use $Q(\v)$ when $s$ is not relevant. 
+\vspace{-0.5em}
 
+We propose to use the stochastic quantization to generate a low precision version of an arbitrary vector $\v$ in the following 
+way. Given a vector
+$\v$, let $M(\v)$ be a scaling factor such that $-1 \le \v/M(\v) \le 1$. Without loss of generality, let $M(\v)=||\v||_2$. We partition the interval $[-1, 1]$ using $s+1$ separators: $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for each number $v$ in $\v/M(\v)$, we 
+quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote the \emph{stochastic quantization} function by $Q(\v, s)$ and choose the probability of quantizing to different separators such that $\E[Q(\v, s)] = \v$. We use $Q(\v)$ when $s$ is not relevant.
+
+\vspace{-0.5em}
 \subsection{Double Sampling for Unbiased Stochastic Gradient}
 \vspace{-0.5em}
 %\subsection
 %\paragraph{Naive Stochastic Quantization does not Work}
-The naive way to use the low precision sample $\hat{\a}_t := Q(\a_t)$ is 
+The naive way to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
 \[
 \hat{\g}_t := \hat{\a}_t \hat{\a}_t^\top \x - \hat{\a}_t b_t.
 \]
@@ -149,8 +165,12 @@ for the second sample because of the correlation (these two samples
 are only different by at most one bit). More generally, because samples
 are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
 
+\vspace{-0.5em}
 \subsection{Variance Reduction}
+\vspace{-0.5em}
+
 From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t - \g_t^{(full)}\|^2$ will dominate the convergence efficiency. It is not hard to see that the variance of the double sampling based stochastic gradient in \eqref{eq:double} can be decomposed into
+\vspace{-0.5em}
 \begin{align*}
 \E\|\g_t - \nabla f(\x_t)\|^2 & \leq \E \|\g_t^{(full)}- \nabla f(\x_t)\|^2 
 \\
@@ -165,19 +185,22 @@ The stochastic gradient variance using double sampling in \eqref{eq:double} $\E\
 \end{align*}
 where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the element product.
 \end{lemma}
-It suggests that $\mathcal{TV}(\a_t)$ is the key factor to affect the variance. 
+It suggests that $\mathcal{TV}(\a_t)$ is the key factor to the variance. 
 
-\paragraph{Uniform quantization} Intuitively, more levels of quantization, the lower the variance. The following result shows the quantitative dependence between the variance and the level of quantization, by simply assuming using the uniformly quantization. 
+\vspace{-0.5em}
+\paragraph{Uniform quantization} Intuitively, more levels of quantization, the lower the variance. The following result shows the quantitative dependence between the variance and the level of quantization with uniform quantization. 
 %We assume that these separators are uniformly distributed, and revisit this in Section~\ref{sec:optimal}.
 %We have~\cite{Alistarh:2016:ArXiv}: 
 \begin{lemma}
+\textcolor{red}{
 \label{lem:quant-facts} [\cite{Alistarh:2016:ArXiv}]
-Assume that these separators are uniformly distributed. For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$, and furthermore, we have the total variance using uniform quantization with level $s$ is bounded by
+Assume that these separators are uniformly distributed. For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$; furthermore, the total variance using uniform quantization with level $s$ is bounded by
 \[
 \mathcal{TV}_s(\v):=\E [\| Q (\vec{v},s) - \v\|_2^2] \leq \min( n/s^2,\sqrt{n}/s)) \| \vec{v} \|_2^2. \;
-\]
-\footnote{Dan and Jerry: I changed the statement a little bit. Please double check.}
+\]}
 \end{lemma} 
+
+\vspace{-1em}
 Together with other results, it suggests the stochastic gradient variance of using double sampling is bounded by
 \[
 \E\|\g_t - \nabla f(\x_t)\|^2 \leq \sigma^2_{(full)} + \Theta \left( {n /s^2} \right)
@@ -185,7 +208,8 @@ Together with other results, it suggests the stochastic gradient variance of usi
 where $\sigma^2_{(full)} \geq \E \|\g_t^{(full)} - \nabla f(\x)\|^2$ is the upper bound of using full stochastic gradient, assuming that $\x$ and all $\a_k$'s are bounded. Because the quantization level $s$ is exponential to the number of bits, to ensure these these two terms are comparable (using low precision sample does not degrade the convergence rate), the number of bits only needs to be greater than $\Theta (\log n /\sigma_{(full)})$. We see that even for linear models with millions
 of features, 32-bits is likely to be  ``overkill.''
 
-The uniform quantization provides us an intuitive dependence between variance and the level of quantization. However, in practice, we can do better by designing the optimal quantization separation given the quantization level $s$. 
+The uniform quantization provides us an intuitive dependence between variance and the level of quantization. However, in practice, we can do better by designing the optimal quantization separation given the quantization level $s$. This motivates
+our study in the next section.
  
 
 %\vspace{-0.5em}

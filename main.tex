@@ -142,7 +142,7 @@ Introduction for details.}
 \label{fig:highlight}
 \end{figure}
 
-\vspace{-2em}
+\vspace{-3em}
 \section{Introduction}
 
 \vspace{-1em}
@@ -222,8 +222,9 @@ In the following, we describe our technical contributions in more detail.
 %learning models. We now summarize our
 %technical contributions.
 
-\vspace{-0.5em}
+\vspace{-1em}
 \subsection{Summary of Technical Contributions}
+\vspace{-0.5em}
 
 We consider the following problem in training generialized linear models: 
 \begin{align}
@@ -247,12 +248,12 @@ where the proximal operator is defined as
 \text{prox}_{\gamma R(\cdot)}(\y) =\argmin_{\x} {1\over 2}\|\x-\y\|^2 + \gamma R(\x).
 \]
 
-%\vspace{-1em}
+\vspace{-1.5em}
 \paragraph{Our Results} We summarize our results as follows. The {\bf (+)}
 sign denotes a ``positive result,'' where we achieve
 significant practical speedup, and {\bf (--)} otherwise.
 
-%\vspace{-1em}
+\vspace{-1em}
 \paragraph{(+) Linear Models.} When $l(\cdot,\cdot)$ is 
 the least squares loss, we first notice that
 simply doing stochastic quantization of data samples  
@@ -270,11 +271,12 @@ number of bits to store a quantized sample is at least $\Theta( \log n / \sigma 
 where $\sigma^2$ is the variance of the standard stochastic gradient. 
 This implies that the 32 bit precision may be excessive for many practical scenarios. 
 
+\vspace{-0.5em}
 We build on this quantization strategy to obtain an \emph{end-to-end quantization} strategy
 for linear models, which compresses all data movements. 
 For certain settings of parameters, end-to-end quantization adds as little as a \emph{constant factor} to the variance of the entire process. 
 
-%\vspace{-1em}
+\vspace{-1.5em}
 \paragraph{(+) Optimal Quantization and Extension to Deep Learning.}
 We then focus on reducing the variance of  
 stochastic quantization. We notice that different ways of setting the quantization points have different variances---the standard uniformly-distributed quantization strategy is far from optimal in many settings.
@@ -285,6 +287,7 @@ When applied to linear models, this optimal
 strategy can save up to $1.6\times$ communication
 compared with the uniform strategy.
 
+\vspace{-0.5em}
 We perform an analysis of the optimal quantizations for various settings, and observe that the uniform quantization approach
 popularly used by state-of-the-art end-to-end
 low-precision deep learning training systems
@@ -298,7 +301,7 @@ is related, but different, to recent work
 on model compression for inference~\cite{Han:2016:ICLR}. 
 To our best knowledge, this is the first time such optimal quantization strategies have been applied to training. 
 
-%\vspace{-1em}
+\vspace{-1.5em}
 \paragraph{(--) Non-Linear Models.} We extend our
 results to non-linear models such as SVM. We observe that 
 we can stretch our multiple-sampling strategy to provide 
@@ -318,15 +321,16 @@ and to provide bounds on the error of an SGD solution obtained from low precisio
 %BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
 %BLAH BLAH BLAH}. 
 We also develop machinery for quantizing SGD for SVM with provable guarantees, even though SVM is not smooth.
-In particular, this implies that none of the machinery developed previously applies, for fundamental reasons.
+\textcolor{red}{In particular, this implies that none of the machinery developed previously applies, for fundamental reasons.}
 However, we show that under reasonable assumptions, this can either be ignored, or we can remove its influence using a sublinear number of additional bits, via ideas from streaming and dimensionality reduction.
 
+\vspace{-0.5em}
 In practice, using this technique, we are
 able to go as low as 8 bit precision for SVM and logistic regression, \textcolor{red}{while providing 
 rigorous theoretical guarantees on the error.} However, we notice that the strawman approach, which just
-does naive stochastic rounding over the input data to 8bit precision, converges to similar results in practical settings, 
+does naive stochastic rounding over the input data to 8bit precision, converges to similar results, 
 without the added complexity. 
-In a nutshell, this negative result is explained by the fact that, to approximate non-linearities such as the step function or the sigmoid well, our framework needs both high degree Chebyshev polynomials, and relatively large (4bit) samples. 
+This negative result is explained by the fact that, to approximate non-linearities such as the step function or the sigmoid well, our framework needs both high degree Chebyshev polynomials, and relatively large samples. 
 
 
 
@@ -342,7 +346,7 @@ In a nutshell, this negative result is explained by the fact that, to approximat
 
 
 %\vspace{-2em}
-\section{Optimal Quantization Strategy for Variance Reduce} \label{sec:optimal}
+\section{Optimal Quantization Strategy for Variance Reduction} \label{sec:optimal}
 
 \vspace{-0.5em}
 % We now revisit the choice of quantization points and present an optimal strategy to minimize the variance term introduced by quantization.
@@ -359,6 +363,7 @@ In this section, we show that it is possible
 to apply optimal quantization to
 training deep neural networks.
 
+\vspace{-0.5em}
 \paragraph*{State-of-the-art} We focus on
 training deep neural networks with quantized
 model. Let $\mathcal{W}$ be the model and 
@@ -374,6 +379,7 @@ $\frac{\partial Q}{\partial{\mathcal{W}}}$, we can
 apply the standard backprop 
 algorithm.
 
+\vspace{-0.5em}
 Choosing the quantization function $Q$ is
 an important design decision. For 1-bit quantization,
 XNOR-Net searches the optimal quantization point. However, for multiple bits,
@@ -389,6 +395,7 @@ in XNOR-Net. Empirically, this results in
 quality improvement
 over with the default {\em multi-bits} quantizer in XNOR-Net. 
 
+\vspace{-0.5em}
 In spirit, our approach is similar to the 1-bit quantizer of
 XNOR-Net, which is equivalent to our approach when the data
 distribution is symmetric---we extend this
@@ -455,10 +462,7 @@ CIFAR-10        & 50,000        & 10,000      &$32\times 32\times 3$     \\
 
 \vspace{-0.5em}
 We provide empirical validation of
-our framework on a range of
-models, including
-(1) linear models, (2) non-linear models,
-and (3) deep learning.
+our framework.
 
 \vspace{-1em}
 \paragraph{Experimental Setup} 
@@ -480,20 +484,18 @@ implementation, as this can only make our
 approach better.) 
 
 \vspace{-1em}
-\paragraph*{Summary of Experiments in Full Version}
-Due to space limitations, we only
-report a very small subset of result, and
-we summarize the result in the full
-version here: (1) In the body we only report
+\paragraph*{\textcolor{red}{Summary of Experiments in ArXiv Version}}
+We only report a very small subset of result
+here but summarize those in the arXiv
+version: (1) Here we only report
 {\bf Synthetic 100} for regression and 
 {\bf gisette} for classification---we
-report the result of other data sets 
-in the full version; In the
-full version, we also report (2) different
+other data sets are in the arXiv version; The
+arXiv version also discusses (2) different
 factors such as the number of features
 to low-precision algorithms, (3) FPGA
-implementation details and design
-decisions there, and (4) refetching
+implementation and design
+decisions, and (4) refetching
 heuristics.
 
 
@@ -505,6 +507,7 @@ heuristics.
 \includegraphics[width=0.7\columnwidth]{final-experiments/linearmodel} 
 \vspace{-1em}
 \caption{Linear models with end-to-end low precision.}
+\vspace{-1.5em}
 \label{fig:convergence}
 \end{figure}
 
@@ -539,6 +542,7 @@ curve. We compare the final
 training loss in both settings 
 and the convergence rate.
 
+\vspace{-0.5em}
 We see that, for both linear regression 
 and least squares SVM,
 using 3 or 4-bit is always enough
@@ -558,14 +562,14 @@ memory bandwidth compared to using
 We implemented our low-precision 
 framework on a state-of-the-art 
 FPGA platform. We leave the detailed 
-implementation and the circuit to
-the full version of this paper. 
+implementation to the arXiv verison.
 This implementation assumes the input
 data is already quantized and
-stored in memory (quantized
-data can be generated during the
-first epoch of training.)
+stored in memory (data can be
+quantized during the
+first epoch.)
 
+\vspace{-0.5em}
 Figure~\ref{fig:speedup} illustrates 
 the result of (1) our FPGA
 implementation with quantized data,
@@ -589,7 +593,70 @@ explains the speedup.
 \includegraphics[width=0.7\columnwidth]{final-experiments/linear-fpga} 
 \vspace{-1em}
 \caption{FPGA implementation of linear models.}
+\vspace{-1em}
 \label{fig:speedup}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.7\columnwidth]{final-experiments/optimal} 
+\vspace{-1em}
+\caption{Optimal quantization strategy.}
+\vspace{-1em}
+\label{fig:optimal}
+\end{figure}
+
+\vspace{-1em}
+\subsection{Data-Optimal Quantization Strategy}
+\vspace{-0.5em}
+
+We validate that, with our data-optimal quantization strategy, we can 
+significantly decrease the number of 
+bits that double-sampling requires to 
+achieve the same convergence.
+Figure~\ref{fig:optimal}(a) illustrates
+the result of using 3-bit and 5-bit
+for uniform quantization and optimal 
+quantization on the {\bf YearPrediction}
+dataset. We see that,
+while uniform quantization needs 5-bit
+to converge smoothly, optimal
+quantization only needs 3-bit. 
+We save almost $1.7\times$ number of 
+bits by just allocating quantization points wisely.
+
+\vspace{-1em}
+\subsection{Extensions to Deep Learning}
+\vspace{-0.5em}
+
+We validate that our data-optimal quantization
+strategy can be used in training deep neural
+networks. We take Caffe's CIFAR-10 tutorial~\cite{Caffe:CIFAR10}
+and compare three different quantization
+strategies: (1) Full Precision, (2) XNOR5, 
+a XNOR-Net implementation that, follows
+the multi-bits strategy in
+the original paper, quantizes data into
+five uniform levels, and (3)
+Optimal5, our quantization strategy with
+five optimal quantization levels. As
+shown in Figure~\ref{fig:optimal}(b), Optimal5
+converges to a significantly lower training 
+loss compared with XNOR5. Also
+Optimal5 achieves $>$5 points higher testing accuracy over XNOR5.
+This illustrates the improvement
+one can get by training neural network with
+a carefully chosen quantization strategy.
+
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.7\columnwidth]{final-experiments/chebyshev} 
+\vspace{-1em}
+\caption{Non-linear models with Chebyshev approximation.}
+\vspace{-1.5em}
+\label{fig:chebyshev}
 \end{figure}
 
 \vspace{-1em}
@@ -607,7 +674,7 @@ rounding or naive stochastic rounding
 to achieve the same quality and convergence 
 rate.
 
-\vspace{-0.5em}
+\vspace{-1em}
 \paragraph{Chebyshev Approximations}
 
 Figure~\ref{fig:chebyshev} illustrates
@@ -627,15 +694,9 @@ with comparable empirical convergence
 rate for both SVM and logistic regression.
 We also get no loss in test accuracy.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.7\columnwidth]{final-experiments/chebyshev} 
-\vspace{-1em}
-\caption{Non-linear models with Chebyshev approximation.}
-\label{fig:chebyshev}
-\end{figure}
 
-\vspace{-0.5em}
+
+\vspace{-1em}
 \paragraph{Negative Results}
 
 We are able to construct the following,
@@ -655,58 +716,6 @@ stochastically), we achieve the
 same, and sometimes better,
 convergence than our Chebyshev 
 approximation.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.7\columnwidth]{final-experiments/optimal} 
-\vspace{-1em}
-\caption{Optimal quantization strategy.}
-\label{fig:optimal}
-\end{figure}
-
-\vspace{-0.5em}
-\subsection{Data-Optimal Quantization Strategy}
-\vspace{-0.5em}
-
-We validate that, with our data-optimal quantization strategy, we can 
-significantly decrease the number of 
-bits that double-sampling requires to 
-achieve the same convergence.
-Figure~\ref{fig:optimal}(a) illustrates
-the result of using 3-bit and 5-bit
-for uniform quantization and optimal 
-quantization on the {\bf YearPrediction}
-dataset. We see that,
-while uniform quantization needs 5-bit
-to converge smoothly, optimal
-quantization only needs 3-bit. 
-We save almost $2\times$ number of 
-bits by just allocating quantization points wisely.
-
-\vspace{-0.5em}
-\subsection{Extensions to Deep Learning}
-\vspace{-0.5em}
-
-We validate that our data-optimal quantization
-strategy can be used in training deep neural
-networks. We take Caffe's CIFAR-10 tutorial
-and compare three different quantization
-strategies: (1) Full Precision, (2) XNOR5, 
-a XNOR-Net implementation that, follows
-the multi-bits strategy in
-the original paper, quantizes data into
-five uniformly chosen levels, and (3)
-Optimal5, our quantization strategy with
-five optimal quantization levels. As
-shown in Figure~\ref{fig:optimal}(b), Optimal5
-converges to a significantly lower training 
-loss compared with XNOR5. In terms of
-testing accuracy, Optimal5 achieves a
-near 10 points improvement over XNOR5.
-This illustrates the improvement
-one can get by training neural network with
-a carefully chosen quantization strategy.
-
 
 \vspace{-1em}
 \section{Related Work} 
@@ -742,7 +751,7 @@ compression of a pre-trained model~\cite{vanhoucke2011improving,gong2014compress
 In this paper, we focus on training and leave the study of
 inference as future work.
 
-\vspace{-1em}
+\vspace{-1.2em}
 \paragraph{Low-Precision Linear Models.}
 
 Quantization is a fundamental topic studied by the
@@ -759,7 +768,7 @@ as a source of ``error''. In this paper, we scope
 ourselves to the context of stochastic gradient descent, 
 and our insights go beyond simple linear models.
 
-\vspace{-1em}
+\vspace{-1.2em}
 \paragraph{Other Related Work.} Precision of data
 representation is a key design decision
 for configurable hardwares such as FPGA. There are attempts to
@@ -774,23 +783,26 @@ by these references.
 \section{Discussion and Future Work}
 \label{sec:conclusions}
 
+\vspace{-0.5em}
 The motivating question of this paper was whether end-to-end low-precision data representation can enable efficient computation, while maintaining convergence guarantees. 
 We have shown that a relatively simple stochastic quantization framework can achieve this for linear models. 
 Moreover, for this setting, as little as two bits per model dimension are sufficient for good accuracy, and can enable a high-performance FPGA implementation.  
 
+\vspace{-0.3em}
 For non-linear models, the picture we observe is more nuanced. 
 In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8 bit precision is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
 However, in this setting, naive rounding has similar performance. 
 
+\vspace{-0.3em}
 It is interesting to consider the rationale behind these results. On one hand, our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we must focus on guaranteeing arbitrarily low bias. 
 However, for a variety of interesting functions, such as hinge loss, guaranteeing low bias requires high polynomial approximations. In turn, these increase the variance (since variance bounds are exponential in the degree). These two constraints force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. 
 
-In future work, we plan to examine compressed data representations which are not necessarily (approximate) unbiased estimators of the high-precision process. 
-Such representations, for instance based on naive rounding with feedback error correction~\cite{1BitSGD}, have been successfully employed for gradient compression, although they currently are not known not provide any guarantees. Since the resulting processes no longer approximate standard SGD, the analysis appears non-trivial. 
+%In future work, we plan to examine compressed data representations which are not necessarily (approximate) unbiased estimators of the high-precision process. 
+%Such representations, for instance based on naive rounding with feedback error correction~\cite{1BitSGD}, have been successfully employed for gradient compression, although they currently are not known not provide any guarantees. Since the resulting processes no longer approximate standard SGD, the analysis appears non-trivial. 
 
-An independent contribution of our work is a set of algorithms for finding an optimal quantization with respect to variance. 
-We show that improved quantizations can significantly improve accuracy for training in both convex and non-convex settings. 
-In future work, we plan to explore the potential of these techniques for training and inference.  
+%An independent contribution of our work is a set of algorithms for finding an optimal quantization with respect to variance. 
+%We show that improved quantizations can significantly improve accuracy for training in both convex and non-convex settings. 
+%In future work, we plan to explore the potential of these techniques for training and inference.  
 
 \cleardoublepage
 
