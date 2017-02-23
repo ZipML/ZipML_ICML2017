@@ -1,14 +1,10 @@
 %!TEX root = main.tex
-
+We investigate the choice of of quantization points and present an optimal strategy to minimize the variance term $\mathcal{TV}(\a_t)$ introduced by quantization.
 %\vspace{-0.5em}
 \paragraph*{Problem Setting}
-Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ 
-with cardinality $N$, where $x_1 \leq x_2 \leq \ldots \leq x_N$.
-W.l.o.g, assume 
-that all real numbers in $\Omega$ are 
-in $[0, 1]$. 
+Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. W.l.o.g, assume that all real numbers in $\Omega$ are in $[0, 1]$ and sorted $x_1 \leq x_2 \leq \ldots \leq x_N$. 
 
-The goal is to find an partition $\setI = \{I_j\}_{j = 1}^k$ of $[0, 1]$ into $k$ disjoint intervals, so that if we quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
+The goal is to find an partition $\setI = \{I_j\}_{j = 1}^k$ of $[0, 1]$ into $k$ disjoint intervals, so that if we randomly quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
 Formally:
 \begin{align}
 \nonumber \min_{\setI: |\setI| = s} \quad & \mathcal{MV}(\setI) := {1\over N}\sum_{j = 1}^k \sum_{x_i \in I_j} \err(x_i, I_j)\\
@@ -27,22 +23,16 @@ That is, $\err (x, I)$ is the variance of the (unique) distribution $D$ supporte
 Given an interval $I \subseteq [0, 1]$, we let $\setX_I$ be the set of $x_j \in \setX$ contained in $I$.
 We also define $\err (\setX, I) = \sum_{x_j \in I} \err (x_j, I)$.
 Given a partition $\setI$ of $[0, 1]$, we let $\err (\setX, \setI) = \sum_{I \in \setI} \err (\setX, I)$.
-We also let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$ (randomly break the tie), and we let $\OPT_k = \err(\setX, \setI^*)$.
+We also let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$ (randomly break the tie). %, and we let $\OPT_k = \err(\setX, \setI^*)$.
 
 
 \vspace{-0.5em}
 \subsection{Dynamic Programming}
 \vspace{-0.5em}
 
-We first present a dynamic programming algorithm
-that solves the above problem in an exact way.
-In the next subsection, we present a more practical
-approximation algorithm that only needs to scan all
-data point once.
+We first present a dynamic programming algorithm that solves the above problem in an exact way. In the next subsection, we present a more practical approximation algorithm that only needs to scan all data point \emph{once}.
 
-One challenging to solve this problem is 
-due to non-convexity and non-smoothness. 
-Our algorithm is based on the observation that
+One challenging to solve this problem is due to non-convexity and non-smoothness. Our algorithm is based on the observation that
 there exists an optimal solution which places endpoints at input points. We have
 
 \begin{lemma}
@@ -53,32 +43,21 @@ There is a $\setI^*$ so that all endpoints of any $I \in \setI^*$ are in $\Omega
 
 \iffalse
 \begin{proof}
-Fix any endpoint $b$ of intervals in $\setI^*$.
-WLOG assume that $b \neq 0, 1$.
-Then we must have $I = [a, b]$ and $I' = [b, c]$ for some $I, I' \in \setI^*$.
-Observe that the choice of $b$ only affects the error for points in $I \cup I'$.
-We have that $\err (\Omega, I) + \err (\Omega, I') $ is given by
+Fix any endpoint $b$ of intervals in $\setI^*$. WLOG assume that $b \neq 0, 1$. Then we must have $I = [a, b]$ and $I' = [b, c]$ for some $I, I' \in \setI^*$. Observe that the choice of $b$ only affects the error for points in $I \cup I'$. We have that $\err (\Omega, I) + \err (\Omega, I') $ is given by 
 \begin{align*}
 & \sum_{x \in I} (b - x) (x - a) + \sum_{x \in I'} (c -x)(x - b) \\
 &= A b + C \; ,
 \end{align*}
-where $A, C$ are constants which do not depend on $b$.
-Hence, this is a linear objective in $b$.
-Since $b$ can freely range between the rightmost point in $I$ and the leftmost point in $I'$, there is an optimizer for this solution at one of those two points.
-Hence we may choose $b \in \Omega$.
+where $A, C$ are constants which do not depend on $b$. Hence, this is a linear objective in $b$. Since $b$ can freely range between the rightmost point in $I$ and the leftmost point in $I'$, there is an optimizer for this solution at one of those two points. Hence we may choose $b \in \Omega$.
 \end{proof}
 \fi
 
-
-Therefore, to solve the problem in an exact way, we
-just need to select a subset of data points as
-quantization points. 
-Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels. Our goal is to calculate $T(s, N)$. This problem can be solved by dynamic programing using the following recursion
+Therefore, to solve the problem in an exact way, we just need to select a subset of data points in $\Omega$ as quantization points. Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels choosing $d_m=x_m$ for all $m=1,2,\cdots, N$. Our goal is to calculate $T(s, N)$. This problem can be solved by dynamic programing using the following recursion
 \[
 T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + V(j,m),
 \]
 where $V(j,m)$ denotes the total variance of points falling into the interval $[d_j, d_m]$. The complexity of calculating the matrix $V(\cdot, \cdot)$ is $O(N^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(sN^2)$. The  memory cost is $O(sN + N^2)$. 
-We describe the details in the full version.
+We describe the details in the full version. \footnote{Personally, I do not suggest saying something like this, since ICML allows unlimited length for supplemental material.}
 
 \begin{figure}[t]
 \centering    
@@ -94,26 +73,18 @@ dynamic programming given a data distribution. }
 \subsection{Practical Heuristics}
 \vspace{-0.5em}
 
-The exact algorithm has
-a complexity that is quadratic to the number
-of data points. To make our algorithm practical,
-we develop an approximation algorithm that
-only needs to scan all data points once and has
-linear complexity to $N$.
+The exact algorithm has a complexity that is quadratic to the number of data points. To make our algorithm practical,
+we develop an approximation algorithm that only needs to scan all data points once and has linear complexity to $N$.
 
 \vspace{-0.5em}
 \paragraph*{Discretization}
 
-We can discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. We then restrict our algorithms
-to only choose quantization points within these $M$ points,
-instead of all $N$ points in the exact algorithm.
-The following result bounded the quality of this
-approximation.
+We can discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. We then restrict our algorithms to only choose $s$ quantization points within these $M$ points, instead of all $N$ points in the exact algorithm. The following result bounded the quality of this approximation.
 
 \begin{theorem} \label{thm:optQ}
-Let the maximal number of data points in each ``small interval'' (defined by $\{d_m\}_{m=1}^{M-1}$) and the maximal length of small intervals be bounded by $bN/M$ and $a/M$, respectively. Let $\{l^*_k\}_{k=1}^{s-1}$ and $\{\hat{l}^*_k\}_{k=1}^{s-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the solution with discretization. Let $cM/s$ be the upper bound of the number of small intervals crossed by any ``large interval'' (defined by $\{l^*_k\}_{k=1}^{s-1}$). Then we have the discretization error bounded by
+Let the maximal number of data points in each ``small interval'' (defined by $\{d_m\}_{m=1}^{M-1}$) and the maximal length of small intervals be bounded by $bN/M$ and $a/M$, respectively. Let ${\mathcal{I}^*} := \{l^*_k\}_{k=1}^{s-1}$ and $\hat{\mathcal{I}}^* :=\{\hat{l}^*_k\}_{k=1}^{s-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the solution with discretization. Let $cM/s$ be the upper bound of the number of small intervals crossed by any ``large interval'' (defined by ${\mathcal{I}}^*$). Then we have the discretization error bounded by
 \[
- \mathcal{MV}(\hat{l}^*_1,\cdots, \hat{l}^*_{s-1}) -  \mathcal{MV}(l^*_1,\cdots, l^*_{s-1}) \leq {a^2b s \over 4 M^3} + {a^2bc^2 \over Ms}.
+ \mathcal{MV}(\hat{\mathcal{I}}^*) -  \mathcal{MV}({\mathcal{I}}^*) \leq {a^2b s \over 4 M^3} + {a^2bc^2 \over Ms}.
 \]
 \end{theorem}
 
@@ -137,7 +108,7 @@ Figure~\ref{fig:optimalquantization} illustrates
 an example output for our algorithm.
 
 \vspace{-0.5em}
-\subsection{Even Faster (More in the Full Version)}
+\subsection{Even Faster (More in the Full Version)} \footnote{Do not suggest to do so. We should include it as well as Jerry's approximation bound in the supplement.}
 \vspace{-0.5em}
 
 We can further bring the complexity 

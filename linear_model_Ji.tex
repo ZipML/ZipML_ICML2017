@@ -36,7 +36,7 @@ In this section, we focus on linear models with possibly nonsmooth regularizatio
 F(\x) = \underbrace{\frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x - b_k \|_2^2}_{=: f(\x)} + R(\x) \; ,
 \label{eq:linear}
 \end{align}
-i.e., minimize the empirical least squares loss plus a nonsmooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). The generic SGD works as follows: at step $\x_t$, given an unbiased gradient estimator $\g_t$, that is, 
+i.e., minimize the empirical least squares loss plus a nonsmooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). The generic SGD is the most popular approach to solve the large scale machine learning problem. It works as follows: at step $\x_t$, given an unbiased gradient estimator $\g_t$, that is, 
 \[
 \E(\g_t) = \nabla f(\x_t)
 \]
@@ -150,20 +150,20 @@ are only different by at most one bit). More generally, because samples
 are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
 
 \subsection{Variance Reduction}
-From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t - \g_t^{(full)}\|^2$ will dominate the convergence efficiency. It is not hard to see that the variance of using the double sampling based stochastic gradient can be decomposed into
+From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t - \g_t^{(full)}\|^2$ will dominate the convergence efficiency. It is not hard to see that the variance of the double sampling based stochastic gradient in \eqref{eq:double} can be decomposed into
 \begin{align*}
 \E\|\g_t - \nabla f(\x_t)\|^2 & \leq \E \|\g_t^{(full)}- \nabla f(\x_t)\|^2 
 \\
-&+ \E \|\g_t^{(full)}- \nabla f(\x_t)\|^2
+&+ \E \|\g_t - \g_t^{(full)})\|^2
 \end{align*}
-The first term is from the full stochastic gradient, which can be reduced by using strategies such as mini-batch, weight sampling, etc. How to reduce the first term is an orthogonal issue to this paper. We are more interested in the second term, which is the additional cost for using low precision samples. The additional cost can be bounded by
+The first term is from the full stochastic gradient, which can be reduced by using strategies such as mini-batch, weight sampling, etc. How to reduce the first term is an orthogonal issue to this paper. We are more interested in the second term, which is the additional cost for using low precision samples. All strategies of reducing the variance of the first term can seamlessly combine the strategies introduced in this paper, The additional cost can be bounded by
 \begin{lemma} 
 The stochastic gradient variance using double sampling in \eqref{eq:double} $\E\|\g_t - \g_t^{(full)}\|^2$ can be bounded by
 \begin{align*}
 %&\E\|\g_t - \g_t^{(full)}\|^2 \leq \\
 &\Theta\left(\mathcal{TV}(\a_t) (\mathcal{TV}(\a_t)\|\x\odot \x\| + \|\a_t^\top \x\|^2 + \|\x\odot \x\|\|\a_t\|^2)\right).
 \end{align*}
-where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$.
+where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the element product.
 \end{lemma}
 It suggests that $\mathcal{TV}(\a_t)$ is the key factor to affect the variance. 
 
