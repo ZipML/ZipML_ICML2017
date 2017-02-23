@@ -120,11 +120,9 @@ we achieve higher accuracy than the state-of-the-art XNOR-Net.
 
 \vspace{-0.1em}
 Last, we extend our framework through approximation to non-linear 
-models, such as SVM. We show that, although the bias of using 
-low precision data cannot be avoided, 
-\textcolor{red}{
-our approach can appropriately 
-control the bias.} We find in practice {\em 8 bit} 
+models, such as SVM. We show that, although using low precision data induces bias, 
+we can appropriately 
+bound and control the bias. We find in practice {\em 8-bit} 
 precision is often sufficient to converge to the correct solution. 
 Interestingly, however, in practice, we notice that our framework does not always outperform the naive rounding approach. We discuss this negative result in detail. 
 
@@ -303,13 +301,11 @@ To our best knowledge, this is the first time such optimal quantization strategi
 
 \vspace{-1.5em}
 \paragraph{(--) Non-Linear Models.} We extend our
-results to non-linear models such as SVM. We observe that 
-we can stretch our multiple-sampling strategy to provide 
+results to non-linear models, such as SVM. We can stretch our multiple-sampling strategy to provide 
 unbiased estimators for any polynomials, at the cost of increased variance. 
 Building further, we employ Chebyshev polynomials to   
-\textcolor{red}{
 approximate the gradient of \emph{arbitrary smooth loss functions} within arbitrarily low bias, 
-and to provide bounds on the error of an SGD solution obtained from low precision samples. }
+and to provide bounds on the error of an SGD solution obtained from low precision samples. 
 %Given the user's error tolerance as input, we can set the bit complexity to lower the bias in order to meet the error threshold. 
 %
 %By increasing the bit complexity of the representation, we can lower the bias 
@@ -320,18 +316,38 @@ and to provide bounds on the error of an SGD solution obtained from low precisio
 %we prove that \textcolor{red}{BLAH BLAH 
 %BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH BLAH 
 %BLAH BLAH BLAH}. 
-We also develop machinery for quantizing SGD for SVM with provable guarantees, even though SVM is not smooth.
-\textcolor{red}{In particular, this implies that none of the machinery developed previously applies, for fundamental reasons.}
-However, we show that under reasonable assumptions, this can either be ignored, or we can remove its influence using a sublinear number of additional bits, via ideas from streaming and dimensionality reduction.
+
+Further, we examine whether this approach can be applied to non-smooth loss functions, such as SVM. 
+We find that the  machinery described above does not apply, for fundamental reasons. 
+We use ideas from streaming and dimensionality reduction to develop a variant which is provably correct for non-smooth loss functions. 
+We can show that, under reasonable assumptions, the added communication cost of supporting non-smooth functions is negligible. 
 
 \vspace{-0.5em}
 In practice, using this technique, we are
-able to go as low as 8 bit precision for SVM and logistic regression, \textcolor{red}{while providing 
-rigorous theoretical guarantees on the error.} However, we notice that the strawman approach, which just
+able to go as low as 8 bit precision for SVM and logistic regression. 
+However, we notice that the strawman approach, which just
 does naive stochastic rounding over the input data to 8bit precision, converges to similar results, 
 without the added complexity. 
 This negative result is explained by the fact that, to approximate non-linearities such as the step function or the sigmoid well, our framework needs both high degree Chebyshev polynomials, and relatively large samples. 
 
+\begin{figure}[t]
+\centering   
+\includegraphics[scale=0.27]{compmodel-pdfcrop}
+\caption{(a) A schematic representation of the computation model and (b) An example realisation
+of the computation model. Three types of
+data, namely (1) sample, (2) model, and (3)
+gradient, move in the system in three
+steps as illustrated in (a). The bottleneck may
+vary depending on the
+ system parameters,
+such as computational power and memory bandwidth. For example, in 
+realisation (b) having a hard drive, DRAM, and a
+modern CPU, it is likely that the  bottleneck when training 
+a dense generalized linear model is the
+memory bandwidth between SampleStore
+and GradientDevice.} 
+\label{fig:model}
+\end{figure}
 
 
 \vspace{-0.5em}
@@ -346,7 +362,7 @@ This negative result is explained by the fact that, to approximate non-lineariti
 
 
 %\vspace{-2em}
-\section{Optimal Quantization Strategy for Variance Reduction} \label{sec:optimal}
+\section{Optimal Quantization Strategy for Reducing Variance} \label{sec:optimal}
 
 \vspace{-0.5em}
 % We now revisit the choice of quantization points and present an optimal strategy to minimize the variance term introduced by quantization.
@@ -410,10 +426,7 @@ compress the model for {\em inference}~---$k$-means
 optimizes for a similar, but different, objective
 function than us. In this paper, we 
 develop a dynamic
-programming algorithm to do optimal quantization efficiently,
-and to our best knowledge, we
-are the first to apply optimal quantization to
-{\em training}.
+programming algorithm to do optimal stochastic quantization efficiently.
 
 
 
@@ -480,26 +493,17 @@ implementation (Theory and
 experiments imply that the low precision
 implementation often favors smaller step size. 
 Thus we do not tune step sizes for the low precision 
-implementation, as this can only make our 
-approach better.) 
+implementation, as this can only improve the accuracy of our approach.) 
 
 \vspace{-1em}
-\paragraph*{\textcolor{red}{Summary of Experiments in ArXiv Version}}
-We only report a very small subset of result
-here but summarize those in the arXiv
-version: (1) Here we only report
-{\bf Synthetic 100} for regression and 
-{\bf gisette} for classification---we
-other data sets are in the arXiv version; The
-arXiv version also discusses (2) different
-factors such as the number of features
-to low-precision algorithms, (3) FPGA
-implementation and design
-decisions, and (4) refetching
-heuristics.
-
-
-
+\paragraph*{\textcolor{red}{Summary of Experiments}}
+Due to space limitations, we only report on {\bf Synthetic 100} for regression, and on 
+{\bf gisette} for classification. 
+The additional material contains (1) several other datasets, 
+and discusses (2) different
+factors such as impact of the number of features, 
+(3) FPGA implementation and design
+decisions, and (4) refetching heuristics.
 
 
 \begin{figure}[t]
@@ -523,7 +527,7 @@ convergence rates---to the same solution
 as SGD with full precision; and
 (2) implemented on FPGA, our low-precision
 prototype achieves significant speed-up
-because of the decrease of bandwidth
+because of the decrease in bandwidth
 consumption.
 
 \vspace{-1em}
@@ -537,7 +541,7 @@ with end-to-end low-precision and
 full precision. For
 low precision, we pick the 
 smallest number of bits that
-result in a smooth convergence
+results in a smooth convergence
 curve. We compare the final 
 training loss in both settings 
 and the convergence rate.
@@ -562,7 +566,7 @@ memory bandwidth compared to using
 We implemented our low-precision 
 framework on a state-of-the-art 
 FPGA platform. We leave the detailed 
-implementation to the arXiv verison.
+implementation to the full version.
 This implementation assumes the input
 data is already quantized and
 stored in memory (data can be
@@ -623,7 +627,7 @@ while uniform quantization needs 5-bit
 to converge smoothly, optimal
 quantization only needs 3-bit. 
 We save almost $1.7\times$ number of 
-bits by just allocating quantization points wisely.
+bits by just allocating quantization points carefully.
 
 \vspace{-1em}
 \subsection{Extensions to Deep Learning}
@@ -721,14 +725,12 @@ approximation.
 \section{Related Work} 
 
 \vspace{-0.5em}
-There are work on ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
-Most of them provide
-theoretical guarantee when the gradients are quantized.
+There has been significant work on ``low precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
+These results provide
+theoretical guarantees only for quantized gradients.
 The model and input samples, on the other hand, are much more difficult
-to analyze because of the non-linearity. In this paper, 
-we
-focus on the {\em end-to-end}
-quantization for all components.
+to analyze because of the non-linearity. We focus on {\em end-to-end}
+quantization, for all  components.
 
 \vspace{-1em}
 \paragraph{Low-Precision Deep learning.}
@@ -740,10 +742,10 @@ a gradient compression heuristic developed in the context of deep
 neural networks for speech recognition. There are successful 
 application of end-to-end quantization to training neural networks
 resulting in little to no quality loss~\cite{hubara2016quantized,
-rastegari2016xnor,zhou2016dorefa,miyashita2016convolutional,li2016ternary,gupta2015deep}. These work quantize weights, activations, and gradients 
+rastegari2016xnor,zhou2016dorefa,miyashita2016convolutional,li2016ternary,gupta2015deep}. They  quantize weights, activations, and gradients 
 to low-precision (e.g., 1-bit) and revise the backpropagation 
 algorithm to be aware of the quantization function.
-The empirical success of these work inspired this paper, in which we try
+The empirical success of this work inspired this paper, in which we try
 to provide a {\em theoretical} understanding of end-to-end low-precision
 training for machine learning models.
 Another line of research concerns about inference and model
@@ -755,9 +757,9 @@ inference as future work.
 \paragraph{Low-Precision Linear Models.}
 
 Quantization is a fundamental topic studied by the
-DSP community, and there have been research related to
+DSP community, and there has been research on
 linear regression models in the presence of quantization
-error or other type of noises. For example,
+error or other types of noise. For example,
 \citet{Gopi:2013:ICML} studied compressive sensing
 with \textcolor{red}{binary} quantized measurement, and \textcolor{red}{a two stage algorithm was proposed to recover the sparse high precision solution up to a scale factor.}
 %algorithm focuses on getting a high-precision solution with low-precision computation. 
@@ -771,31 +773,30 @@ and our insights go beyond simple linear models.
 \vspace{-1.2em}
 \paragraph{Other Related Work.} Precision of data
 representation is a key design decision
-for configurable hardwares such as FPGA. There are attempts to
+for configurable hardwares such as FPGA. There have been attempts to
 lower the precision when training machine learning models
-on these hardware~\cite{Kim:2011:ICASSP}. 
+on such hardware~\cite{Kim:2011:ICASSP}. 
 These results are mostly empirical; we
 aim at providing a theoretical understanding, which 
-enables new algorithms that are not covered 
-by these references.
+enables new algorithms.
 
 \vspace{-1em}
-\section{Discussion and Future Work}
+\section{Discussion}
 \label{sec:conclusions}
 
 \vspace{-0.5em}
-The motivating question of this paper was whether end-to-end low-precision data representation can enable efficient computation, while maintaining convergence guarantees. 
+Our motivating question was whether end-to-end low-precision data representation can enable efficient computation with convergence guarantees. 
 We have shown that a relatively simple stochastic quantization framework can achieve this for linear models. 
 Moreover, for this setting, as little as two bits per model dimension are sufficient for good accuracy, and can enable a high-performance FPGA implementation.  
 
 \vspace{-0.3em}
 For non-linear models, the picture we observe is more nuanced. 
-In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8 bit precision is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
-However, in this setting, naive rounding has similar performance. 
+In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8-bit precision is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
+However, in this generalized setting, naive rounding has similar performance on many practical tasks. 
 
 \vspace{-0.3em}
-It is interesting to consider the rationale behind these results. On one hand, our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we must focus on guaranteeing arbitrarily low bias. 
-However, for a variety of interesting functions, such as hinge loss, guaranteeing low bias requires high polynomial approximations. In turn, these increase the variance (since variance bounds are exponential in the degree). These two constraints force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. 
+It is interesting to consider the rationale behind these results. Our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we  focus on guaranteeing arbitrarily low bias. 
+However, for a variety of interesting functions, such as hinge loss, guaranteeing low bias requires complex approximations. In turn, these increase the variance. The complexity of the approximation and the resulting variance increase force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. 
 
 %In future work, we plan to examine compressed data representations which are not necessarily (approximate) unbiased estimators of the high-precision process. 
 %Such representations, for instance based on naive rounding with feedback error correction~\cite{1BitSGD}, have been successfully employed for gradient compression, although they currently are not known not provide any guarantees. Since the resulting processes no longer approximate standard SGD, the analysis appears non-trivial. 

@@ -31,21 +31,19 @@
 
 
 \vspace{-0.5em}
-In this section, we focus on linear models with possibly nonsmooth regularization. We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
+In this section, we focus on linear models with possibly non-smooth regularization. We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
 \vspace{-0.5em}
 \begin{align}
 F(\x) = \underbrace{\frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x - b_k \|_2^2}_{=: f(\x)} + R(\x) \; ,
 \label{eq:linear}
 \end{align}
-i.e., minimize the empirical least squares loss plus a nonsmooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). The generic SGD is the most popular approach to solve the large scale machine learning problem. It works as follows: at step $\x_t$, given an unbiased gradient estimator $\g_t$, that is, 
-\[
-\E(\g_t) = \nabla f(\x_t)
-\]
-and update $\x_{t+1}$ by
+i.e., minimize the empirical least squares loss plus a non-smooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). SGD is a popular approach for solving large scale machine learning problems. It works as follows: at step $\x_t$, given an unbiased gradient estimator $\g_t$, that is, 
+$\E(\g_t) = \nabla f(\x_t),$
+we update $\x_{t+1}$ by
 \[
 \x_{t+1} = \text{prox}_{\gamma_t R(\cdot)}\left( \x_t - \gamma_t \g_t\right)
 \]
-where $\gamma_t$ is the predefined steplength. The generic SGD admits the following convergence property:
+where $\gamma_t$ is the predefined step length. SGD guarantees the following convergence property:
 \begin{theorem}\label{thm:sgd-conv}[e.g., \cite{2014arXiv1405.4980B}, Theorem 6.3]
 Let the sequence $\{\x_t\}_{t=1}^T$ be bounded. Appropriately choosing the steplength,% (e.g., $\gamma_t = 1 / ( L + \sqrt{T})$), 
 we have the following convergence rate for \eqref{eq:linear}
@@ -102,11 +100,11 @@ quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote
 \vspace{-0.5em}
 %\subsection
 %\paragraph{Naive Stochastic Quantization does not Work}
-The naive way to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
+The naive apprach to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
 \[
 \hat{\g}_t := \hat{\a}_t \hat{\a}_t^\top \x - \hat{\a}_t b_t.
 \]
-However, \emph{the naive way does not work} (even cannot guarantee the convergence), because it is biased: 
+However, \emph{the naive approach does not work} (does not guarantee convergence), because it is biased: 
 \[
 \E[\hat{\g}_t] := \a_t \a_t^\top \x - \a_t b_t + D_{\a} \x, 
 \]
@@ -155,15 +153,15 @@ We now present a simple method to fix the biased gradient estimator. We generate
 \g_t := Q_1 (\a_t) (Q_2 (\a_t)^\top \x + b_t) \; .
 \label{eq:double}
 \end{align}
-This gives us an unbiased estimator of the gradient $\E(\g_t) = \nabla f(\x)$. 
+This gives us an unbiased estimator of the gradient. 
 
 \paragraph*{Overhead of Storing Two Samples}
-Acute readers may notice that one system implication of double sampling is the overhead of sending
+The reader may have noticed that one implication of double sampling is the overhead of sending
 two samples instead of one. We note that this will not introduce $2\times$
-overhead in terms of data communication, instead, just a single more bit
-for the second sample because of the correlation (these two samples 
-are only different by at most one bit). More generally, because samples
-are used symmetrically, sending $k$ samples only require $\log_2 k$ more bits.
+overhead in terms of data communication. Instead, just one additional bit
+is needed the second sample, because of correlation, as the two samples 
+differ by at most one bit. More generally, since samples
+are used symmetrically, sending $k$ samples only requires $\log_2 k$ more bits.
 
 \vspace{-0.5em}
 \subsection{Variance Reduction}
@@ -176,7 +174,9 @@ From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t -
 \\
 &+ \E \|\g_t - \g_t^{(full)})\|^2
 \end{align*}
-The first term is from the full stochastic gradient, which can be reduced by using strategies such as mini-batch, weight sampling, etc. How to reduce the first term is an orthogonal issue to this paper. We are more interested in the second term, which is the additional cost for using low precision samples. All strategies of reducing the variance of the first term can seamlessly combine the strategies introduced in this paper, The additional cost can be bounded by
+The first term is from the full stochastic gradient, which can be reduced by using strategies such as mini-batch, weight sampling, etc. Reducing the first term is issue orthogonal to this paper. 
+Rather, we are interested in the second term, which is the additional cost of using low precision samples. All strategies for reducing the variance of the first term can seamlessly combine with the approach of this paper. 
+The additional cost can be bounded by
 \begin{lemma} 
 The stochastic gradient variance using double sampling in \eqref{eq:double} $\E\|\g_t - \g_t^{(full)}\|^2$ can be bounded by
 \begin{align*}
@@ -185,19 +185,18 @@ The stochastic gradient variance using double sampling in \eqref{eq:double} $\E\
 \end{align*}
 where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the element product.
 \end{lemma}
-It suggests that $\mathcal{TV}(\a_t)$ is the key factor to the variance. 
+It suggests that minimizing $\mathcal{TV}(\a_t)$ is key for reducing variance. 
 
 \vspace{-0.5em}
-\paragraph{Uniform quantization} Intuitively, more levels of quantization, the lower the variance. The following result shows the quantitative dependence between the variance and the level of quantization with uniform quantization. 
+\paragraph{Uniform quantization} Intuitively, more levels of quantization, the lower the variance. The following result shows the quantitative dependence between the variance and the number of uniformly distributed levels. 
 %We assume that these separators are uniformly distributed, and revisit this in Section~\ref{sec:optimal}.
 %We have~\cite{Alistarh:2016:ArXiv}: 
 \begin{lemma}
-\textcolor{red}{
 \label{lem:quant-facts} [\cite{Alistarh:2016:ArXiv}]
-Assume that these separators are uniformly distributed. For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$; furthermore, the total variance using uniform quantization with level $s$ is bounded by
+Assume that quantization levels are uniformly distributed. For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$; furthermore, the total variance using uniform quantization with level $s$ is bounded by
 \[
 \mathcal{TV}_s(\v):=\E [\| Q (\vec{v},s) - \v\|_2^2] \leq \min( n/s^2,\sqrt{n}/s)) \| \vec{v} \|_2^2. \;
-\]}
+\]
 \end{lemma} 
 
 \vspace{-1em}
