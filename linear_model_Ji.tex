@@ -102,6 +102,12 @@ quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote
 \vspace{-0.5em}
 %\subsection
 %\paragraph{Naive Stochastic Quantization does not Work}
+\begin{wrapfigure}{r}{0.23\textwidth}
+  \begin{center}
+    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
+  \end{center}
+  \label{fig:gap}
+\end{wrapfigure}
 The naive way to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
 \[
 \hat{\g}_t := \hat{\a}_t \hat{\a}_t^\top \x - \hat{\a}_t b_t.
@@ -133,14 +139,8 @@ where $D_{\a}$ is diagonal and its $i$th diagonal element is
 %\[
 %\E[ Q(\a_i)^2 ] - \a_i^2.
 %\]
-
 %\todo{y axis here is weird}
-\begin{wrapfigure}{r}{0.23\textwidth}
-  \begin{center}
-    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
-  \end{center}
-  \label{fig:gap}
-\end{wrapfigure}
+
 
 \vspace{-0.5em}
 Since $D_{\a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 

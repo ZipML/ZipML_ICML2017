@@ -5,12 +5,12 @@ We now investigate the choice of of quantization points and present an optimal s
 \paragraph*{Problem Setting}
 Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. WLOG, assume that all real numbers in $\Omega$ are in $[0, 1]$ and sorted $x_1 \leq \ldots \leq x_N$. 
 
-The goal is to find an partition $\setI = \{I_j\}_{j = 1}^k$ of $[0, 1]$ into $k$ disjoint intervals, so that if we randomly quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
+The goal is to find an partition $\setI = \{I_j\}_{j = 1}^s$ of $[0, 1]$ into $s$ disjoint intervals, so that if we randomly quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
 Formally:
 \vspace{-0.5em}
 \begin{align}
 \nonumber \min_{\setI: |\setI| = s} \quad & \mathcal{MV}(\setI) := {1\over N}\sum_{j = 1}^k \sum_{x_i \in I_j} \err(x_i, I_j)\\
-\text{s.t.}\quad & \bigcup_{j = 1}^k I_j = [0, 1],
+\text{s.t.}\quad & \bigcup_{j = 1}^s I_j = [0, 1],\quad I_j\cap l_k = \emptyset~\text{for $k\neq j$}
 \label{eq:opt_Q}
 \end{align}
 where $\err (x, I) = (b - x) (x - a)$ is the variance for point $x \in I$ if we quantize $x$ to an endpoint of $I = [a, b]$.
@@ -25,7 +25,7 @@ That is, $\err (x, I)$ is the variance of the (unique) distribution $D$ supporte
 Given an interval $I \subseteq [0, 1]$, we let $\setX_I$ be the set of $x_j \in \setX$ contained in $I$.
 We also define $\err (\setX, I) = \sum_{x_j \in I} \err (x_j, I)$.
 Given a partition $\setI$ of $[0, 1]$, we let $\err (\setX, \setI) = \sum_{I \in \setI} \err (\setX, I)$.
-We let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$ (break the tie randomly). %, and we let $\OPT_k = \err(\setX, \setI^*)$.
+We let the optimum solution be $\setI^* = \argmin_{|\setI| = s} \err (\setX, \setI)$ (break the tie randomly). %, and we let $\OPT_k = \err(\setX, \setI^*)$.
 
 
 \vspace{-1em}
