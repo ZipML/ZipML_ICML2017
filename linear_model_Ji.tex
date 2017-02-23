@@ -100,7 +100,17 @@ quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote
 \vspace{-0.5em}
 %\subsection
 %\paragraph{Naive Stochastic Quantization does not Work}
+<<<<<<< HEAD
 The naive apprach to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
+=======
+\begin{wrapfigure}{r}{0.23\textwidth}
+  \begin{center}
+    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
+  \end{center}
+  \label{fig:gap}
+\end{wrapfigure}
+The naive way to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
+>>>>>>> 53ed983bc6f25525cd7066584eeb6ee23e197e6f
 \[
 \hat{\g}_t := \hat{\a}_t \hat{\a}_t^\top \x - \hat{\a}_t b_t.
 \]
@@ -131,14 +141,8 @@ where $D_{\a}$ is diagonal and its $i$th diagonal element is
 %\[
 %\E[ Q(\a_i)^2 ] - \a_i^2.
 %\]
-
 %\todo{y axis here is weird}
-\begin{wrapfigure}{r}{0.23\textwidth}
-  \begin{center}
-    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
-  \end{center}
-  \label{fig:gap}
-\end{wrapfigure}
+
 
 \vspace{-0.5em}
 Since $D_{\a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
@@ -167,7 +171,7 @@ are used symmetrically, sending $k$ samples only requires $\log_2 k$ more bits.
 \subsection{Variance Reduction}
 \vspace{-0.5em}
 
-From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t - \g_t^{(full)}\|^2$ will dominate the convergence efficiency. It is not hard to see that the variance of the double sampling based stochastic gradient in \eqref{eq:double} can be decomposed into
+From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t - \nabla f(\x)\|^2$ will dominate the convergence efficiency. It is not hard to see that the variance of the double sampling based stochastic gradient in \eqref{eq:double} can be decomposed into
 \vspace{-0.5em}
 \begin{align*}
 \E\|\g_t - \nabla f(\x_t)\|^2 & \leq \E \|\g_t^{(full)}- \nabla f(\x_t)\|^2 
