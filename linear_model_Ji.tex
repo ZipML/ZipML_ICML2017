@@ -36,7 +36,7 @@ In this section, we focus on linear models with possibly nonsmooth regularizatio
 F(\x) = \underbrace{\frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x - b_k \|_2^2}_{=: f(\x)} + R(\x) \; ,
 \label{eq:linear}
 \end{align}
-i.e., minimize the empirical least squares loss plus a nonsmooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). The generic SGD works as follows: at step $\x_t$, given an unbiased gradient estimator $\g_t$, that is, 
+i.e., minimize the empirical least squares loss plus a nonsmooth regularization $R(\cdot)$ (e.g., $\ell_1$ norm, $\ell_2$ norm, and constraint indicator function). The generic SGD is the most popular approach to solve the large scale machine learning problem. It works as follows: at step $\x_t$, given an unbiased gradient estimator $\g_t$, that is, 
 \[
 \E(\g_t) = \nabla f(\x_t)
 \]
