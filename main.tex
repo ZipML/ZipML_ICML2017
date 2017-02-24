@@ -387,7 +387,7 @@ From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t -
 \end{align*}
 The first term is from the full stochastic gradient, which can be reduced by using strategies such as mini-batch, weight sampling, and so on. Reducing the first term is issue orthogonal to this paper. 
 Rather, we are interested in the second term, which is the additional cost of using low-precision samples. All strategies for reducing the variance of the first term can seamlessly combine with the approach of this paper. 
-The additional cost can be bounded by <Editor query: Is this sentence fragment intentional? It seems redundant to the next line.>
+The additional cost can be bounded by the following lemma.
 \begin{lemma} 
 The stochastic gradient variance using double sampling in \eqref{eq:double} $\E\|\g_t - \g_t^{(full)}\|^2$ can be bounded by
 \begin{align*}
@@ -598,9 +598,10 @@ In this section, we extend our framework to approximate arbitrary classification
 \subsection{Quantizing Polynomials} 
 \vspace{-0.5em}
 
-Given a degree $d$ polynomial $P(x) = \sum_{i = 0}^{d} m_i z^i$, which <Editor query: There seems to be some text missing here ater the "which.">
-Our goal is to evaluate at $\vec{a}^\top \vec{x}$, while quantizing $\vec{a}$, so as to preserve the value of $P( \vec{a}^\top \vec{x})$ in expectation. 
+Given a degree $d$ polynomial $P(x) = \sum_{i = 0}^{d} m_i z^i$,
+our goal is to evaluate at $\vec{a}^\top \vec{x}$, while quantizing $\vec{a}$, so as to preserve the value of $P( \vec{a}^\top \vec{x})$ in expectation. 
 
+\vspace{-0.5em}
 We will use $d$ independent quantizations of $\vec{a}$, $Q_1(\vec{a}), Q_2(\vec{a}), \ldots, Q_d(\vec{a})$. 
 Given these quantizations, our reconstruction of the polynomial at $( \vec{a}^\top \vec{x})$ will be 
 \vspace{-0.5em}
@@ -609,11 +610,12 @@ $$ Q(P) := \sum_{i = 0}^d m_i \prod_{j \leq i} Q_j(\vec{a})^\top \vec{x}.$$
 \vspace{-1em}
 The fact that this is an unbiased estimator of $P( \vec{a}^\top \vec{x} )$ follows from the independence of the quantizations. Using Lemma~\ref{lem:quant-facts} yields:
 
+\vspace{-0.5em}
 \begin{lemma}
 \label{lem:poly-sec-moment-bound}
 	$\E[ Q(P)^2 ] \leq \left(\sum_{i = 0}^d m_i r(s)^i (\vec{a}^\top \vec{x})^i\right)^2.$
 \end{lemma} 
-
+\vspace{-0.5em}
 
 
 \vspace{-0.5em}
@@ -625,7 +627,8 @@ $$ \nabla_\vec{x} (b \cdot \vec{a}^\top \vec{x}) = b \ell' (b \cdot \vec{a}^\top
 
 Assume normalized samples, i.e. $\| \vec{a}_i \|_2 \leq 1, \forall i$, and that $\vec{x}$ is constrained such that $\| \vec{x} \|_2 \leq R$, for some real value $R > 0$. We wish to approximate the gradient within some target accuracy $\epsilon$. 
 
-To achieve this, fix a minimal-degree polynomial $P$ such that $|P(z) - \ell'(z)| \leq \epsilon, \forall z \leq R$. Assume this polynomial is known to both transmitter (sample source) and receiver (compute device). <Editor query: Is "compute device" correct? Should it be "computing" or "computer"?> The protocol is as follows. 
+\vspace{-0.5em}
+To achieve this, fix a minimal-degree polynomial $P$ such that $|P(z) - \ell'(z)| \leq \epsilon, \forall z \leq R$. Assume this polynomial is known to both transmitter (sample source) and receiver (computing device). The protocol is as follows. 
 \vspace{-0.5em}
 \begin{itemize}
     \vspace{-0.5em}
@@ -642,11 +645,11 @@ We can extend Lemma~\ref{lem:poly-sec-moment-bound} to obtain a general guarante
 	For any $\epsilon > 0$ and any convex classification loss function $\ell: \R \rightarrow \R$, there exists a polynomial degree $D(\epsilon, \ell)$ such that the polynomial approximation framework converges to within $\epsilon$ of OPT.  
 \end{lemma}
 
-\vspace{-0.5em}
+\vspace{-1.5em}
 \paragraph{Chebyshev Approximations} 
 For \emph{logistic loss}, with sigmoid gradient, we notice that polynomial approximations have been well studied. In particular, we use the Chebyshev polynomial approximation of~\cite{vlcek2012chebyshev}. 
 
-\vspace{-0.5em}
+\vspace{-1em}
 \subsection{Quantizing Non-Smooth Classification Losses}
 \vspace{-0.5em}
 
@@ -654,9 +657,10 @@ Our techniques further extend to convex loss functions with non-smooth gradients
 For simplicity, in the following we focus on SVM, whose gradient (the step function), is discontinuous. 
 This gradient is hard to approximate generally by polynomials; yet, the problem is approachable on intervals of the type $[-R, R] \setminus [-\delta, \delta]$, for some small parameter $\delta > 0$~\cite{frostig2016principal, allen2016faster}; the latter reference provides the optimal approximation via Chebyshev polynomials, which we use in our experiments. 
 
-The key challenge is that these results do any <Editor query: It appears that some text is missing here ("these results do any").>non-trivial guarantees for our setting, since gradients within the interval $[-\delta, \delta]$ can differ from the true gradient by $\Omega (1)$ in expectation. In particular, due to quantization, the gradient might be \emph{flipped}: 
+The key challenge is that these results do not provide any non-trivial guarantees for our setting, since gradients within the interval $[-\delta, \delta]$ can differ from the true gradient by $\Omega (1)$ in expectation. In particular, due to quantization, the gradient might be \emph{flipped}: 
 its relative value with respect to $0$ changes, which corresponds to having the \emph{wrong} label for the current sample.\footnote{Training SVM with noisy labels has been previously considered, e.g.~\cite{Natarajan:2013:NIPS}, but in a setting where labels are corrupted uniformly at random. It is not hard to see that label corruptions are not uniform random in this case.}
 We show two approaches for controlling the error resulting from these errors. 
+
 
 The first is to just ignore such errors: under generative assumptions on the data, we can prove that quantization does not induce significant error. 
 In particular, the error vanishes by taking more data points.
@@ -665,12 +669,12 @@ This approach is always correct; however, it requires more communication.
 Under the same generative assumptions, we show that the additional communication is \emph{sublinear} in the dimension.
 Details are in the supplementary material.
 
-\vspace{-0.5em}
+\vspace{-1em}
 \paragraph{Practical Considerations} The above strategy introduces a precision-variance trade-off, since increasing the precision of approximation (higher polynomial degree) also increases the variance of the gradient. 
 Fortunately, we can reduce the variance and increase the approximation quality by increasing the density of the quantization. 
 In practice, a total of $8$ bits per sample is sufficient to ensure convergence for both hinge and logistic loss. 
 
-\vspace{-0.5em}
+\vspace{-1em}
 \paragraph*{The Refetching Heuristic}
 The second theoretical approach inspires the following heuristic. 
 Consider hinge loss, i.e.  $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$. 
@@ -723,11 +727,11 @@ Dataset           & \# Projections & Volumn Size & Proj. Size \\
 \label{table:dataset}
 \end{table}
 
-\vspace{-0.5em}
+\vspace{-1.5em}
 \section{Experiments} \label{sec:exp}
 
 \vspace{-0.5em}
-In this section we provide empirical validation of
+We provide empirical validation of
 our framework.
 
 \vspace{-1em}
@@ -748,7 +752,7 @@ implementation often favors smaller step size.
 Thus we do not tune step sizes for the low-precision 
 implementation, as this can only improve the accuracy of our approach.) 
 
-\vspace{-1em}
+\vspace{-1.5em}
 \paragraph*{Summary of Experiments}
 Due to space limitations, we only report on {\bf Synthetic 100} for regression, and on 
 {\bf gisette} for classification. 
@@ -761,7 +765,7 @@ decisions, and (4) refetching heuristics.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.7\columnwidth]{final-experiments/linearmodel} 
+\includegraphics[width=0.68\columnwidth]{final-experiments/linearmodel} 
 \vspace{-1em}
 \caption{Linear models with end-to-end low precision.}
 \vspace{-1.5em}
@@ -783,7 +787,7 @@ prototype achieves significant speedup
 because of the decrease in bandwidth
 consumption.
 
-\vspace{-1em}
+\vspace{-1.5em}
 \paragraph{Convergence}
 
 Figure~\ref{fig:convergence} illustrates
@@ -832,7 +836,7 @@ the result of (1) our FPGA
 implementation with quantized data,
 (2) FPGA implementation with 32-bit
 data, and (3) Hogwild! running with
-10 CPU cores. <Editor query: Earlier in the paper, this was described as 10-core CPU. It seems to me that they are different: in this case it sounds like there are 10 separate CPUs.>
+10 CPU cores. 
 Observe that all approaches
 converge to the same solution.
 FPGA with quantized data converges
@@ -847,19 +851,19 @@ explains the speedup.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.7\columnwidth]{final-experiments/linear-fpga} 
+\includegraphics[width=0.68\columnwidth]{final-experiments/linear-fpga} 
 \vspace{-1em}
 \caption{FPGA implementation of linear models.}
-\vspace{-1em}
+\vspace{-2em}
 \label{fig:speedup}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.7\columnwidth]{final-experiments/optimal} 
+\includegraphics[width=0.68\columnwidth]{final-experiments/optimal} 
 \vspace{-1em}
 \caption{Optimal quantization strategy.}
-\vspace{-1em}
+\vspace{-2em}
 \label{fig:optimal}
 \end{figure}
 
@@ -909,7 +913,7 @@ a carefully chosen quantization strategy.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.7\columnwidth]{final-experiments/chebyshev} 
+\includegraphics[width=0.68\columnwidth]{final-experiments/chebyshev} 
 \vspace{-1.2em}
 \caption{Non-linear models with Chebyshev approximation.}
 \vspace{-1.9em}
@@ -931,7 +935,7 @@ rounding or naive stochastic rounding
 to achieve the same quality and convergence 
 rate.
 
-\vspace{-1em}
+\vspace{-1.5em}
 \paragraph{Chebyshev Approximations}
 
 Figure~\ref{fig:chebyshev} illustrates
@@ -953,7 +957,7 @@ We also experience no loss in test accuracy.
 
 
 
-\vspace{-1em}
+\vspace{-1.5em}
 \paragraph{Negative Results}
 
 We are able to construct the following,
