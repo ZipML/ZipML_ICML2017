@@ -337,8 +337,10 @@ quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote
 
 \begin{wrapfigure}{r}{0.23\textwidth}
   \begin{center}
+  \vspace{-6mm}
     \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
   \end{center}
+      \vspace{-5mm}
   \label{fig:gap}
 \end{wrapfigure}
 The naive way to use low-precision samples $\hat{\a}_t := Q(\a_t)$ is 
@@ -685,7 +687,8 @@ In practice, this works for
 8-bit while only refetching $<5\%$ of the data.
 
 \begin{table}[t]
-\scriptsize
+%\scriptsize
+\small
 \centering
 \begin{tabular}{crrrr}
 \hline
@@ -716,12 +719,12 @@ CIFAR-10        & 50,000        & 10,000      &$32\times 32\times 3$     \\
 \multicolumn{4}{c}{\bf Tomographic Reconstruction}\\
 Dataset           & \# Projections & Volumn Size & Proj. Size \\
 \hline
-                  & $128$            & $128\times 128\times 128$      & $128\times 128\times 128$     \\
+                  & $128$            & $128^3$      & $128^3$     \\
 \hline
 \end{tabular}
 \vspace{-1em}
 \caption{Dataset statistics}
-\vspace{-1.5em}
+\vspace{-.5em}
 \label{table:dataset}
 \end{table}
 

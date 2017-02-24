@@ -97,18 +97,20 @@ way. Given a vector
 $\v$, let $M(\v)$ be a scaling factor such that $-1 \le \v/M(\v) \le 1$. Without loss of generality, let $M(\v)=||\v||_2$. We partition the interval $[-1, 1]$ using $s+1$ separators: $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for each number $v$ in $\v/M(\v)$, we 
 quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote the \emph{stochastic quantization} function by $Q(\v, s)$ and choose the probability of quantizing to different separators such that $\E[Q(\v, s)] = \v$. We use $Q(\v)$ when $s$ is not relevant.
 
+\vspace{-10mm}
+\begin{wrapfigure}{r}{0.20\textwidth}
+  \vspace{-5mm}
+  %\begin{center}
+    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
+  %\end{center}
+  \label{fig:gap}
+\end{wrapfigure}
+
 \vspace{-0.5em}
 \subsection{Double Sampling for Unbiased Stochastic Gradient}
 \vspace{-0.5em}
 %\subsection
 %\paragraph{Naive Stochastic Quantization does not Work}
-
-\begin{wrapfigure}{r}{0.23\textwidth}
-  \begin{center}
-    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
-  \end{center}
-  \label{fig:gap}
-\end{wrapfigure}
 The naive way to use low precision samples $\hat{\a}_t := Q(\a_t)$ is 
 \[
 \hat{\g}_t := \hat{\a}_t \hat{\a}_t^\top \x - \hat{\a}_t b_t.
