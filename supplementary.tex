@@ -446,7 +446,7 @@ as claimed.
 
 \section{Quantizing the Gradients}
 
-Recent work~\cite{Alistarh:2016:ArXiv, DeSa:NIPS:2015}, has focused on quantizing the gradients 
+Recent work has focused on quantizing the gradients 
 with low-precision representation.
 We omit the description of this direction
 because it is relatively well-studied and is orthogonal
@@ -549,7 +549,7 @@ When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^
 We have two approaches to dealing with this: the first provides rigorous guarantees, however, requires some fairly heavy algorithmic machinery (in particular, Johnson-Lindenstrauss matrices with little randomness).
 The latter is a simpler heuristic that we find works well in practice.
 
-\textcolor{red}{Dan: you might want to change the notation of original gradient and the approximation, since it's a bit confusing later in the game.}
+
 
 \subsection{Polynomial approximation and $\ell_2$-refetching via Johnson-Lindenstrauss}
 Let $H(x)$ be the Heaviside function, i.e. $H(x) = 1$ if $x \geq 0$ and $H(x) = 0$ if $x < 0$. 
@@ -791,7 +791,7 @@ which simplifies to the claimed bound.
 %Thus, it suffices to bound the error in the case of success.
 \end{proof}
 
-\subsubsection{A bound on refetching probability}
+\subsubsection{A bound on the refetching probability}
 We now show that under a reasonable generative model, we will not have to refetch very often.
 Under this assumption, we show:
 \begin{theorem}
@@ -860,7 +860,7 @@ If $I \subseteq I'$, then $\err(\setX, I) = \err (\setX_I, I) \leq \err (\setX_I
 First, we observe that it is trivial that the optimal partition must have endpoints solely at points in $\setX$.
 Thus we may restrict our attention to such partitions.
 The algorithm is given in Algorithm \ref{alg:adaquant}.
-The algorithm is inspired by the greedy merging algorithms of \cite{ADHLS15,ADLS17} for histogram recovery.
+The algorithm is inspired by  greedy merging algorithms for histogram recovery.
 
 \begin{algorithm}[htb]
 \begin{algorithmic}[1]
