@@ -1,3 +1,5 @@
+%!TEX root = main.tex
+
 %\begin{itemize}
 %\item Show the convergence rate of SGD something like
 %\[
@@ -157,7 +159,7 @@ We now present a simple method to fix the biased gradient estimator. We generate
 This gives us an unbiased estimator of the gradient. 
 
 \paragraph*{Overhead of Storing Two Samples}
-The reader may have noticed that one implication of double sampling is the overhead of sending
+The astute reader will have noticed that one implication of double sampling is the overhead of sending
 two samples instead of one. We note that this will not introduce $2\times$
 overhead in terms of data communication. Instead, just one additional bit
 is needed the second sample, because of correlation, as the two samples 
@@ -184,24 +186,24 @@ The stochastic gradient variance using double sampling in \eqref{eq:double} $\E\
 %&\E\|\g_t - \g_t^{(full)}\|^2 \leq \\
 &\Theta\left(\mathcal{TV}(\a_t) (\mathcal{TV}(\a_t)\|\x\odot \x\| + \|\a_t^\top \x\|^2 + \|\x\odot \x\|\|\a_t\|^2)\right).
 \end{align*}
-where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the element product.
+where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the elementwise product.
 \end{lemma}
 Thus minimizing $\mathcal{TV}(\a_t)$ is key for reducing variance. 
 
 \vspace{-0.5em}
-\paragraph{Uniform quantization} Intuitively, more levels of quantization, the lower the variance. The following result shows the quantitative dependence between the variance and the number of uniformly distributed levels. 
+\paragraph{Uniform quantization} Intuitively, more levels of quantization, the lower the variance. The following result makes this quantitative dependence precise. 
 %We assume that these separators are uniformly distributed, and revisit this in Section~\ref{sec:optimal}.
 %We have~\cite{Alistarh:2016:ArXiv}: 
 \begin{lemma}
 \label{lem:quant-facts} [\cite{Alistarh:2016:ArXiv}]
-Assume that quantization levels are uniformly distributed. For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$; furthermore, the total variance using uniform quantization with level $s$ is bounded by
+Assume that quantization levels are uniformly distributed. For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$. Further, the total variance using uniform quantization with  $s$ levels is bounded by
 \[
 \mathcal{TV}_s(\v):=\E [\| Q (\vec{v},s) - \v\|_2^2] \leq \min( n/s^2,\sqrt{n}/s)) \| \vec{v} \|_2^2. \;
 \]
 \end{lemma} 
 
 \vspace{-1em}
-Together with other results, it suggests the stochastic gradient variance of using double sampling is bounded by
+Hence, the stochastic gradient variance of double sampling is bounded by
 \[
 \E\|\g_t - \nabla f(\x_t)\|^2 \leq \sigma^2_{(full)} + \Theta \left( {n /s^2} \right)
 \]
