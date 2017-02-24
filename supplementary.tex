@@ -7,8 +7,10 @@
 \usepackage{mdwlist}
 \usepackage{fullpage}
 \usepackage{charter}
-
+\usepackage{tikz}
 \usepackage{url}
+
+
 
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
@@ -26,6 +28,9 @@
 \newcommand{\sgn}[1]{\mbox{sgn}(#1)}
 \renewcommand{\vec}[1]{\mathbf{#1}}
 \newcommand{\poly}{\mathrm{poly}}
+
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+\node[shape=circle,draw,color=black,text=black,inner sep=0.05pt](char){#1};}}
 
 \def\a{{\bf a}}
 \def\g{{\bf g}}
@@ -890,9 +895,7 @@ We first show this algorithm runs in nearly linear time:
 \begin{theorem}
 Given any $\setX, k, \gamma, \delta$, we have that $\textsc{AdaQuant} (\setX, k, \gamma, \delta)$ runs in time $O(n (\log (n / \gamma) + \log \log 1 / \delta))$ 
 \end{theorem}
-\begin{proof}
-This follows from the same analysis as in \cite{ADLS17}.
-\end{proof}
+
 
 Our main contribution is to show that the algorithm does indeed achieve good error:
 \begin{theorem}
@@ -920,6 +923,169 @@ Since this holds for all $I \in \setJ$, and $|\setJ| \leq k$, this implies that
 \]
 Combining the above two expressions yields that $\err (\setX, \setI) \leq  \left( 1 + \frac{1}{\gamma} \right) \OPT_k$, as claimed.
 \end{proof}
+
+\section{Description of the FPGA Implementation}
+
+\section{Implementation}
+\label{section:implementation}
+We describe the FPGA implementations. First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
+
+\subsection{Target platform: Intel Xeon+FPGA}
+\label{section:xeonfpga}
+
+Our target platform is the Intel Xeon+FPGA represented in Figure \ref{fig:xeonfpga}, made available through the \textit{Intel-Altera Heterogeneous Architecture Research Platform}\footnote{Following the Intel legal guidelines on publishing performance numbers we want to make the reader aware that results in this publication were generated using preproduction hardware and software, and may not reflect the performance of production or future systems.}. It combines a 10-core CPU (Intel Xeon E5-2680 v2, 2.8 GHz) and an FPGA (Altera Stratix V 5SGXEA) on a 2-socket motherboard. The FPGA has cache-coherent access to the CPU-connected main memory through QPI (Quick Path Interconnect) with a combined read and write bandwidth of around 6.5 GB/s. The usage of an FPGA accelerator, that we implement using VHDL, is pretty straightforward with Intel-provided software libraries, a QPI endpoint and an FPGA based page table of our own implementation: At the start of an application the required amount of shared memory is allocated by software in 4MB pages and the page table on the FPGA is populated with corresponding addresses. The accelerator can request cache-line wide (64B) reads and writes to the entire memory through the use of the page table and the QPI endpoint, which in addition to handling the QPI protocol also implements an FPGA local cache (128KB two-way associative) using BRAMs. Apart from the page-table, a further addition we made to the interface is a reorder buffer, since by default QPI requests arrive out of order. In addition to an accelerator requesting data from QPI, the software can also issue direct writes, a useful feature for configuring some registers containing runtime parameters.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=.7\columnwidth]{Figures/XeonFPGA.eps}
+\caption{Intel Xeon+FPGA Architecture}
+\label{fig:xeonfpga}
+\end{figure}
+
+\subsection{FPGA-SGD on \textbf{float} data}
+\label{section:floatfpgasgd}
+
+We first present an SGD implementation on the FPGA, that works on 32-bit floating-point data, which is very often the original data representation in machine learning data sets. In Figure \ref{fig:floatFPGASGD} the computation pipeline for \textit{float} FPGA-SGD is presented. As the data access width is a 64B cache-line on Xeon+FPGA, the circuit is designed to work on that data width. It is able to accept a cache-line at every clock cycle ($f_{clock} = 200 MHz$), resulting in an internal processing rate of 12.8 GB/s.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=.8\columnwidth]{Figures/floatFPGASGD.eps}
+\caption{Computation pipeline for \textit{float} FPGA-SGD, with a latency of 36 cycles, a data width of 64B and a processing rate of 64B/cycle.}
+\label{fig:floatFPGASGD}
+\end{figure}
+
+\noindent
+\textbf{Scale to \# features:} The challenging part of the design is to make it capable of handling a number of features $D$ that is larger than 16, which is the default width of the pipeline. In fact, this is possible since all vector algebra in algorithm \ref{algo:sgd} can be performed iteratively, where each chunk contains 16 values. This implies that the number $D$ needs to be a multiple of 16. To ensure that, we use zero-padding on a data set, if $D\bmod16\neq0$. Thus, we can calculate how many cache-lines it takes for $\mathbf{a_i}$ (one row in the set) to be completely received:
+\[
+\text{\#} \mathbf{a_i} \text{cache-lines} = 
+\begin{cases}
+%\frac{D}{16}
+D/16
+\quad & \text{if } D\bmod16=0 \\
+\frac{D + (16-D\bmod16)}{16}
+%(D + (16-D\bmod16))/16
+\quad & \text{if } D\bmod16\neq0
+\end{cases}
+\]
+The only parameter that the design needs to scale for is the maximum number of dimensions $D_{max}$ that can be supported, and the only value growing with that is the amount of BRAM for storing the model $\mathbf{x}$. We choose $D_{max}$ to be 8192, since this is more than enough for most existing linear dense model training examples. The design can handle any number of samples, \textit{N}, since training is done in a streaming fashion, as explained in the following.
+%The resource consumption numbers on the target FPGA are given in Table \ref{table:resources}.
+
+\begin{figure*}[t]
+\centering
+\begin{subfigure}[t]{.8\columnwidth}
+\centering
+\includegraphics[width=\columnwidth]{Figures/qFPGASGD.eps}
+\caption{\textit{Q2}, \textit{Q4} and \textit{Q8} FPGA-SGD, with a latency of $log(K)$+5 cycles, a data width of 64B and a processing rate of 64B/cycle.}
+\label{fig:qFPGASGD}
+\end{subfigure}
+\quad
+\begin{subfigure}[t]{.8\columnwidth}
+\centering
+\includegraphics[width=\columnwidth]{Figures/q1FPGASGD.eps}
+\caption{\textit{Q1} FPGA-SGD, with a latency of 12 cycles, a data width of 32B and a processing rate of 32B/cycle.}
+\label{fig:q1FPGASGD}
+\end{subfigure}
+\caption{Computation pipelines for all quantizations. Although for \textit{Q2}, \textit{Q4} and \textit{Q8} the pipeline width scales out and maintains 64B width, for \textit{Q1} it does not scale out and the pipeline width needs to be halved, making \textit{Q1} FPGA-SGD compute bound.}
+\label{fig:qallFPGASGD}
+\end{figure*}
+
+
+\noindent
+\textbf{Walk-through of computation pipeline:} In the following, we explain what happens at each stage of the computation pipeline. The first stage is the dot product $\mathbf{a_i}\cdot\mathbf{x} = \sum_{j=1}^{D} a_{i,j}x_j$. When a cache-line containing a part of vector $\mathbf{a_i}$ arrives, it is first multiplied (\circled{1}) with the corresponding part of vector $\mathbf{x}$. The multiplication is performed in floating point with multiplier IPs\footnote{All floating point IPs are created via Altera Quartus II 13.1}, which have 5 cycles latency and a result per cycle throughput. Then, the values are converted to a 32-bit integer (\circled{2}) by multiplication with a large constant that is configurable during runtime, depending on the value range or the precision that is desired to be kept. This \textit{float2fixed} conversion takes 1 cyle. After that, an adder tree (\circled{3}) accumulates 16 values, each layer taking 1 cycle. At the output of the adder tree is a single accumulator (\circled{4}). It accumulates the results coming out from the adder tree for the pre-calculated number of $\text{\#} \mathbf{a_i} \text{cache-lines}$, thus building the final value for the dot product. The dot product result is converted back to floating point (\circled{5}), since the next stages of the calculation will be performed with floating point data.
+In the next part, the rest of the gradient calculation takes place. First, the scalar value $b$, which is the true inference value in the data set, is subtracted from the dot product (\circled{6}) using a floating point adder IP, which has 7 cycles latency and a result per cycle throughput. As for where the $b$ value comes from, it is actually received some cycles before the subtraction takes place and is put into a FIFO (\circled{B}), waiting there until the dot product result is ready. After the subtraction, a floating point multiplication takes place with the step size $\gamma$ (\circled{7}), which can be configured to any \textit{float} value during runtime. At the end of this step, we have a scalar value $\gamma(\mathbf{a_i}\cdot\mathbf{x}-b_i)$, which needs to be multiplied with vector $\mathbf{a_i}$. At this stage, a FIFO (\circled{A}) already contains all parts of vector $\mathbf{a_i}$, because the incoming cache-lines are written to this FIFO simultaneously as they were sent to the dot product calculation. The scalar-vector multiplication (\circled{8}) takes place in floating point, where all parts of $\mathbf{a_i}$ are multiplied with the same scalar value. This gives us the gradient $\mathbf{g_i}$ one part at a time, which undergoes \textit{float2fixed} conversion (\circled{9}), so that a cycle-by-cycle update of the model $\mathbf{x}$ (\circled{C}) can take place, which would not be possible with a floating point adder having 7 cycles latency. The part of the gradient, which is ready, is applied to the corresponding part of the model. After the last part of the gradient is subtracted from the model, the update for $\mathbf{a_i}$ (a row in the data set) is completed. After all rows go through the same calculation, one so called epoch is completed, as shown in algorithm \eqref{algo:sgd}. In Figure \ref{fig:floatFPGASGD} we can see that the model we apply the updates to and the model we read for the dot product are separate. Only when a certain batch size (the number of already processed $\mathbf{a_i}$) is reached, the updated model is carried on to the actual model (\circled{D}). The reason for this is the latency introduced by the computation pipeline: In theory, the whole gradient calculation and the update to the model as in \eqref{algo:sgd} should be an atomic operation. However, since we would like to exploit the deep-pipelining an FPGA provides to achieve high processing throughput, we don't perform this operation atomically. Instead, we keep the actual model and the updated model separate and only carry out the accumulated update when a certain batch size is reached (called also a mini-batch SGD). The batch size is a runtime configurable parameter, which should be set to the latency of the pipeline (36 cycles) to avoid any so called stale updates.
+
+\noindent
+\textbf{Trade-off: End-to-end float vs. hybrid computation} We choose a hybrid (float+fixed) over end-to-end float computation because of the following reasons: (1) One floating point addition takes 7 cycles, resulting in a high latency adder tree (\circled{3}). Because of the increased latency (as explained previously) a larger batch-size is required to avoid staleness, which slows down the convergence rate. (2) Again, since a floating point addition takes 7 cycles, a cycle-by-cycle accumulation (\circled{7}) would not be possible, since the result of an ongoing addition is required in the next cycle. Thus, for keeping the processing rate at 64B/cycle, a hybrid design is chosen.
+
+\subsection{FPGA-SGD on \textbf{quantized} data}
+\label{section:qfpgasgd}
+
+We explain how the FPGA-SGD design for \textit{float} data is adjusted to work on quantized data. The main purpose of this design is simple: Instead of reading \textit{float} data, where only 16 values can be fit into a cache-line, we would like to quantize the data beforehand, so that we can fit more than 16 values into a cache-line, thus utilize the available bandwidth more efficiently and gain speedup. There is one main challenge in making the FPGA-SGD work on quantized data: Scaling out the computation pipeline presented in Figure \ref{fig:floatFPGASGD}, so that it can work on more than 16 values in parallel. Before we dive in and explain how this is achieved, first we would like to give an overview of quantization options we consider and how the data layout looks like.
+
+\noindent
+\textbf{Quantization for FPGA-SGD:} When we analyze what happens in equation \eqref{equation:quantization}, we deduct that given a non-integer value, the quantization still might produce a non-integer value. However, floating point arithmetic induced by non-integer values are hard to implement on the FPGA, and scaling out such a design would not be possible. We would like to take advantage of the fact that we can select the quantization variables $[L,U]$ and $s$ intelligently, so that only integer values are produced. In Table \ref{table:quantization} we present choices for these values.
+
+\begin{table}[t]
+\centering
+\caption{Choice of quantization levels, lower and upper bounds, so that only integer values are produced.}
+\label{table:quantization}
+\begin{tabular}{c|c|c|c}
+Levels & Data set positive & Data set negative & Needed bits\\
+\hline
+s=2 & $[L,U]=[0,1]$ & N/A & 1, \textit{Q1} \\
+s=3 & $[L,U]=[0,2]$ & $[L,U]=[-1,1]$ & 2, \textit{Q2} \\
+s=9 & $[L,U]=[0,8]$ & $[L,U]=[-4,4]$ & 4, \textit{Q4} \\
+s=129 & $[L,U]=[0,128]$ & $[L,U]=[-64,64]$ & 8, \textit{Q8}
+\end{tabular}
+\end{table}
+
+After we have selected a quantization precision (one of \textit{Q1}, \textit{Q2}, \textit{Q4} or \textit{Q8}), the data set (the values in matrix $\mathbf{a}$) must be normalized to selected quantization's corresponding $[L,U]$. At this stage, the sign of the data set is considered for the normalization. For example, we choose not the normalize a negative data set into a positive interval, in order to keep existing zeros, thus we don't use \textit{Q1} for negative data sets.
+
+\noindent
+\textbf{The layout of quantized data} As it was shown in Section \ref{section:quantization}, for calculating a correct gradient we need 2 quantization samples of the same data point. That is, if we for example select \textit{Q8}, a quantized sample has 8 bits and we need 2 of them for calculating the gradient; the actual amount of bits we use is 16. That's why, when we perform quantization on a data set, we always create 2 samples and store them in memory next to each other. Thus, we can calculate how many quantized values can fit into one cache-line, a value we call $K$, in Table \ref{table:valuesincl}. The value $K$ dictates the amount of zero-padding we need to perform, in order to be cache-line aligned, similar to as it did for \textit{float} FPGA-SGD. Thus, the number of cache-lines required to receive one quantized row $Q(\mathbf{a_i})$ can be calculated:
+\begin{equation}
+\label{equation:cachelines}
+\text{\#} \mathbf{a_i} \text{cache-lines} = 
+\begin{cases}
+%\frac{D}{16}
+D/K
+\quad & \text{if } D\bmod K=0 \\
+\frac{D + (K-D\bmod K)}{K}
+%(D + (16-D\bmod16))/16
+\quad & \text{if } D\bmod K\neq0
+\end{cases}
+\end{equation}
+\begin{table}[t]
+\centering
+\caption{Number of received values in a single cache-line.}
+\label{table:valuesincl}
+\begin{tabular}{c|c|c|c|c|c}
+Data type & \textit{Q1} & \textit{Q2} & \textit{Q4} & \textit{Q8} & \textit{float}\\
+\hline
+Number of values in a cache-line, $K$ & 256 & 128 & 64 & 32 & 16\\
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{subfigure}{.9\columnwidth}
+\centering
+\includegraphics[width=\columnwidth]{Figures/Q8Q4mult.eps}
+\caption{Signed integer multiplication for \textit{Q8} and \textit{Q4} data, implemented with DSPs.}
+\label{fig:Q8Q4mult}
+\end{subfigure}
+\begin{subfigure}{\columnwidth}
+\centering
+\includegraphics[width=.7\columnwidth]{Figures/Q2Q1mult.eps}
+\caption{Signed integer multiplication for \textit{Q2} and \textit{Q1} data, implemented with combinational logic.}
+\label{fig:Q2Q1mult}
+\end{subfigure}
+\caption{Multiplication implementations depending on the quantization kind.}
+\label{fig:Qmult}
+\end{figure}
+
+\noindent
+\textbf{Computation pipeline for quantized data:} The computation pipeline for quantized data is presented in Figure \ref{fig:qallFPGASGD}. The selection of \textit{Qx}, which determines the width of the pipeline is a generic parameter that can be set before synthesis. So, for each \textit{Qx} a different bitstream needs to be compiled. The pipeline is very similar to the \textit{float} version, explained in Section \ref{section:floatfpgasgd}. For this reason, our explanation here only focuses on the differences and how the pipelines are scaled out. The first thing to note is that \textit{Qx} pipelines are working only on integer data, so there is no need for converters. This is because, the arriving quantized data $Q(\mathbf{a_i})$ is already in integer form, as explained previously, and the inference values $b$ are also converted to integer by multiplication with a large constant. Another difference here is that for a given value in vector $\mathbf{a_i}$, 2 quantized samples arrive because of the double sampling method. The first sample is given to the dot product calculation (\circled{1}) and the second sample is put into a FIFO (\circled{A}), where it is kept until the dot product result is ready, as depicted in Figure \ref{fig:qallFPGASGD}. The last difference we would like to mention is the appliance of the step size $\gamma$ (\circled{2}), which is actually a division. Since we are dealing with integer data here, we choose to apply $\gamma$ as a bit-shift operation. By how many bits the value is shifted to right is a runtime configurable parameter, allowing adjustments according to data set characteristics.
+
+\noindent
+\textbf{Scaling out for quantized data and trade-offs:} Now, scaling out the pipeline for \textit{Q8} and \textit{Q4} is very straightforward as conventional signed multipliers (\circled{3}), implemented by DSP resources, followed by a bitshift, to keep the data width at 32 bits, is used as shown in Figure \ref{fig:Q8Q4mult}. However, for \textit{Q2} and \textit{Q1}, we can do a much more efficient multiplication using multiplexers as shown in \ref{fig:Q2Q1mult}, since one of the multiplicands is only 2 bits and 1 bit, respectively. Doing this efficient multiplication allows \textit{Q2} pipeline to scale to 128 value parallelism, which would have otherwise required a 100\% usage of the available DSP resources on the target FPGA (see Table \ref{table:resources}). However, the pipeline shown in Figure \ref{fig:qFPGASGD} does not scale to 256 value parallelism, even though \textit{Q1} multiplier is just one multiplexer. The main problem here is that the adder tree is too wide and deep, making the routing very challenging. Once it has become clear that we cannot scale the pipeline to this parallelism, we decided to halve it to process \textit{Q1} data. For doing that, we split an arriving cache-line into 2 parts (\circled{4}), which are processed sequentially by the pipeline shown in Figure \ref{fig:q1FPGASGD}. The processing rate of this pipeline is 32B/cycle, or 6.4 GB/s, which is slightly less than the memory bandwidth. Thus, \textit{Q1} FPGA-SGD will actually be compute bound.
+{\tiny
+\begin{table}[t]
+\centering
+\caption{Resource consumption for computation pipelines.}
+\label{table:resources}
+\begin{tabular}{c|c|c|c}
+Data type & Logic (ALMs) & DSP & BRAM (bits)\\
+\hline
+\textit{float} & 38\% (89194) & 12\% (33) & 7\% (3.471K) \\
+\textit{Q8} & 35\% (82152) & 25\% (64) & 6\% (3.145K) \\
+\textit{Q4} & 36\% (84500) & 50\% (128) & 6\% (3.145K) \\
+\textit{Q2}, \textit{Q1} & 43\% (100930) & 1\% (2) & 6\% (3.145K) %\\
+%\textit{Q1}	& 42\% (98582) & 1\% (2) & 6\% (3.145K)
+\end{tabular}
+\end{table}
+}
+
 
 
 \bibliographystyle{alpha}
