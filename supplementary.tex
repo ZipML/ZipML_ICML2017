@@ -165,7 +165,7 @@ We say it has variance at most $\sigma^2$ if $\E [\| g (\x) - \nabla f(\x) \|_2^
 For simplicity, if $\beta = 0$ we will simply refer to such a random function as a stochastic gradient.
 Under these conditions, the following convergence rate for SGD is well-known:
 
-\begin{theorem}[e.g. \cite{Bubeck15}, Theorem 6.3]
+\begin{theorem}[e.g. \cite{2014arXiv1405.4980B}, Theorem 6.3]
 \label{thm:sgd}
 Let $\mathcal{X} \subseteq \R^n$ be convex, and let $f: \mathcal{X} \to \R$ be an unknown, convex, and $L$-smooth.
 Let $\x_0 \in \mathcal{X}$ be given, and let $R^2 = \sup_{\x \in \mathcal{X}} \| \x - \x_0 \|_2^2$.
@@ -446,7 +446,7 @@ as claimed.
 
 \section{Quantizing the Gradients}
 
-Recent work~\cite{QSGD,BUCKWILD} has focused on quantizing the gradients 
+Recent work~\cite{Alistarh:2016:ArXiv, DeSa:NIPS:2015}, has focused on quantizing the gradients 
 with low-precision representation.
 We omit the description of this direction
 because it is relatively well-studied and is orthogonal
@@ -544,7 +544,7 @@ The (sub-)gradient at a randomly selected sample $(\a_k, b_k)$ is:
          -b_k \a_k & \mbox{if $b_k \a_k^\top \x < 1$};\\
          0 & \mbox{otherwise}. \end{array} \right.
 \]
-Observe that this loss function is not smooth.\footnote{Technically this implies that Theorem \ref{thm:sgd} does not apply in this setting, but other well-known and similar results still do, see \cite{Bubeck15}.}
+Observe that this loss function is not smooth.\footnote{Technically this implies that Theorem \ref{thm:sgd} does not apply in this setting, but other well-known and similar results still do, see \cite{2014arXiv1405.4980B}.}
 When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^\top \x)$ and $(1 - b_k Q(\a_k)^\top \x)$ may have different signs, in which case the two procedures will apply different gradients. We say that in this case the gradient is \emph{flipped}. 
 We have two approaches to dealing with this: the first provides rigorous guarantees, however, requires some fairly heavy algorithmic machinery (in particular, Johnson-Lindenstrauss matrices with little randomness).
 The latter is a simpler heuristic that we find works well in practice.
@@ -860,6 +860,7 @@ If $I \subseteq I'$, then $\err(\setX, I) = \err (\setX_I, I) \leq \err (\setX_I
 First, we observe that it is trivial that the optimal partition must have endpoints solely at points in $\setX$.
 Thus we may restrict our attention to such partitions.
 The algorithm is given in Algorithm \ref{alg:adaquant}.
+The algorithm is inspired by the greedy merging algorithms of \cite{ADHLS15,ADLS17} for histogram recovery.
 
 \begin{algorithm}[htb]
 \begin{algorithmic}[1]
@@ -887,10 +888,10 @@ The algorithm is given in Algorithm \ref{alg:adaquant}.
 
 We first show this algorithm runs in nearly linear time:
 \begin{theorem}
-Given any $\setX, k, \gamma, \delta$, we have that $\textsc{AdaQuant} (\setX, k, \gamma, \delta)$ runs in time $O(n \log ????)$ TODO: copy exact dependence from ADHLS.
+Given any $\setX, k, \gamma, \delta$, we have that $\textsc{AdaQuant} (\setX, k, \gamma, \delta)$ runs in time $O(n (\log (n / \gamma) + \log \log 1 / \delta))$ 
 \end{theorem}
 \begin{proof}
-TODO: cite proof from ADLS or ADHLS.
+This follows from the same analysis as in \cite{ADLS17}.
 \end{proof}
 
 Our main contribution is to show that the algorithm does indeed achieve good error:
@@ -920,6 +921,9 @@ Since this holds for all $I \in \setJ$, and $|\setJ| \leq k$, this implies that
 Combining the above two expressions yields that $\err (\setX, \setI) \leq  \left( 1 + \frac{1}{\gamma} \right) \OPT_k$, as claimed.
 \end{proof}
 
+
+\bibliographystyle{alpha}
+\bibliography{low-precision.bib}
 
 
 \end{document}
