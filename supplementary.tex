@@ -343,7 +343,39 @@ Q_2 (\a_k, s) (Q_1 (\a_k, s)^\top \x + b_k)\right)$. This version does not impac
 but enjoys lower variance (by a constant) both theoretically and empirically.}
 
 
+
 \paragraph{Variance Analysis}
+
+\begin{lemma} 
+The stochastic gradient variance using double sampling above $\E\|\g_t - \g_t^{(full)}\|^2$ can be bounded by
+\begin{align*}
+%&\E\|\g_t - \g_t^{(full)}\|^2 \leq \\
+&\Theta\left(\mathcal{TV}(\a_t) (\mathcal{TV}(\a_t)\|\x\odot \x\| + \|\a_t^\top \x\|^2 + \|\x\odot \x\|\|\a_t\|^2)\right),
+\end{align*}
+where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the element product.
+\end{lemma}
+\begin{proof}
+Let $\a$ denote $\a_t$ for short in the followed proof.
+\begin{eqnarray*}
+& & \E\left\|Q_1(\a)(Q_2(\a)^\top \x + b_t)\right\|^2
+\\
+& \leq & 
+2\E\left\| (Q_1(\a)- \a) Q_2(\a)^\top \x \right\|^2 + 2\E\left\| \a(Q_2(\a) - \a)^\top \x) \right\|^2
+\\
+& \leq &
+2 \E_1 \|Q_1(\a)-\a\|^2\E_2(Q_2(\a)^\top \x)^2 + 2 \|\a\|^2 \E((Q_2(\a)-\a)^\top\x)^2
+\\
+& \leq &
+2 \E_1 \|Q_1(\a)-\a\|^2\E_2(Q_2(\a)^\top \x)^2 + 2 \|\a\|^2 \E((Q_2(\a)-\a)^\top\x)^2
+\\
+& \leq &
+2 \mathcal{TV}(\a)(2 \|\a\|^2 \E((Q_2(\a)-\a)^\top\x)^2 + 2(\a^\top \x)^2)+ 2 \|\a\|^2 \E((Q_2(\a)-\a)^\top\x)^2
+\\
+& \leq &
+\Theta\left(\mathcal{TV}(\a) (\mathcal{TV}(\a)\|\x\odot \x\| + \|\a^\top \x\|^2 + \|\x\odot \x\|\|\a\|^2)\right),
+\end{eqnarray*}
+which completing the proof.
+\end{proof}
 
 Let $r = r(s) = 1 + \min (n / s^2, \sqrt{n}/ s)$ be the blow-up in the second moment promised in Lemma \ref{lem:quant-facts}.
 Then, we have the following lemma.
