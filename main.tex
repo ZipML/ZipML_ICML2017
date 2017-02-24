@@ -207,8 +207,8 @@ where $\sigma^2$ is the variance of the standard stochastic gradient.
 This implies that the 32-bit precision may be excessive for many practical scenarios. 
 
 \vspace{-0.5em}
-We build on this quantization strategy to obtain an \emph{end-to-end quantization} strategy
-for linear models that compresses all data movements. 
+We build on this result to obtain an \emph{end-to-end quantization} strategy
+for linear models, which compresses all data movements. 
 For certain settings of parameters, end-to-end quantization adds as little as a \emph{constant factor} to the variance of the entire process. 
 
 \vspace{-1.5em}
@@ -260,7 +260,7 @@ This negative result is explained by the fact that, to approximate non-lineariti
 \centering   
 \includegraphics[scale=0.27]{compmodel-pdfcrop}
 \vspace{-1em}
-\caption{A schematic representation of the computation model.}
+\caption{A schematic representation of the computational model.}
 \vspace{-0.5em}
 \label{fig:model}
 \end{figure}
@@ -398,11 +398,11 @@ where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the ele
 Thus, minimizing $\mathcal{TV}(\a_t)$ is key to reducing variance. 
 
 \vspace{-0.5em}
-\paragraph{Uniform quantization} It makes intuitive sense that, the more levels of quantization, the lower the variance. The following result shows the quantitative dependence between the variance and the number of uniformly distributed levels. 
+\paragraph{Uniform quantization} It makes intuitive sense that, the more levels of quantization, the lower the variance. The following  makes this quantitative dependence precise. 
 
 \begin{lemma}
 \label{lem:quant-facts} [\cite{Alistarh:2016:ArXiv}]
-Assume that quantization levels are uniformly distributed. For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$; furthermore, the total variance using uniform quantization with level $s$ is bounded by
+Assume that quantization levels are uniformly distributed. For any vector $\vec{v} \in \R^n$, we have that $\E [Q (\vec{v},s)] = \vec{v}$. Further, the variance of uniform quantization with $s$ levels is bounded by
 \[
 \mathcal{TV}_s(\v):=\E [\| Q (\vec{v},s) - \v\|_2^2] \leq \min( n/s^2,\sqrt{n}/s)) \| \vec{v} \|_2^2. \; .
 \]
@@ -416,9 +416,9 @@ Together with other results, it suggests the stochastic gradient variance of usi
 where $\sigma^2_{(full)} \geq \E \|\g_t^{(full)} - \nabla f(\x)\|^2$ is the upper bound of using the full stochastic gradient, assuming that $\x$ and all $\a_k$'s are bounded. Because the quantization level $s$ is exponential to the number of bits, to ensure that these two terms are comparable (using a low-precision sample does not degrade the convergence rate), the number of bits only needs to be greater than $\Theta (\log n /\sigma_{(full)})$. Even for linear models with millions
 of features, 32 bits is likely to be  ``overkill.''
 
-\vspace{-0.5em}
-The uniform quantization provides us an intuitive dependence between variance and the level of quantization. However, in practice, we can do better by designing the optimal quantization separation given the quantization level $s$. This motivates
-our study in the next section.
+%\vspace{-0.5em}
+%The uniform quantization provides us an intuitive dependence between variance and the level of quantization. However, in practice, we can do better by designing the optimal quantization separation given the quantization level $s$. This motivates
+%our study in the next section.
 
 
 
@@ -434,7 +434,7 @@ We now investigate the choice of quantization points and present an optimal stra
 
 \vspace{-1em}
 \paragraph*{Problem Setting}
-Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. WLOG, assume that all numbers are in $[0, 1]$ and are sorted such that $x_1 \leq \ldots \leq x_N$. 
+Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. WLOG, assume that all numbers are in $[0, 1]$ and that $x_1 \leq \ldots \leq x_N$. 
 
 The goal is to partition $\setI = \{I_j\}_{j = 1}^s$ of $[0, 1]$ into $s$ disjoint intervals, so that if we randomly quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
 Formally:
