@@ -24,6 +24,18 @@
 \usepackage{subcaption}
 %\captionsetup[subfigure]{justification=justified,singlelinecheck=false}
 
+
+\usepackage{amsfonts}
+\usepackage{comment}
+\usepackage{listings}
+\usepackage{balance}
+\usepackage{cmtt}
+\usepackage{subfig}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usepackage{pgfplots, pgfplotstable}
+\usepackage{mathtools}
+
 \newcommand{\R}{\mathsf{R}}
 \newcommand{\sgn}[1]{\mbox{sgn}(#1)}
 \renewcommand{\vec}[1]{\mathbf{#1}}
@@ -146,7 +158,7 @@ and GradientDevice.}
 In this paper we consider SGD, a general family of stochastic first order methods for finding the minima of convex (and non-convex) functions.
 Due to its generality and usefulness, there is a vast literature on SGD in a variety of settings, with different guarantees in all of these settings.
 Our techniques apply fairly generally in a black box fashion to many of these settings, and so for simplicity we will restrict our attention to a fairly basic setting.
-For a more comprehensive treatment, see \cite{Bubeck15}.
+For a more comprehensive treatment, see \cite{bubeck2015convex}.
 
 Throughout the paper, we will assume the following setting in our theoretical analysis.
 Let $\mathcal{X} \subseteq \R^n$ be a known convex set, and let $f: \mathcal{X} \to \R$ be differentiable, convex, and unknown.
@@ -204,8 +216,8 @@ Then
          (\ell + 1) / s & \mbox{otherwise}. \end{array} \right.
 \]
 If $\vec{v} = \vec{0}$, then we define $Q(\vec{v},s) = \vec{0}$.
-For any such choice of $M_i$, we have the following properties, which generalize Lemma 3.4 in~\cite{QSGD}.
-The proofs follow immediately from those in \cite{QSGD}, and so we omit them for conciseness.
+For any such choice of $M_i$, we have the following properties, which generalize Lemma 3.4 in~\cite{Alistarh:2016:ArXiv}.
+The proofs follow immediately from those in \cite{Alistarh:2016:ArXiv}, and so we omit them for conciseness.
 \begin{lemma}
 \label{lem:quant-facts}
  For any $\vec{v} \in \R^n$, we have that 
@@ -226,7 +238,7 @@ We now discuss different choices of the scaling function $M_i(\vec{v})$.
 
 \paragraph*{``Row Scaling''}
 
-One obvious choice that was suggested in \cite{QSGD} is to have $M_i(\vec{v}) = \| \vec{v} \|_2$, in this way, we
+One obvious choice that was suggested in \cite{Alistarh:2016:ArXiv} is to have $M_i(\vec{v}) = \| \vec{v} \|_2$, in this way, we
 always have $\frac{\vec{v}_i}{M_i(\vec{v})} \in [-1, 1]$ and all $M_i(\vec{v})$ are the same
 such that we can store them only once.
 When the 
@@ -240,7 +252,7 @@ where $\mu_i(\vec{v})$'s are independent random variables such that $\mu_i(\vec{
 Obviously, if
 all vectors $\vec{v}$ are scaled to have unit $\ell_2$ norms, $M(\vec{v}) \equiv 1$
 and therefore, we can also omit this term.
-Moreover, it was shown in \cite{QSGD} that for this choice of $M_i$, the function $r$ can be upper bounded by
+Moreover, it was shown in \cite{Alistarh:2016:ArXiv} that for this choice of $M_i$, the function $r$ can be upper bounded by
 \[
 r(s) \leq \rrow (s) = 1 + \min\left( \frac{n}{s^2}, \frac{\sqrt{n}}{s} \right) \; .
 \]
@@ -512,7 +524,7 @@ We first extend our quantization framework to
 least squares support vector machines--a model
 popularly used for classification tasks and
 often showing comparable accuracy to
-SVM~\cite{SvmVsLssvm}.
+SVM~\cite{ye2007svm}.
 The  Least Squares SVM optimization problem is formally defined as follows: 
 
 \begin{align*}
@@ -553,7 +565,6 @@ Observe that this loss function is not smooth.\footnote{Technically this implies
 When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^\top \x)$ and $(1 - b_k Q(\a_k)^\top \x)$ may have different signs, in which case the two procedures will apply different gradients. We say that in this case the gradient is \emph{flipped}. 
 We have two approaches to dealing with this: the first provides rigorous guarantees, however, requires some fairly heavy algorithmic machinery (in particular, Johnson-Lindenstrauss matrices with little randomness).
 The latter is a simpler heuristic that we find works well in practice.
-
 
 
 \subsection{Polynomial approximation and $\ell_2$-refetching via Johnson-Lindenstrauss}
@@ -827,7 +838,7 @@ This seems to work well in practice, however, we could not prove any guarantees 
 \subsection{Importance Sampling}  Another heuristic
  used to decrease the amount of original data that
 we fetch during training is to use {\em importance
-sampling}, instead of standard uniform sampling for SGD~\cite{ImportantSampling}. 
+sampling}, instead of standard uniform sampling for SGD~\cite{zhao2015stochastic}. 
 Intuitively, flipping happens more frequently
 when $1 - b_k \a_k^\top \x$ is close to 0.
 Therefore, we sample an input sample
@@ -843,6 +854,244 @@ needing to be fetched.
 %\todo{Ce: I was debating whether we should add DG's distributed DL
 %work in system or theory--but I think it should be in theory because
 %we still do not know how to do relu?}
+\section{Optimal Quantization Strategy}
+
+We prove Lemma 3 and Theorem 2 in the main paper here.
+
+\vspace{-1em}
+\paragraph*{Problem Setting}
+Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. WLOG, assume that all numbers are in $[0, 1]$ and sorted are sorted such that $x_1 \leq \ldots \leq x_N$. 
+
+The goal is to find an partition $\setI = \{I_j\}_{j = 1}^s$ of $[0, 1]$ into $s$ disjoint intervals, so that if we randomly quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
+Formally:
+\vspace{-0.5em}
+\begin{align}
+\nonumber \min_{\setI: |\setI| = s} \quad & \mathcal{MV}(\setI) := {1\over N}\sum_{j = 1}^k \sum_{x_i \in I_j} \err(x_i, I_j)\\
+\text{s.t.}\quad & \bigcup_{j = 1}^s I_j = [0, 1],\quad I_j\cap l_k = \emptyset~\text{for $k\neq j$}
+\label{eq:opt_Q}
+\end{align}
+where $\err (x, I) = (b - x) (x - a)$ is the variance for point $x \in I$ if we quantize $x$ to an endpoint of $I = [a, b]$.\label{eq:var}
+That is, $\err (x, I)$ is the variance of the (unique) distribution $D$ supported on ${a, b}$  so that $\E_{X \sim D} [X] = x$.
+
+%\begin{align}
+%\nonumber \min_{l_1, \cdots, l_{s-1}} \quad & \mathcal{MV}(l_1,\cdots, l_{s-1}) := {1\over N}\sum_{x\in \Omega} \sum_{k=1}^s {\bf 1}_k(x)V_k(x)\\
+%\text{s.t.}\quad & 0 = l_0 \leq l_1\leq l_2 \leq \cdots \leq l_{s-1} \leq l_s = 1.
+%\label{eq:opt_Q}
+%\end{align}
+
+Given an interval $I \subseteq [0, 1]$, we let $\setX_I$ be the set of $x_j \in \setX$ contained in $I$.
+We also define $\err (\setX, I) = \sum_{x_j \in I} \err (x_j, I)$.
+Given a partition $\setI$ of $[0, 1]$, we let $\err (\setX, \setI) = \sum_{I \in \setI} \err (\setX, I)$.
+We let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$, breaking ties randomly. %, and we let $\OPT_k = \err(\setX, \setI^*)$.
+
+
+\begin{lemma}
+\label{lem:discrete}
+There is an $\setI^*$ so that all endpoints of any $I \in \setI^*$ are in $\Omega \cup \{0, 1\}$.
+\end{lemma}
+
+
+
+\begin{proof}
+Fix any endpoint $b$ of intervals in $\setI^*$. WLOG assume that $b \neq 0, 1$. Then we must have $I = [a, b]$ and $I' = [b, c]$ for some $I, I' \in \setI^*$. Observe that the choice of $b$ only affects the error for points in $I \cup I'$. We have that $\err (\Omega, I) + \err (\Omega, I') $ is given by 
+\begin{align*}
+& \sum_{x \in I} (b - x) (x - a) + \sum_{x \in I'} (c -x)(x - b) \\
+&= A b + C \; ,
+\end{align*}
+where $A, C$ are constants which do not depend on $b$. Hence, this is a linear objective in $b$. Since $b$ can freely range between the rightmost point in $I$ and the leftmost point in $I'$, there is an optimizer for this solution at one of those two points. Hence we may choose $b \in \Omega$.
+\end{proof}
+
+
+Therefore, to solve the problem in an exact way, we just need to select a subset of data points in $\Omega$ as quantization points. Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels choosing $d_m=x_m$ for all $m=1,2,\cdots, N$. Our goal is to calculate $T(s, N)$. This problem can be solved by dynamic programing using the following recursion
+\[
+T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + V(j,m),
+\]
+where $V(j,m)$ denotes the total variance of points falling into $[d_j, d_m]$. The complexity of calculating the matrix $V(\cdot, \cdot)$ is $O(N^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(kN^2)$. The  memory cost is $O(kN + N^2)$. 
+
+\begin{figure}[t]
+\centering    
+\includegraphics[width=0.5\columnwidth]{micro-experiments/dp-level.pdf} 
+\vspace{-1em}
+\caption{Optimal quantization points calculated with
+dynamic programming given a data distribution. }
+\vspace{-1em}
+\label{fig:optimalquantization}
+\end{figure} 
+
+\vspace{-0.5em}
+\subsection{Heuristics}
+\vspace{-0.5em}
+
+The exact algorithm has a complexity that is quadratic to the number of data points. To make our algorithm practical,
+we develop an approximation algorithm that only needs to scan all data points once and has linear complexity to $N$.
+
+\vspace{-0.5em}
+\paragraph*{Discretization}
+
+We can discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. We then restrict our algorithms to only choose $k$ quantization points within these $M$ points, instead of all $N$ points in the exact algorithm. The following result bounded the quality of this approximation.
+
+\begin{theorem} \label{thm:optQ}
+Let the maximal number of data points in each ``small interval'' (defined by $\{d_m\}_{m=1}^{M-1}$) and the maximal length of small intervals be bounded by $bN/M$ and $a/M$, respectively. Let ${\mathcal{I}^*} := \{l^*_j\}_{k=1}^{k-1}$ and $\hat{\mathcal{I}}^* :=\{\hat{l}^*_k\}_{k=1}^{k-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the solution with discretization. Let $cM/k$ be the upper bound of the number of small intervals crossed by any ``large interval'' (defined by ${\mathcal{I}}^*$). Then we have the discretization error bounded by
+\vspace{-0.5em}
+\[
+ \mathcal{MV}(\hat{\mathcal{I}}^*) -  \mathcal{MV}({\mathcal{I}}^*) \leq {a^2b k \over 4 M^3} + {a^2bc^2 \over Mk}.
+\]
+\end{theorem}
+
+\begin{proof}
+Let $p^*_0$ be $0$ and $p^*_K=1$.We quantitize $\{p^*_k\}_{k=1}^{K-1}$ one element by one element, while monitor the changing of the total variance $N \times \mathcal{MV(\cdot)}$. We first quantize $p^*_1$ to the closest value (denoted it by $Q(p^*_1)$) in $\{d_m\}_{m=1}^{M-1} \cup \{p^*_0,p^*_K\}$ under the monotonicity constraint, that is, $p^*_0\leq Q(p^*_1) \leq p^*_2$. Here, one important observation is $|p^*_{1} - Q(p^*_1)|\leq a/M$. Consider the total variance of this new solution $Q(p^*_1), p^*_2, \cdots, p^*_{K-1}$. The variance of points falling into the range $[p^*_2, 1]$ does not change at all. Without the loss of generality, assume $p^*_{1} \geq Q(p^*_1)$.
+
+Next we consider points falling into the following three sets $C_1 = [p^*_0, Q(p^*_1)]$, $C_2 = [Q(p^*_1), p^*_1]$, and $C_3 = [p^*_1, p^*_2]$. The variance of points of falling into $C_1$ gets reduced from the form of variance in \eqref{eq:var}. Next we only need to check the variance change for points in $C_2$ and $C_3$. Consider $C_2$ first. The variance for point $x$ in $C_2$ is
+\[
+(x-Q(p^*_1))(p^*_1 - x) \leq {a^2 \over 4 M^2}. 
+\]  
+Thus, the change of variance for points in $C_2$ would be bounded by ${a^2 \over 4 M^2}$. Then consider $C_3$. The change of variance for point $x$ in $C_3$ is
+\begin{align*}
+& (x-Q(p^*_1))(p^*_2 - x) - (x-p^*_1) (p^*_2 - x) 
+\\
+= & (p^*_1 - Q(p^*_1)) (p^*_2 - x)
+\\
+\leq & {a\over M}(p^*_2 - x)
+\end{align*}
+Therefore, the change of total variance from $\{p^*_1, p^*_2, \cdots, p^*_{K-1}\}$ to $\{Q(p^*_1), p^*_2, \cdots, p^*_{K-1}\}$ is bounded by 
+\begin{align}
+\nonumber
+& \sum_{x\in C_2} {a^2 \over 4M^2} + \sum_{x \in C_3} {a\over M}(p^*_2 - x)
+\\
+\nonumber
+\leq & {Nb \over M} {a^2 \over 4M^2} + {a\over M}{Nb \over M} \sum_{t=1}^{cM/K}t{a\over M}
+\\
+\leq &
+{a^2b N \over 4 M^3} + {a^2bc^2 N \over MK^2}
+\label{eq:bound_1step}
+\end{align}
+Similarly, we quantitize $p^2_2$ in $\{Q(p^*_1), p^*_2, \cdots, p^*_{K-1}\}$ to get a new solution $\{Q(p^*_1), Q(p^*_2), \cdots, p^*_{K-1}\}$ while maintain the monotonicity. We can establish the same upper bound to \eqref{eq:bound_1step}. Following this idea, we can obtain a quantization solution $\{Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1})\}$. Therefore, we obtain that 
+\begin{align*}
+&  \mathcal{MV}(Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1})) -  \mathcal{MV}({p}^*_1,\cdots, {p}^*_{K-1}) 
+ \\
+ & \quad \leq {a^2b K \over 4 M^3} + {a^2bc^2 \over MK}.
+\end{align*}
+Using the fact that $ \mathcal{MV}(p^*_1,\cdots, p^*_{K-1})$ is smaller than $\mathcal{MV}(Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1}))$ proves the claim.
+\end{proof}
+%Here the constant $b$ roughly measures the 
+%``uniformness of the data distribution w.r.t. small intervals'', and $a$ roughly measures ``the distortion 
+%from equal-length small intervals'' (more details in 
+%the full version). 
+%Similarly, $c$ roughly measures the distortion from equal-length large intervals since $c=1$ means that all large intervals defined by $\{l^*_k\}_{k=1}^{s-1}$ roughly cross the same number of small intervals defined by $\{d_m\}_{m=1}^{M-1}$. 
+\vspace{-0.5em}
+Theorem~\ref{thm:optQ} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/Mk)$.
+
+\vspace{-0.5em}
+\paragraph*{Dynamic Programming with Candidate Points}
+Notice that we can apply the same dynamic programming approach given $M$ candidate points. 
+In this case, the total computational complexity becomes $O((k+1)M^2 + N)$, with memory cost 
+$O(kM + M^2)$. Also, to find the optimal quantization,  we only need to scan all $N$ numbers once.
+Figure~\ref{fig:optimalquantization} illustrates an example output for our algorithm.
+
+
+
+%%%%
+
+
+%Moreover, to get the output of the algorithm down to size exactly $k$, we may also do an additional dynamic programming postprocessing routine on the output of this algorithm.
+%This postprocessing now looks for the best partition with $s$ pieces at endpoints given by endpoints of $\setI$, and so runs in time $O(k^2 N)$, i.e., nearly-linear in the number of samples.
+
+
+%The goal is to find  
+%the optimal set of $s$ quantization 
+%levels $\{l_1, l_2, \cdots, l_{s-1}\}$ 
+%which minimize the mean quantization variance. Formally:
+%\begin{align}
+%\nonumber \min_{l_1, \cdots, l_{s-1}} \quad & \mathcal{MV}(l_1,\cdots, l_{s-1}) := {1\over N}\sum_{x\in \Omega} \sum_{k=1}^s {\bf 1}_k(x)V_k(x)\\
+%\text{s.t.}\quad & 0 = l_0 \leq l_1\leq l_2 \leq \cdots \leq l_{s-1} \leq l_s = 1.
+%\label{eq:opt_Q}
+%\end{align}
+%where ${\bf 1}_k(x)$ is the indicator function
+%\[
+%{\bf 1}_k(x) = 
+%\begin{cases}
+%1 & \text{if}~x\in (l_{k-1}, l_k] \\
+%0 & \text{o.w.}
+%\end{cases}
+%\]
+%and $V_k(x)$ is the variance function 
+%\begin{align}
+%V_k(x) = (x-p_{k-1})(p_k - x), \label{eq:var}
+%\end{align}
+%which is the variance of Bernoulli distribution with probability $l_k-x$ taking value $l_{k-1}$ and probability $x-l_{k-1}$ taking value $l_k$. ${\bf 1}_k(x)V_k(x)$ is the variance if $x$ falls into the interval $(l_{k-1}, l_k]$. 
+
+%This problem is hard to solve directly, due to non-convexity and non-smoothness. We discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. All $l_k$'s are restricted to values in $\{d_1, d_2, \cdots, d_{M-1}\}$ while satisfying  monotonicity. 
+%
+%\begin{theorem} \label{thm:optQ}
+%Let the maximal number of data points in each ``small interval'' (defined by $\{d_m\}_{m=1}^{M-1}$) and the maximal length of small intervals be bounded by $bN/M$ and $a/M$, respectively. Let $\{l^*_k\}_{k=1}^{s-1}$ and $\{\hat{l}^*_k\}_{k=1}^{s-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the solution with discretization. Let $cM/s$ be the upper bound of the number of small intervals crossed by any ``large interval'' (defined by $\{l^*_k\}_{k=1}^{s-1}$). Then we have the discretization error bounded by
+%\[
+% \mathcal{MV}(\hat{l}^*_1,\cdots, \hat{l}^*_{s-1}) -  \mathcal{MV}(l^*_1,\cdots, l^*_{s-1}) \leq {a^2b s \over 4 M^3} + {a^2bc^2 \over Ms}.
+%\]
+%\end{theorem}
+%
+%Note that if the numbers of data points falling into all small intervals are equal, then
+%the constant $b$ is $1$. So $b$ roughly measures the uniformness of the data distribution w.r.t. small intervals. If all small intervals have equal length, then $a$ is equal to $1$. So $a$ roughly measures the distortion from equal-length small intervals. 
+%Similarly, $c$ roughly measures the distortion from equal-length large intervals since $c=1$ means that all large intervals defined by $\{l^*_k\}_{k=1}^{s-1}$ roughly cross the same number of small intervals defined by $\{d_m\}_{m=1}^{M-1}$. Theorem~\ref{thm:optQ} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/Ms)$.
+
+
+
+
+%\paragraph*{Approximate dynamic programming}
+%This program requires quadratic time in $N$ to run, which is often infeasible in practice.
+% We discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. All $l_k$'s are restricted to values in $\{d_1, d_2, \cdots, d_{M-1}\}$ while satisfying  monotonicity. 
+%
+%\begin{theorem} \label{thm:optQ}
+%Let the maximal number of data points in each ``small interval'' (defined by $\{d_m\}_{m=1}^{M-1}$) and the maximal length of small intervals be bounded by $bN/M$ and $a/M$, respectively. Let $\{l^*_k\}_{k=1}^{s-1}$ and $\{\hat{l}^*_k\}_{k=1}^{s-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the solution with discretization. Let $cM/s$ be the upper bound of the number of small intervals crossed by any ``large interval'' (defined by $\{l^*_k\}_{k=1}^{s-1}$). Then we have the discretization error bounded by
+%\[
+% \mathcal{MV}(\hat{l}^*_1,\cdots, \hat{l}^*_{s-1}) -  \mathcal{MV}(l^*_1,\cdots, l^*_{s-1}) \leq {a^2b s \over 4 M^3} + {a^2bc^2 \over Ms}.
+%\]
+%\end{theorem}
+%
+
+%where $V(j,m)$ denotes the total variance of points falling into the interval $[d_j, d_m]$. 
+%The optimal value for $l_{s-1}^*$ is $ d_{j^*_{s-1}}$ with $j^*_{s-1}$ equal to
+%\[
+%j^*_{s-1} = \argmin_{j\in \{s-1, k, \cdots, M-1\}} T(s-1,j) + V(j,M),
+%\]
+%and the rest can be retrieved by 
+%\begin{align*}
+%j^*_{k-1} = \argmin_{j\in \{k-1, k, \cdots, j^*_k-1\}} T(k-1, j) + V(j, j^*_k) \\
+%\text{for all}~k=2, \cdots, K-2
+%\end{align*}
+
+%The complexity of calculating the matrix $V(\cdot, \cdot)$ is $O(M^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(sM^2)$. The total memory cost is $O(sM + M^2)$. Note that to find the optimal quantization, we only need to scan all $N$ numbers once.
+%The calculation of $V$ is not trivial (it needs
+%another dynamic programming algorithm) and we
+%describe the details in the full version.
+
+%Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels. Our goal is to calculate $T(s, M)$. This problem can be solved by dynamic programing using the following recursion
+%\[
+%T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + V(j,m),
+%\]
+%where $V(j,m)$ denotes the total variance of points falling into the interval $[d_j, d_m]$. The optimal value for $l_{s-1}^*$ is $ d_{j^*_{s-1}}$ with $j^*_{s-1}$ equal to
+%\[
+%j^*_{s-1} = \argmin_{j\in \{s-1, k, \cdots, M-1\}} T(s-1,j) + V(j,M),
+%\]
+%and the rest can be retrieved by 
+%\begin{align*}
+%j^*_{k-1} = \argmin_{j\in \{k-1, k, \cdots, j^*_k-1\}} T(k-1, j) + V(j, j^*_k) \\
+%\text{for all}~k=2, \cdots, K-2
+%\end{align*}
+%
+%The complexity of calculating the matrix $V(\cdot, \cdot)$ is $O(M^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(sM^2)$. The total memory cost is $O(sM + M^2)$. Note that to find the optimal quantization, we only need to scan all $N$ numbers once.
+%The calculation of $V$ is not trivial (it needs
+%another dynamic programming algorithm) and we
+%describe the details in the full version.
+%Figure~\ref{fig:optimalquantization} illlustrates
+%an example output for our algorithm.
+
+
+
+
+%We require the following lemma, whose proof is trivial and omitted.
+%\begin{lemma}
+%If $I \subseteq I'$, then $\err(\setX, I) = \err (\setX_I, I) \leq \err (\setX_I, I')$.
+%\end{lemma}
 
 \section{A Greedy Algorithm for Finding Quantization Points}
 \subsection{Setup}
@@ -872,17 +1121,17 @@ The algorithm is inspired by  greedy merging algorithms for histogram recovery.
 \Function{AdaQuant}{$\setX, k, \gamma, \delta$}
 \State Let $\setI = [0, 1]$ be a partition of $[n]$, initially with one breakpoint at each point in $\setX \cup \{0, 1\}$.
 \While{$|\setI| > 2(1 + \gamma) k + \delta$}
-	\State Pair up consecutive intervals in $\setI$ to form $\setJ$
-	\For{each $I \in \setJ$}
-		\State Let $e_I = \err (\setX, I)$
-	\EndFor
-	\State Let $\setJ_1$ be the set of $(1 + \gamma) k$ intervals $I \in \setI$ with largest $e_I$.
-	\For{each $I \in \setJ_1$}
-		\State Let $I = I_1 \cup I_2$, where $I_1, I_2 \in \setI$
-		\State Remove $I$ from $\setJ$
-		\State Insert $I_1, I_2$ into $\setJ$
-	\EndFor
-	\State Let $\setI \gets \setJ$
+    \State Pair up consecutive intervals in $\setI$ to form $\setJ$
+    \For{each $I \in \setJ$}
+        \State Let $e_I = \err (\setX, I)$
+    \EndFor
+    \State Let $\setJ_1$ be the set of $(1 + \gamma) k$ intervals $I \in \setI$ with largest $e_I$.
+    \For{each $I \in \setJ_1$}
+        \State Let $I = I_1 \cup I_2$, where $I_1, I_2 \in \setI$
+        \State Remove $I$ from $\setJ$
+        \State Insert $I_1, I_2$ into $\setJ$
+    \EndFor
+    \State Let $\setI \gets \setJ$
 \EndWhile
 \State \textbf{return} the partition with endpoints at $\setI$.
 \EndFunction
@@ -1087,6 +1336,325 @@ Data type & Logic (ALMs) & DSP & BRAM (bits)\\
 }
 
 
+
+\section{Implementation on FPGA}
+\label{section:implementation}
+%We describe the FPGA implementations. First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
+In this section, we show the computation pipeline for full-precision SGD and quantized SGD implemented on FPGA in figure~\ref{fig:floatFPGASGD} and~\ref{fig:qallFPGASGD}. The FPGA implementation work is submitted to IEEE International Symposium on Field-Programmable Custom Computing Machines (FCCM) 2017.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=.8\columnwidth]{Figures/floatFPGASGD.eps}
+\caption{Computation pipeline for \texttt{floatFSGD}, with a latency of 36 cycles, a data width of 64B and a processing rate of 64B/cycle.}
+\label{fig:floatFPGASGD}
+\end{figure}
+
+
+\begin{figure}[t]
+\centering
+\begin{subfigure}[t]{.8\columnwidth}
+\centering
+\includegraphics[width=\columnwidth]{Figures/qFPGASGD.eps}
+\caption{\textit{Q2}, \textit{Q4} and \textit{Q8} \texttt{qFSGD}, with a latency of $log(K)$+5 cycles, a data width of 64B and a processing rate of 64B/cycle.}
+\label{fig:qFPGASGD}
+\end{subfigure}
+\quad
+\begin{subfigure}[t]{.8\columnwidth}
+\centering
+\includegraphics[width=\columnwidth]{Figures/q1FPGASGD.eps}
+\caption{\textit{Q1} \texttt{qFSGD}, with a latency of 12 cycles, a data width of 32B and a processing rate of 32B/cycle.}
+\label{fig:q1FPGASGD}
+\end{subfigure}
+\caption{Computation pipelines for all quantizations. Although for \textit{Q2}, \textit{Q4} and \textit{Q8} the pipeline width scales out and maintains 64B width, for \textit{Q1} it does not scale out and the pipeline width needs to be halved, making \textit{Q1} \texttt{qFSGD} compute bound.}
+\label{fig:qallFPGASGD}
+\vspace{-1em}
+\end{figure}
+
+
+
+\section{Experiments}
+
+This part is an extended version of the experiment section in the main paper.
+
+\begin{table}[t]
+\small
+\centering
+\begin{tabular}{crrrr}
+\hline
+\multicolumn{4}{c}{\bf Regression}\\
+Dataset           & Training Set & Testing Set & \# Features  \\
+\hline
+Synthetic 10   & 10,000        & 10,000       & 10               \\
+Synthetic 100  & 10,000        & 10,000       & 100              \\
+Synthetic 1000 & 10,000        & 10,000       & 1,000           \\
+YearPrediction & 463,715       & 51,630       & 90                  \\
+cadata         & 10,000        & 10,640       & 8                   \\
+cpusmall       & 6,000         & 2,192        & 12     \\
+\hline
+\hline
+\multicolumn{4}{c}{\bf Classification}\\
+Dataset           & Training Set & Testing Set & \# Features \\
+\hline
+cod-rna        & 59,535        & 271,617      & 8    \\
+gisette        & 6,000         & 1,000        & 5,000  \\  
+epsilon        & 10,000        & 10,000       & 2,000\\  
+\hline
+\hline
+\multicolumn{4}{c}{\bf Deep Learning}\\
+Dataset           & Training Set & Testing Set & \# Features \\
+\hline
+CIFAR-10        & 50,000        & 10,000      &$32\times 32\times 3$     \\
+\hline
+\hline
+\multicolumn{4}{c}{\bf Tomographic Reconstruction}\\
+Dataset           & \# Projections & Volumn Size & Proj. Size \\
+\hline
+                  & $128$            & $128\times 128\times 128$      & $128\times 128\times 128$     \\
+\hline
+\end{tabular}
+\caption{Dataset statistics}
+\label{table:dataset}
+\end{table}
+
+\paragraph{Experimental Setup} 
+Table~\ref{table:dataset} shows the 
+datasets we use. 
+Unless otherwise noted, we always
+use diminishing stepsizes $\alpha/k$,
+where $k$ is the current number of
+epoch. We tune 
+$\alpha$ for the full precision
+implementation, and use the
+same initial step size for 
+our low-precision 
+implementation. (Theory and
+experiments imply that the low-precision
+implementation often favors smaller step size. 
+Thus we do not tune step sizes for the low-precision 
+implementation, as this can only improve the accuracy of our approach.) 
+
+\subsection{Linear Models}
+
+For linear models, we validate that with double sampling, SGD with low
+precision converges---in comparable empirical 
+convergence rates---to the same solution
+as SGD with full precision.
+
+\paragraph{Quantized Data}
+We validate that (1) if we quantize data with double sampling, SGD with low precision converges---in comparable empirical 
+convergence rates---to the same solution as SGD with full precision, and (2) With our optimal quantization strategy for quantizing data, we can use less bits to converge to the same solution.
+
+Figure~\ref{fig:lindata} -~\ref{fig:lssvmdata} illustrates that the result of training linear models:
+(a) linear regression and (b) least squares SVMs,
+with low precision data with uniform quantization points, low-precision data with optimal quantization points, and 
+full precision data. For low precision, we pick the 
+smallest number of bits that results in a smooth convergence
+curve. We compare the final training loss in both settings and the convergence rate.
+
+
+We see that, for both linear regression 
+and least squares SVM,
+using 2- or 3-bit is always enough
+to converge to the same solution
+with comparable convergence rate. 
+This validates our prediction that
+double-sampling provides an
+unbiased estimator of the gradient.
+Considering the size of input
+samples that we need to read, we
+could potentially save 8--10$\times$ 
+memory bandwidth compared to using 
+32-bit. 
+
+\begin{figure}[t]
+\centering
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{Synthetic 10}
+    \end{subfigure}
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{Synthetic 100}
+    \end{subfigure}
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+     \caption{Synthetic 1000}
+    \end{subfigure}
+    
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{YearPredictionMSD}
+    \end{subfigure}
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{cadata}
+    \end{subfigure}
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+     \caption{cpusmall}
+    \end{subfigure}
+    
+\caption{Linear models with low precision data}
+\label{fig:lindata}
+\end{figure}
+
+
+\begin{figure}[t]
+\centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{cod-rna}
+    \end{subfigure}
+    
+\caption{Least Squares SVM with low precision data}
+\label{fig:lssvmdata}
+\end{figure}
+
+\paragraph{End-to-End Quantization}
+We validate that (1) if we quantize data with double sampling, SGD with low precision converges---in comparable empirical 
+convergence rates---to the same solution as SGD with full precision.
+
+Figure~\ref{fig:linendtoend} -~\ref{fig:lssvmendtoend} illustrates that the result of training linear models:
+(a) linear regression and (b) least squares SVMs,
+with low precision data with uniform quantization points, low-precision data with optimal quantization points, and 
+full precision data. For low precision, we pick the 
+smallest number of bits that results in a smooth convergence
+curve. We compare the final training loss in both settings and the convergence rate.
+
+
+We see that, for both linear regression 
+and least squares SVM,
+using 2- or 3-bit is always enough
+to converge to the same solution
+with comparable convergence rate. 
+And when we compare the end-to-end quantization
+with quantized data, we can see that we
+need more bits . 
+\begin{figure}[t]
+\centering
+
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{Synthetic 10}
+    \end{subfigure}
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{Synthetic 100}
+    \end{subfigure}
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+     \caption{Synthetic 1000}
+    \end{subfigure}
+    
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{YearPredictionMSD}
+    \end{subfigure}
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{cadata}
+    \end{subfigure}
+    \begin{subfigure}[h]{.3\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+     \caption{cpusmall}
+    \end{subfigure}
+    
+\caption{Linear models with end-to-end low-precision}
+\label{fig:linendtoend}
+\end{figure}
+
+
+\begin{figure}[t]
+\centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{cod-rna}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{gisette}
+    \end{subfigure}
+    
+\caption{Least Squares SVM with end-to-end low precision}
+\label{fig:lssvmendtoend}
+\end{figure}
+
+\paragraph{Impact of the number of features}
+We can see from figure~\ref{fig:lindata} (a)-(c) shows that with more features, the variance introduced by quantization increases and we need more bits to converge.
+
+\subsection{Non-Linear Models}
+
+We validate that (1) our Chebyshev 
+approximation approach is able to
+converge to almost the same solution 
+with 8-bit precision for both SVM
+and logistic regression;
+and (2) For SVM, we can use our refetching heuristic and we can 
+8-bit while only refetching $<10\%$ of the data.
+
+\paragraph{Chebyshev Polynomial Approximation}
+
+
+Figure~\ref{fig:chebyshev} illustrates
+the result of training SVM
+and logistic regression 
+with Chebyshev approximation. Here,
+we use Chebyshev polynomials up to
+degree 15 (which requires 16 samples
+that can be encoded with 4 extra 
+bits). For each sample, the precision
+is 4-bit, and therefore, in total
+we use 8-bit for each single number
+in input samples. We see that, 
+with our quantization framework,
+SGD converges to similar training loss 
+with a comparable empirical convergence 
+rate for both SVM and logistic regression.
+We also experience no loss in test accuracy.
+\begin{figure}[t]
+\centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{cod-rna}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{gisette}
+    \end{subfigure}
+    
+\caption{SVM with low precision data and refetching}
+\label{fig:chebyshev}
+\end{figure}
+
+\paragraph{Refetching Heuristic for SVM}
+
+Figure~\ref{fig:refetch} illustrates
+the result of training SVM
+with refetching heuristic. 
+We see that, 
+with our refetching heuristic,
+SGD converges to similar training loss 
+with a comparable empirical convergence 
+rate for SVM. If we increase the number of
+bits we use, we need to refetch less data and
+if we use 8-bit quantization, we only need to fetch
+about $6\%$ of data.
+We also experience no loss in test accuracy.
+
+\begin{figure}[t]
+\centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{cod-rna}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    %\includegraphics[width=\columnwidth]{}
+    \caption{gisette}
+    \end{subfigure}
+    
+\caption{SVM with low precision data and refetching}
+\label{fig:refetch}
+\end{figure}
 
 \bibliographystyle{alpha}
 \bibliography{low-precision.bib}
