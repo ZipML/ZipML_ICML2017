@@ -11,6 +11,8 @@
 \usepackage{mdwlist}
 \usepackage{todonotes}
 
+\usepackage{enumitem}
+
 \usepackage{url}
 
 \usepackage{wrapfig}
@@ -294,18 +296,19 @@ F\left(\frac{1}{T} \sum_{t = 0}^T \x_t\right) - \min_{\x}F(\x) \leq \Theta\left(
 \end{equation}
 where $\sigma$ is the upper bound of the mean variance 
 \[
+\vspace{-1em}
 \sigma^2 \geq {1\over T}\sum_{t=1}^T \E\|\g_t - \nabla f(\x_t)\|^2. 
 \]
 %Then $\E \left[ f \left( \frac{1}{T} \sum_{t = 0}^T \x_t \right) \right] - \min_{\x \in \mathcal{X}} f(\x) \leq \epsilon$.
 \end{theorem} 
-\vspace{-2em}
+\vspace{-0.7em}
 There are three key factors to ensure for SGD:
-\begin{enumerate}
+\begin{enumerate}[leftmargin=*, noitemsep]
 \vspace{-0.75em}
 \item Computing stochastic gradient $\g_t$ is cheap;
-\vspace{-0.75em}
+%\vspace{-0.75em}
 \item The stochastic gradient $\g_t$ should be unbiased;
-\vspace{-0.75em}
+%\vspace{-0.75em}
 \item The stochastic gradient variance $\sigma$ dominates the convergence efficiency, so it needs to be controlled appropriately.
 \end{enumerate}
 \vspace{-1.5em}
