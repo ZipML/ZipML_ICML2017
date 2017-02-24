@@ -685,7 +685,7 @@ In practice, this works for
 8-bit while only refetching $<5\%$ of the data.
 
 \begin{table}[t]
-\tiny
+\scriptsize
 \centering
 \begin{tabular}{crrrr}
 \hline
@@ -726,7 +726,7 @@ Dataset           & \# Projections & Volumn Size & Proj. Size \\
 \label{table:dataset}
 \end{table}
 
-\vspace{-1.5em}
+\vspace{-0.5em}
 \section{Experiments} \label{sec:exp}
 
 \vspace{-0.5em}
@@ -853,7 +853,7 @@ explains the speedup.
 \includegraphics[width=0.68\columnwidth]{final-experiments/linear-fpga} 
 \vspace{-1em}
 \caption{FPGA implementation of linear models.}
-\vspace{-2em}
+\vspace{-1em}
 \label{fig:speedup}
 \end{figure}
 
@@ -934,7 +934,7 @@ rounding or naive stochastic rounding
 to achieve the same quality and convergence 
 rate.
 
-\vspace{-1.5em}
+\vspace{-0.5em}
 \paragraph{Chebyshev Approximations}
 
 Figure~\ref{fig:chebyshev} illustrates
@@ -956,7 +956,7 @@ We also experience no loss in test accuracy.
 
 
 
-\vspace{-1.5em}
+\vspace{-0.5em}
 \paragraph{Negative Results}
 
 We are able to construct the following,
@@ -977,9 +977,9 @@ same, and sometimes better,
 convergence than our Chebyshev 
 approximation.
 
-\vspace{-1em}
+\vspace{-0.5em}
 \section{Related Work} 
-\vspace{-1em}
+\vspace{-0.5em}
 
 There has been significant work on ``low-precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
 These results provide
@@ -988,7 +988,7 @@ The model and input samples, on the other hand, are much more difficult
 to analyze because of the non-linearity. We focus on {\em end-to-end}
 quantization, for all components.
 
-\vspace{-1em}
+\vspace{-0.5em}
 \paragraph{Low-Precision Deep Learning.}
 
 Low-precision training of deep neural networks has been studied
@@ -1009,7 +1009,7 @@ compression of a pre-trained model~\cite{vanhoucke2011improving,gong2014compress
 In this paper, we focus on training and leave the study of
 inference for future work.
 
-\vspace{-1.2em}
+\vspace{-0.5em}
 \paragraph{Low-Precision Linear Models.}
 
 Quantization is a fundamental topic studied by the
@@ -1028,7 +1028,7 @@ For SVM the straw man approach
 can also be seen as a very simple case of kernel 
 approximation~\cite{Cortes:2010:AISTATS}.
 
-\vspace{-1.2em}
+\vspace{-0.5em}
 \paragraph{Other Related Work.} Precision of data
 representation is a key design decision
 for configurable hardwares such as FPGA. There have been attempts to
@@ -1037,21 +1037,21 @@ These results are mostly empirical; we
 aim at providing a theoretical understanding, which 
 enables new algorithms.
 
-\vspace{-1.5em}
+\vspace{-0.5em}
 \section{Discussion}
 \label{sec:conclusions}
 
-\vspace{-1em}
+\vspace{-0.5em}
 Our motivating question was whether end-to-end low-precision data representation can enable efficient computation with convergence guarantees. 
 We show that a relatively simple stochastic quantization framework can achieve this for linear models. 
 With this setting, as little as two bits per model dimension are sufficient for good accuracy, and can enable a fast FPGA implementation.  
 
-\vspace{-0.5em}
+\vspace{-0.2em}
 For non-linear models, the picture is more nuanced. 
 In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8-bit is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
 However, in this generalized setting, naive rounding has similar performance on many practical tasks. 
 
-\vspace{-0.5em}
+\vspace{-0.2em}
 It is interesting to consider the rationale behind these results. Our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we focus on guaranteeing arbitrarily low bias. 
 However, for a variety of interesting functions such as hinge loss, guaranteeing low bias requires complex approximations. In turn, these increase the variance. The complexity of the approximation and the resulting variance increase force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. 
 
