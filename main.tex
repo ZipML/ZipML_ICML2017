@@ -365,7 +365,7 @@ The figure on the right illustrates the bias caused by a non-zero $D_{\a}$. In f
 
 We now present a simple method to fix the biased gradient estimator. We generate two independent random quantizations and revise the gradient:
 \begin{align}
-\g_t := Q_1 (\a_t) (Q_2 (\a_t)^\top \x + b_t) \; .
+\g_t := Q_1 (\a_t) (Q_2 (\a_t)^\top \x - b_t) \; .
 \label{eq:double}
 \end{align}
 This gives us an unbiased estimator of the gradient. 
@@ -1063,12 +1063,10 @@ However, for a variety of interesting functions such as hinge loss, guaranteeing
 
 \cleardoublepage
 
-
-
-
-
 \bibliographystyle{icml2017}
 \bibliography{low-precision.bib}
 
+%\newpage
+%\input{supp-Ji.tex}
 
 \end{document}
