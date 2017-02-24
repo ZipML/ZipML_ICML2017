@@ -1173,11 +1173,12 @@ Since this holds for all $I \in \setJ$, and $|\setJ| \leq k$, this implies that
 Combining the above two expressions yields that $\err (\setX, \setI) \leq  \left( 1 + \frac{1}{\gamma} \right) \OPT_k$, as claimed.
 \end{proof}
 
-\section{Description of the FPGA Implementation}
-
-\section{Implementation}
+\section{Implementation on FPGA}
 \label{section:implementation}
-We describe the FPGA implementations. First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
+%We describe the FPGA implementations. First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
+In this section, we show the computation pipeline for full-precision SGD and quantized SGD implemented on FPGA in figure~\ref{fig:floatFPGASGD} and~\ref{fig:qallFPGASGD}. The FPGA implementation work is submitted to IEEE International Symposium on Field-Programmable Custom Computing Machines (FCCM) 2017.
+
+First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
 
 \subsection{Target platform: Intel Xeon+FPGA}
 \label{section:xeonfpga}
@@ -1204,7 +1205,7 @@ We first present an SGD implementation on the FPGA, that works on 32-bit floatin
 \end{figure}
 
 \noindent
-\textbf{Scale to \# features:} The challenging part of the design is to make it capable of handling a number of features $D$ that is larger than 16, which is the default width of the pipeline. In fact, this is possible since all vector algebra in algorithm \ref{algo:sgd} can be performed iteratively, where each chunk contains 16 values. This implies that the number $D$ needs to be a multiple of 16. To ensure that, we use zero-padding on a data set, if $D\bmod16\neq0$. Thus, we can calculate how many cache-lines it takes for $\mathbf{a_i}$ (one row in the set) to be completely received:
+\textbf{Scale to \# features:} The challenging part of the design is to make it capable of handling a number of features $D$ that is larger than 16, which is the default width of the pipeline. In fact, this is possible since all vector algebra can be performed iteratively, where each chunk contains 16 values. This implies that the number $D$ needs to be a multiple of 16. To ensure that, we use zero-padding on a data set, if $D\bmod16\neq0$. Thus, we can calculate how many cache-lines it takes for $\mathbf{a_i}$ (one row in the set) to be completely received:
 \[
 \text{\#} \mathbf{a_i} \text{cache-lines} = 
 \begin{cases}
@@ -1221,14 +1222,14 @@ The only parameter that the design needs to scale for is the maximum number of d
 
 \begin{figure*}[t]
 \centering
-\begin{subfigure}[t]{.8\columnwidth}
+\begin{subfigure}[t]{.6\columnwidth}
 \centering
 \includegraphics[width=\columnwidth]{Figures/qFPGASGD.eps}
 \caption{\textit{Q2}, \textit{Q4} and \textit{Q8} FPGA-SGD, with a latency of $log(K)$+5 cycles, a data width of 64B and a processing rate of 64B/cycle.}
 \label{fig:qFPGASGD}
 \end{subfigure}
 \quad
-\begin{subfigure}[t]{.8\columnwidth}
+\begin{subfigure}[t]{.6\columnwidth}
 \centering
 \includegraphics[width=\columnwidth]{Figures/q1FPGASGD.eps}
 \caption{\textit{Q1} FPGA-SGD, with a latency of 12 cycles, a data width of 32B and a processing rate of 32B/cycle.}
@@ -1337,38 +1338,35 @@ Data type & Logic (ALMs) & DSP & BRAM (bits)\\
 
 
 
-\section{Implementation on FPGA}
-\label{section:implementation}
-%We describe the FPGA implementations. First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
-In this section, we show the computation pipeline for full-precision SGD and quantized SGD implemented on FPGA in figure~\ref{fig:floatFPGASGD} and~\ref{fig:qallFPGASGD}. The FPGA implementation work is submitted to IEEE International Symposium on Field-Programmable Custom Computing Machines (FCCM) 2017.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=.8\columnwidth]{Figures/floatFPGASGD.eps}
-\caption{Computation pipeline for \texttt{floatFSGD}, with a latency of 36 cycles, a data width of 64B and a processing rate of 64B/cycle.}
-\label{fig:floatFPGASGD}
-\end{figure}
 
 
-\begin{figure}[t]
-\centering
-\begin{subfigure}[t]{.8\columnwidth}
-\centering
-\includegraphics[width=\columnwidth]{Figures/qFPGASGD.eps}
-\caption{\textit{Q2}, \textit{Q4} and \textit{Q8} \texttt{qFSGD}, with a latency of $log(K)$+5 cycles, a data width of 64B and a processing rate of 64B/cycle.}
-\label{fig:qFPGASGD}
-\end{subfigure}
-\quad
-\begin{subfigure}[t]{.8\columnwidth}
-\centering
-\includegraphics[width=\columnwidth]{Figures/q1FPGASGD.eps}
-\caption{\textit{Q1} \texttt{qFSGD}, with a latency of 12 cycles, a data width of 32B and a processing rate of 32B/cycle.}
-\label{fig:q1FPGASGD}
-\end{subfigure}
-\caption{Computation pipelines for all quantizations. Although for \textit{Q2}, \textit{Q4} and \textit{Q8} the pipeline width scales out and maintains 64B width, for \textit{Q1} it does not scale out and the pipeline width needs to be halved, making \textit{Q1} \texttt{qFSGD} compute bound.}
-\label{fig:qallFPGASGD}
-\vspace{-1em}
-\end{figure}
+%\begin{figure}[t]
+%\centering
+%\includegraphics[width=.8\columnwidth]{Figures/floatFPGASGD.eps}
+%\caption{Computation pipeline for \texttt{floatFSGD}, with a latency of 36 cycles, a data width of 64B and a processing rate of 64B/cycle.}
+%\label{fig:floatFPGASGD}
+%\end{figure}
+%
+%
+%\begin{figure}[t]
+%\centering
+%\begin{subfigure}[t]{.8\columnwidth}
+%\centering
+%\includegraphics[width=\columnwidth]{Figures/qFPGASGD.eps}
+%\caption{\textit{Q2}, \textit{Q4} and \textit{Q8} \texttt{qFSGD}, with a latency of $log(K)$+5 cycles, a data width of 64B and a processing rate of 64B/cycle.}
+%\label{fig:qFPGASGD}
+%\end{subfigure}
+%\quad
+%\begin{subfigure}[t]{.8\columnwidth}
+%\centering
+%\includegraphics[width=\columnwidth]{Figures/q1FPGASGD.eps}
+%\caption{\textit{Q1} \texttt{qFSGD}, with a latency of 12 cycles, a data width of 32B and a processing rate of 32B/cycle.}
+%\label{fig:q1FPGASGD}
+%\end{subfigure}
+%\caption{Computation pipelines for all quantizations. Although for \textit{Q2}, \textit{Q4} and \textit{Q8} the pipeline width scales out and maintains 64B width, for \textit{Q1} it does not scale out and the pipeline width needs to be halved, making \textit{Q1} \texttt{qFSGD} compute bound.}
+%\label{fig:qallFPGASGD}
+%\vspace{-1em}
+%\end{figure}
 
 
 
