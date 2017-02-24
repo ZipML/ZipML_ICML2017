@@ -835,18 +835,6 @@ If the upper and lower bounds of a quantized sample have the same sign, then we 
 This seems to work well in practice, however, we could not prove any guarantees about how often we refetch with this guarantee, under any reasonable generative models.
 
 
-\subsection{Importance Sampling}  Another heuristic
- used to decrease the amount of original data that
-we fetch during training is to use {\em importance
-sampling}, instead of standard uniform sampling for SGD~\cite{zhao2015stochastic}. 
-Intuitively, flipping happens more frequently
-when $1 - b_k \a_k^\top \x$ is close to 0.
-Therefore, we sample an input sample
-with a probability proportional to 
-$|1 - b_k \a_k^\top \x|$. This heuristic 
-increases the variance of SGD, 
-but at the same time it decreases the amount of original data
-needing to be fetched. 
 
 %\todo{Proof}
 
@@ -1242,7 +1230,7 @@ The only parameter that the design needs to scale for is the maximum number of d
 
 \noindent
 \textbf{Walk-through of computation pipeline:} In the following, we explain what happens at each stage of the computation pipeline. The first stage is the dot product $\mathbf{a_i}\cdot\mathbf{x} = \sum_{j=1}^{D} a_{i,j}x_j$. When a cache-line containing a part of vector $\mathbf{a_i}$ arrives, it is first multiplied (\circled{1}) with the corresponding part of vector $\mathbf{x}$. The multiplication is performed in floating point with multiplier IPs\footnote{All floating point IPs are created via Altera Quartus II 13.1}, which have 5 cycles latency and a result per cycle throughput. Then, the values are converted to a 32-bit integer (\circled{2}) by multiplication with a large constant that is configurable during runtime, depending on the value range or the precision that is desired to be kept. This \textit{float2fixed} conversion takes 1 cyle. After that, an adder tree (\circled{3}) accumulates 16 values, each layer taking 1 cycle. At the output of the adder tree is a single accumulator (\circled{4}). It accumulates the results coming out from the adder tree for the pre-calculated number of $\text{\#} \mathbf{a_i} \text{cache-lines}$, thus building the final value for the dot product. The dot product result is converted back to floating point (\circled{5}), since the next stages of the calculation will be performed with floating point data.
-In the next part, the rest of the gradient calculation takes place. First, the scalar value $b$, which is the true inference value in the data set, is subtracted from the dot product (\circled{6}) using a floating point adder IP, which has 7 cycles latency and a result per cycle throughput. As for where the $b$ value comes from, it is actually received some cycles before the subtraction takes place and is put into a FIFO (\circled{B}), waiting there until the dot product result is ready. After the subtraction, a floating point multiplication takes place with the step size $\gamma$ (\circled{7}), which can be configured to any \textit{float} value during runtime. At the end of this step, we have a scalar value $\gamma(\mathbf{a_i}\cdot\mathbf{x}-b_i)$, which needs to be multiplied with vector $\mathbf{a_i}$. At this stage, a FIFO (\circled{A}) already contains all parts of vector $\mathbf{a_i}$, because the incoming cache-lines are written to this FIFO simultaneously as they were sent to the dot product calculation. The scalar-vector multiplication (\circled{8}) takes place in floating point, where all parts of $\mathbf{a_i}$ are multiplied with the same scalar value. This gives us the gradient $\mathbf{g_i}$ one part at a time, which undergoes \textit{float2fixed} conversion (\circled{9}), so that a cycle-by-cycle update of the model $\mathbf{x}$ (\circled{C}) can take place, which would not be possible with a floating point adder having 7 cycles latency. The part of the gradient, which is ready, is applied to the corresponding part of the model. After the last part of the gradient is subtracted from the model, the update for $\mathbf{a_i}$ (a row in the data set) is completed. After all rows go through the same calculation, one so called epoch is completed, as shown in algorithm \eqref{algo:sgd}. In Figure \ref{fig:floatFPGASGD} we can see that the model we apply the updates to and the model we read for the dot product are separate. Only when a certain batch size (the number of already processed $\mathbf{a_i}$) is reached, the updated model is carried on to the actual model (\circled{D}). The reason for this is the latency introduced by the computation pipeline: In theory, the whole gradient calculation and the update to the model as in \eqref{algo:sgd} should be an atomic operation. However, since we would like to exploit the deep-pipelining an FPGA provides to achieve high processing throughput, we don't perform this operation atomically. Instead, we keep the actual model and the updated model separate and only carry out the accumulated update when a certain batch size is reached (called also a mini-batch SGD). The batch size is a runtime configurable parameter, which should be set to the latency of the pipeline (36 cycles) to avoid any so called stale updates.
+In the next part, the rest of the gradient calculation takes place. First, the scalar value $b$, which is the true inference value in the data set, is subtracted from the dot product (\circled{6}) using a floating point adder IP, which has 7 cycles latency and a result per cycle throughput. As for where the $b$ value comes from, it is actually received some cycles before the subtraction takes place and is put into a FIFO (\circled{B}), waiting there until the dot product result is ready. After the subtraction, a floating point multiplication takes place with the step size $\gamma$ (\circled{7}), which can be configured to any \textit{float} value during runtime. At the end of this step, we have a scalar value $\gamma(\mathbf{a_i}\cdot\mathbf{x}-b_i)$, which needs to be multiplied with vector $\mathbf{a_i}$. At this stage, a FIFO (\circled{A}) already contains all parts of vector $\mathbf{a_i}$, because the incoming cache-lines are written to this FIFO simultaneously as they were sent to the dot product calculation. The scalar-vector multiplication (\circled{8}) takes place in floating point, where all parts of $\mathbf{a_i}$ are multiplied with the same scalar value. This gives us the gradient $\mathbf{g_i}$ one part at a time, which undergoes \textit{float2fixed} conversion (\circled{9}), so that a cycle-by-cycle update of the model $\mathbf{x}$ (\circled{C}) can take place, which would not be possible with a floating point adder having 7 cycles latency. The part of the gradient, which is ready, is applied to the corresponding part of the model. After the last part of the gradient is subtracted from the model, the update for $\mathbf{a_i}$ (a row in the data set) is completed. After all rows go through the same calculation, one so called epoch is completed. In Figure \ref{fig:floatFPGASGD} we can see that the model we apply the updates to and the model we read for the dot product are separate. Only when a certain batch size (the number of already processed $\mathbf{a_i}$) is reached, the updated model is carried on to the actual model (\circled{D}). The reason for this is the latency introduced by the computation pipeline: In theory, the whole gradient calculation and the update to the model should be an atomic operation. However, since we would like to exploit the deep-pipelining an FPGA provides to achieve high processing throughput, we don't perform this operation atomically. Instead, we keep the actual model and the updated model separate and only carry out the accumulated update when a certain batch size is reached (called also a mini-batch SGD). The batch size is a runtime configurable parameter, which should be set to the latency of the pipeline (36 cycles) to avoid any so called stale updates.
 
 \noindent
 \textbf{Trade-off: End-to-end float vs. hybrid computation} We choose a hybrid (float+fixed) over end-to-end float computation because of the following reasons: (1) One floating point addition takes 7 cycles, resulting in a high latency adder tree (\circled{3}). Because of the increased latency (as explained previously) a larger batch-size is required to avoid staleness, which slows down the convergence rate. (2) Again, since a floating point addition takes 7 cycles, a cycle-by-cycle accumulation (\circled{7}) would not be possible, since the result of an ongoing addition is required in the next cycle. Thus, for keeping the processing rate at 64B/cycle, a hybrid design is chosen.
@@ -1253,7 +1241,7 @@ In the next part, the rest of the gradient calculation takes place. First, the s
 We explain how the FPGA-SGD design for \textit{float} data is adjusted to work on quantized data. The main purpose of this design is simple: Instead of reading \textit{float} data, where only 16 values can be fit into a cache-line, we would like to quantize the data beforehand, so that we can fit more than 16 values into a cache-line, thus utilize the available bandwidth more efficiently and gain speedup. There is one main challenge in making the FPGA-SGD work on quantized data: Scaling out the computation pipeline presented in Figure \ref{fig:floatFPGASGD}, so that it can work on more than 16 values in parallel. Before we dive in and explain how this is achieved, first we would like to give an overview of quantization options we consider and how the data layout looks like.
 
 \noindent
-\textbf{Quantization for FPGA-SGD:} When we analyze what happens in equation \eqref{equation:quantization}, we deduct that given a non-integer value, the quantization still might produce a non-integer value. However, floating point arithmetic induced by non-integer values are hard to implement on the FPGA, and scaling out such a design would not be possible. We would like to take advantage of the fact that we can select the quantization variables $[L,U]$ and $s$ intelligently, so that only integer values are produced. In Table \ref{table:quantization} we present choices for these values.
+\textbf{Quantization for FPGA-SGD:} When we analyze what happens when we quantize data, given a non-integer value, the quantization still might produce a non-integer value. However, floating point arithmetic induced by non-integer values are hard to implement on the FPGA, and scaling out such a design would not be possible. We would like to take advantage of the fact that we can select the quantization variables $[L,U]$ and $s$ intelligently, so that only integer values are produced. In Table \ref{table:quantization} we present choices for these values.
 
 \begin{table}[t]
 \centering
@@ -1272,7 +1260,7 @@ s=129 & $[L,U]=[0,128]$ & $[L,U]=[-64,64]$ & 8, \textit{Q8}
 After we have selected a quantization precision (one of \textit{Q1}, \textit{Q2}, \textit{Q4} or \textit{Q8}), the data set (the values in matrix $\mathbf{a}$) must be normalized to selected quantization's corresponding $[L,U]$. At this stage, the sign of the data set is considered for the normalization. For example, we choose not the normalize a negative data set into a positive interval, in order to keep existing zeros, thus we don't use \textit{Q1} for negative data sets.
 
 \noindent
-\textbf{The layout of quantized data} As it was shown in Section \ref{section:quantization}, for calculating a correct gradient we need 2 quantization samples of the same data point. That is, if we for example select \textit{Q8}, a quantized sample has 8 bits and we need 2 of them for calculating the gradient; the actual amount of bits we use is 16. That's why, when we perform quantization on a data set, we always create 2 samples and store them in memory next to each other. Thus, we can calculate how many quantized values can fit into one cache-line, a value we call $K$, in Table \ref{table:valuesincl}. The value $K$ dictates the amount of zero-padding we need to perform, in order to be cache-line aligned, similar to as it did for \textit{float} FPGA-SGD. Thus, the number of cache-lines required to receive one quantized row $Q(\mathbf{a_i})$ can be calculated:
+\textbf{The layout of quantized data}  For calculating a correct gradient we need 2 quantization samples of the same data point. That is, if we for example select \textit{Q8}, a quantized sample has 8 bits and we need 2 of them for calculating the gradient; the actual amount of bits we use is 16. That's why, when we perform quantization on a data set, we always create 2 samples and store them in memory next to each other. Thus, we can calculate how many quantized values can fit into one cache-line, a value we call $K$, in Table \ref{table:valuesincl}. The value $K$ dictates the amount of zero-padding we need to perform, in order to be cache-line aligned, similar to as it did for \textit{float} FPGA-SGD. Thus, the number of cache-lines required to receive one quantized row $Q(\mathbf{a_i})$ can be calculated:
 \begin{equation}
 \label{equation:cachelines}
 \text{\#} \mathbf{a_i} \text{cache-lines} = 
@@ -1440,10 +1428,10 @@ as SGD with full precision.
 
 \paragraph{Quantized Data}
 We validate that (1) if we quantize data with double sampling, SGD with low precision converges---in comparable empirical 
-convergence rates---to the same solution as SGD with full precision, and (2) With our optimal quantization strategy for quantizing data, we can use less bits to converge to the same solution.
+convergence rates---to the same solution as SGD with full precision, and (2) with our optimal quantization strategy for quantizing data, we can use less bits to converge to the same solution.
 
-Figure~\ref{fig:lindata} -~\ref{fig:lssvmdata} illustrates that the result of training linear models:
-(a) linear regression and (b) least squares SVMs,
+Figure~\ref{fig:lindata} and \ref{fig:lssvmdata} illustrates that the result of training linear models:
+(a) linear regression and (b) least squares SVMs, respectively,
 with low precision data with uniform quantization points, low-precision data with optimal quantization points, and 
 full precision data. For low precision, we pick the 
 smallest number of bits that results in a smooth convergence
@@ -1452,44 +1440,47 @@ curve. We compare the final training loss in both settings and the convergence r
 
 We see that, for both linear regression 
 and least squares SVM,
-using 2- or 3-bit is always enough
+using 6-bit is always enough
 to converge to the same solution
-with comparable convergence rate. 
+with comparable convergence rate. In most cases,
+4-bit is enough. 
 This validates our prediction that
 double-sampling provides an
 unbiased estimator of the gradient.
 Considering the size of input
 samples that we need to read, we
-could potentially save 8--10$\times$ 
+could potentially save 5--8$\times$ 
 memory bandwidth compared to using 
-32-bit. 
+32-bit. Also, we can see that with out optimal quantization 
+strategy, usually we can save 1-2 bits we need.
 
 \begin{figure}[t]
 \centering
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{Synthetic 10}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/syn10-data}
+    \caption{Synthetic 10 dataset}
     \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{Synthetic 100}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/syn100-data}
+    \caption{Synthetic 100 dataset}
     \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-     \caption{Synthetic 1000}
+
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/syn1000-data}
+     \caption{Synthetic 1000 dataset}
     \end{subfigure}
-    
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{YearPredictionMSD}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/year-data}
+    \caption{YearPredictionMSD dataset}
     \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{cadata}
+
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/cadata-data}
+    \caption{cadata dataset}
     \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-     \caption{cpusmall}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/cpusmall-data}
+     \caption{cpusmall dataset}
     \end{subfigure}
     
 \caption{Linear models with low precision data}
@@ -1500,10 +1491,13 @@ memory bandwidth compared to using
 \begin{figure}[t]
 \centering
     \begin{subfigure}[h]{.4\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{cod-rna}
+    \includegraphics[width=\columnwidth]{additional/cod-rna-data}
+    \caption{cod-rna dataset}
     \end{subfigure}
-    
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/gisette-data}
+    \caption{gisette dataset}
+    \end{subfigure}    
 \caption{Least Squares SVM with low precision data}
 \label{fig:lssvmdata}
 \end{figure}
@@ -1512,7 +1506,7 @@ memory bandwidth compared to using
 We validate that (1) if we quantize data with double sampling, SGD with low precision converges---in comparable empirical 
 convergence rates---to the same solution as SGD with full precision.
 
-Figure~\ref{fig:linendtoend} -~\ref{fig:lssvmendtoend} illustrates that the result of training linear models:
+Figure~\ref{fig:linendtoend}-\ref{fig:lssvmendtoend} illustrates that the result of training linear models:
 (a) linear regression and (b) least squares SVMs,
 with low precision data with uniform quantization points, low-precision data with optimal quantization points, and 
 full precision data. For low precision, we pick the 
@@ -1522,42 +1516,43 @@ curve. We compare the final training loss in both settings and the convergence r
 
 We see that, for both linear regression 
 and least squares SVM,
-using 2- or 3-bit is always enough
+using 4-6 bits is always enough
 to converge to the same solution
 with comparable convergence rate. 
 And when we compare the end-to-end quantization
 with quantized data, we can see that we
-need more bits . 
+need more bits, which is because the extra variance introduced
+by quantized model and gradient. 
 \begin{figure}[t]
 \centering
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/syn10-endtoend}
+    \caption{Synthetic 10 dataset}
+    \end{subfigure}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/syn100-endtoend}
+    \caption{Synthetic 100 dataset}
+    \end{subfigure}
 
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{Synthetic 10}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/syn1000-endtoend}
+     \caption{Synthetic 1000 dataset}
     \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{Synthetic 100}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-     \caption{Synthetic 1000}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/year-endtoend}
+    \caption{YearPredictionMSD dataset}
     \end{subfigure}
     
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{YearPredictionMSD}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/cadata-endtoend}
+    \caption{cadata dataset}
     \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{cadata}
-    \end{subfigure}
-    \begin{subfigure}[h]{.3\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-     \caption{cpusmall}
+    \begin{subfigure}[h]{.4\columnwidth}
+    \includegraphics[width=\columnwidth]{additional/cpusmall-endtoend}
+     \caption{cpusmall dataset}
     \end{subfigure}
     
-\caption{Linear models with end-to-end low-precision}
+\caption{Linear models with end-to-end low precision}
 \label{fig:linendtoend}
 \end{figure}
 
@@ -1565,12 +1560,12 @@ need more bits .
 \begin{figure}[t]
 \centering
     \begin{subfigure}[h]{.4\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{cod-rna}
+    \includegraphics[width=\columnwidth]{additional/cod-rna-endtoend}
+    \caption{cod-rna dataset}
     \end{subfigure}
     \begin{subfigure}[h]{.4\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{gisette}
+    \includegraphics[width=\columnwidth]{additional/gisette-endtoend}
+    \caption{gisette dataset}
     \end{subfigure}
     
 \caption{Least Squares SVM with end-to-end low precision}
@@ -1582,47 +1577,8 @@ We can see from figure~\ref{fig:lindata} (a)-(c) shows that with more features, 
 
 \subsection{Non-Linear Models}
 
-We validate that (1) our Chebyshev 
-approximation approach is able to
-converge to almost the same solution 
-with 8-bit precision for both SVM
-and logistic regression;
-and (2) For SVM, we can use our refetching heuristic and we can 
+We validate that for SVM, we can use our refetching heuristic and we can 
 8-bit while only refetching $<10\%$ of the data.
-
-\paragraph{Chebyshev Polynomial Approximation}
-
-
-Figure~\ref{fig:chebyshev} illustrates
-the result of training SVM
-and logistic regression 
-with Chebyshev approximation. Here,
-we use Chebyshev polynomials up to
-degree 15 (which requires 16 samples
-that can be encoded with 4 extra 
-bits). For each sample, the precision
-is 4-bit, and therefore, in total
-we use 8-bit for each single number
-in input samples. We see that, 
-with our quantization framework,
-SGD converges to similar training loss 
-with a comparable empirical convergence 
-rate for both SVM and logistic regression.
-We also experience no loss in test accuracy.
-\begin{figure}[t]
-\centering
-    \begin{subfigure}[h]{.4\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{cod-rna}
-    \end{subfigure}
-    \begin{subfigure}[h]{.4\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{gisette}
-    \end{subfigure}
-    
-\caption{SVM with low precision data and refetching}
-\label{fig:chebyshev}
-\end{figure}
 
 \paragraph{Refetching Heuristic for SVM}
 
@@ -1641,16 +1597,9 @@ We also experience no loss in test accuracy.
 
 \begin{figure}[t]
 \centering
-    \begin{subfigure}[h]{.4\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{cod-rna}
-    \end{subfigure}
-    \begin{subfigure}[h]{.4\columnwidth}
-    %\includegraphics[width=\columnwidth]{}
-    \caption{gisette}
-    \end{subfigure}
+    \includegraphics[width=0.5\columnwidth]{additional/fetch}
     
-\caption{SVM with low precision data and refetching}
+\caption{SVM with low precision data and refetching on cod-rna dataset}
 \label{fig:refetch}
 \end{figure}
 
