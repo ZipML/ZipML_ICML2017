@@ -1,0 +1,79 @@
+\onecolumn
+\begin{center}
+\Large
+Supplemental Materials
+\end{center}
+
+{\bf \noindent Proof to Lemma~\ref{thm:optQ}}
+\begin{proof}
+Let $\a$ denote $\a_t$ for short in the followed proof.
+\begin{eqnarray*}
+& & \E\left\|Q_1(\a)(Q_2(\a)^\top \x + b_t)\right\|^2
+\\
+& \leq & 
+2\E\left\| (Q_1(\a)- \a) Q_2(\a)^\top \x \right\|^2 + 2\E\left\| \a(Q_2(\a) - \a)^\top \x) \right\|^2
+\\
+& \leq &
+2 \E_1 \|Q_1(\a)-\a\|^2\E_2(Q_2(\a)^\top \x)^2 + 2 \|\a\|^2 \E((Q_2(\a)-\a)^\top\x)^2
+\\
+& \leq &
+2 \E_1 \|Q_1(\a)-\a\|^2\E_2(Q_2(\a)^\top \x)^2 + 2 \|\a\|^2 \E((Q_2(\a)-\a)^\top\x)^2
+\\
+& \leq &
+2 \mathcal{TV}(\a)(2 \|\a\|^2 \E((Q_2(\a)-\a)^\top\x)^2 + 2(\a^\top \x)^2)+ 2 \|\a\|^2 \E((Q_2(\a)-\a)^\top\x)^2
+\\
+& \leq &
+\Theta\left(\mathcal{TV}(\a) (\mathcal{TV}(\a)\|\x\odot \x\| + \|\a^\top \x\|^2 + \|\x\odot \x\|\|\a\|^2)\right),
+\end{eqnarray*}
+which completing the proof.
+\end{proof}
+
+
+{\bf \noindent Proof to Lemma~\ref{lem:discrete}}
+\begin{proof}
+Fix any endpoint $b$ of intervals in $\setI^*$. WLOG assumes that $b \neq 0, 1$. Then we must have $I = [a, b]$ and $I' = [b, c]$ for some $I, I' \in \setI^*$. Observe that the choice of $b$ only affects the error for points in $I \cup I'$. We have that $\err (\Omega, I) + \err (\Omega, I') $ is given by 
+\begin{align*}
+& \sum_{x \in I} (b - x) (x - a) + \sum_{x \in I'} (c -x)(x - b) \\
+&= A b + C \; ,
+\end{align*}
+where $A, C$ are constants that do not depend on $b$. Hence, this is a linear objective in $b$. Since $b$ can freely range between the rightmost point in $I$ and the leftmost point in $I'$, there is an optimizer for this solution at one of those two points. Hence we may choose $b \in \Omega$.
+\end{proof}
+
+
+{\bf \noindent Proof to Theorem~\ref{thm:optQ}}
+\begin{proof}
+Let $p^*_0$ be $0$ and $p^*_K=1$.We quantitize $\{p^*_k\}_{k=1}^{K-1}$ one element by one element, while monitor the changing of the total variance $N \times \mathcal{MV(\cdot)}$. We first quantize $p^*_1$ to the closest value (denoted it by $Q(p^*_1)$) in $\{d_m\}_{m=1}^{M-1} \cup \{p^*_0,p^*_K\}$ under the monotonicity constraint, that is, $p^*_0\leq Q(p^*_1) \leq p^*_2$. Here, one important observation is $|p^*_{1} - Q(p^*_1)|\leq a/M$. Consider the total variance of this new solution $Q(p^*_1), p^*_2, \cdots, p^*_{K-1}$. The variance of points falling into the range $[p^*_2, 1]$ does not change at all. Without the loss of generality, assume $p^*_{1} \geq Q(p^*_1)$.
+
+Next we consider points falling into the following three sets $C_1 = [p^*_0, Q(p^*_1)]$, $C_2 = [Q(p^*_1), p^*_1]$, and $C_3 = [p^*_1, p^*_2]$. The variance of points of falling into $C_1$ gets reduced from the form of variance in \eqref{eq:var}. Next we only need to check the variance change for points in $C_2$ and $C_3$. Consider $C_2$ first. The variance for point $x$ in $C_2$ is
+\[
+(x-Q(p^*_1))(p^*_1 - x) \leq {a^2 \over 4 M^2}. 
+\]  
+Thus, the change of variance for points in $C_2$ would be bounded by ${a^2 \over 4 M^2}$. Then consider $C_3$. The change of variance for point $x$ in $C_3$ is
+\begin{align*}
+& (x-Q(p^*_1))(p^*_2 - x) - (x-p^*_1) (p^*_2 - x) = (p^*_1 - Q(p^*_1)) (p^*_2 - x)
+\\
+\leq & {a\over M}(p^*_2 - x)
+\end{align*}
+Therefore, the change of total variance from $\{p^*_1, p^*_2, \cdots, p^*_{K-1}\}$ to $\{Q(p^*_1), p^*_2, \cdots, p^*_{K-1}\}$ is bounded by 
+\begin{align}
+\nonumber
+& \sum_{x\in C_2} {a^2 \over 4M^2} + \sum_{x \in C_3} {a\over M}(p^*_2 - x)
+\\
+\nonumber
+\leq & {Nb \over M} {a^2 \over 4M^2} + {a\over M}{Nb \over M} \sum_{t=1}^{cM/K}t{a\over M}
+\\
+\leq &
+{a^2b N \over 4 M^3} + {a^2bc^2 N \over MK^2}
+\label{eq:bound_1step}
+\end{align}
+Similarly, we quantitize $p^2_2$ in $\{Q(p^*_1), p^*_2, \cdots, p^*_{K-1}\}$ to get a new solution $\{Q(p^*_1), Q(p^*_2), \cdots, p^*_{K-1}\}$ while maintain the monotonicity. We can establish the same upper bound to \eqref{eq:bound_1step}. Following this idea, we can obtain a quantization solution $\{Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1})\}$. Therefore, we obtain that 
+\begin{align*}
+&  \mathcal{MV}(Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1})) -  \mathcal{MV}({p}^*_1,\cdots, {p}^*_{K-1}) 
+ \\
+ & \quad \leq {a^2b K \over 4 M^3} + {a^2bc^2 \over MK}.
+\end{align*}
+Using the fact that $ \mathcal{MV}(p^*_1,\cdots, p^*_{K-1})$ is smaller than $\mathcal{MV}(Q(p^*_1), Q(p^*_2), \cdots, Q(p^*_{K-1}))$ proves the claim.
+\end{proof}
+
+
+{\bf \noindent Proof to Lemma~\ref{lem:OPT}}
