@@ -1971,13 +1971,8 @@ Using the fact that $ \mathcal{MV}(p^*_1,\cdots, p^*_{K-1})$ is smaller than $\m
 %from equal-length small intervals'' (more details in 
 %the full version). 
 %Similarly, $c$ roughly measures the distortion from equal-length large intervals since $c=1$ means that all large intervals defined by $\{l^*_k\}_{k=1}^{s-1}$ roughly cross the same number of small intervals defined by $\{d_m\}_{m=1}^{M-1}$. 
-Theorem~\ref{thm:optQ-2} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/Mk)$.
+Theorem~\ref{thm:optQ} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/Mk)$.
 
-\paragraph*{Dynamic Programming with Candidate Points}
-Notice that we can apply the same dynamic programming approach given $M$ candidate points. 
-In this case, the total computational complexity becomes $O((k+1)M^2 + N)$, with memory cost 
-$O(kM + M^2)$. Also, to find the optimal quantization,  we only need to scan all $N$ numbers once.
-Figure~\ref{fig:optimalquantization} illustrates an example output for our algorithm.
 
 
 
