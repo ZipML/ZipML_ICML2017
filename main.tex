@@ -118,20 +118,17 @@ would introduce significant bias. We validate our framework
 across a range of applications, and show that it enables an 
 FPGA prototype that is up to $6.5\times$ faster 
 than an implementation using full 32-bit precision.
-
 We further develop a variance-optimal 
 stochastic quantization
 strategy and show that 
 it can make a significant difference in a variety of settings. 
 When applied to linear models together with 
 double sampling, we save up to another 
-$1.7\times$ in data movement 
-%compared with uniform quantization. 
+$1.7\times$ in data movement compared with the uniform quantization. 
 When
 training deep networks with quantized models, 
 we achieve higher accuracy than the state-of-the-art XNOR-Net. 
-
-Last, we extend our framework through approximation to non-linear 
+Finally, we extend our framework through approximation to non-linear 
 models, such as SVM. We show that, although using low-precision data induces bias, 
 we can appropriately 
 bound and control the bias. We find in practice {\em 8-bit} 
