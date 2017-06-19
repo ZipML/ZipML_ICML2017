@@ -68,42 +68,29 @@
 
 
 \title{ \bf
-Training Models with End-to-End Low Precision:\\
+The ZipML Framework for Training Models with End-to-End Low Precision:\\
 The Cans, the Cannots, and a Little Bit of Deep Learning
 }
 
 \author{
-\small Hantian Zhang$^\dag$~~~~Jerry Li$^\ast$~~~~Kaan Kara$^\dag$\\
+\small Hantian Zhang$^\ast$$^\dag$~~~~Jerry Li$^\ast$$^\sharp$~~~~Kaan Kara$^\dag$\\
 \small Dan Alistarh$^\dag$~~~~Ji Liu$^\ddag$~~~~Ce Zhang$^\dag$\\
 \small $^\dag$ ETH Zurich\\
-\small zht@student.ethz.ch\\
-\small \{kaan.kara, dan.alistarh, ce.zhang\}@inf.ethz.ch\\
+\small \{hantian.zhang, kaan.kara, dan.alistarh, ce.zhang\}@inf.ethz.ch\\
 \small $^\ddag$ University of Rochester\\
 \small jliu@cs.rochester.edu\\
-\small $^\ast$ Massachusetts Institute of Technology\\
-\small jerryzli@mit.edu
+\small $^\sharp$ Massachusetts Institute of Technology\\
+\small jerryzli@mit.edu \\
+\small $^\ast$ Equal Contribution
 }
 \date{}
 
 
-%\usepackage{icml2017}
-
-%\icmltitlerunning{Training Models with End-to-End Low Precision}
-
 \begin{document}
 \maketitle
-%\twocolumn[
-%\icmltitle{Training Models with End-to-End Low Precision:\\
-%The Cans, the Cannots, and a Little Bit of Deep Learning}
-%    \vskip 0.3in
-%]
 
 \begin{abstract}
 
-<<<<<<< HEAD
-%\vspace{-0.75em}
-=======
->>>>>>> master
 Recently there has been significant interest in training 
 machine-learning models at low precision: by reducing 
 precision, one can reduce computation and communication by one order of magnitude. 
@@ -112,11 +99,7 @@ perspective, and ask:
 {\em is it possible to \emph{train} models at end-to-end low 
 precision with \emph{provable} guarantees? Can this 
 lead to consistent order-of-magnitude speedups?}
-
-<<<<<<< HEAD
-%\vspace{-0.1em}
-=======
->>>>>>> master
+We present a framework called ZipML to answer these questions.
 For linear models, the answer is yes. We develop a simple 
 framework based on one simple but novel strategy called double sampling. 
 Our framework is able 
@@ -126,24 +109,13 @@ would introduce significant bias. We validate our framework
 across a range of applications, and show that it enables an 
 FPGA prototype that is up to $6.5\times$ faster 
 than an implementation using full 32-bit precision.
-<<<<<<< HEAD
-
-%\vspace{-0.1em}
-=======
->>>>>>> master
 We further develop a variance-optimal 
 stochastic quantization
 strategy and show that 
 it can make a significant difference in a variety of settings. 
 When applied to linear models together with 
 double sampling, we save up to another 
-<<<<<<< HEAD
-$1.7\times$ in data movement compared with uniform quantization. 
-When
-training deep networks with quantized models, 
-we achieve higher accuracy than the state-of-the-art XNOR-Net. 
-=======
-$1.7\times$ in data movement compared with the uniform quantization. 
+$1.7\times$ in data movement compared with the uniform quantization.
 When
 training deep networks with quantized models, 
 we achieve higher accuracy than the state-of-the-art XNOR-Net. 
@@ -153,7 +125,6 @@ we can appropriately
 bound and control the bias. We find in practice {\em 8-bit} 
 precision is often sufficient to converge to the correct solution. 
 Interestingly, however, in practice we notice that our framework does not always outperform the naive rounding approach. We discuss this negative result in detail. 
->>>>>>> master
 
 
 \end{abstract}
@@ -161,24 +132,12 @@ Interestingly, however, in practice we notice that our framework does not always
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.5\textwidth]{Figures/RSHighlight}    
-<<<<<<< HEAD
-%\vspace{-2em}
-\caption{Overview of theoretical results and
-highlights of empirical results. See
-Introduction for details.}
-%\vspace{-1em}
-\label{fig:highlight}
-\end{figure}
-
-%\vspace{-3em}
-=======
 \caption{Overview of theoretical results and
 highlights of empirical results. See
 Introduction for details.}
 \label{fig:highlight}
 \end{figure}
 
->>>>>>> master
 \section{Introduction}
 
 The computational cost and power consumption of today's machine learning systems are often driven by data movement, and by the precision of computation. 
@@ -188,9 +147,7 @@ and hence performance can hinge on reducing the precision of data representation
 associated computation. 
 A similar trend is observed in deep learning, where impressive progress has been reported with systems 
 using end-to-end reduced-precision representations~\cite{hubara2016quantized,
-rastegari2016xnor,zhou2016dorefa,miyashita2016convolutional}. The empirical success of these works inspired this paper, in which we try
-to provide a {\em theoretical} understanding of end-to-end low-precision
-training for machine learning models.
+rastegari2016xnor,zhou2016dorefa,miyashita2016convolutional}. 
 In this context, the motivating question behind our work is:  {\em When training general machine learning models,
 can we lower the precision of data representation,
 communication, and computation, while maintaining provable guarantees?}
@@ -205,17 +162,11 @@ present both positive and negative results
 a 32-bit FPGA implementation, or with a 10-core CPU running Hogwild!;  
 (c) we are able to decrease data movement by $2.7\times$ for
 tomographic reconstruction, while obtaining a negligible quality decrease. 
-Elements of our framework generalize to (d) model compression for training deep learning models. 
+Elements of our framework generalize to (d) non-linear models and (e) model compression for training deep learning models. 
 In the following, we describe our technical contributions in more detail. 
 
 
-<<<<<<< HEAD
-%\vspace{-1em}
 \subsection{Summary of Technical Contributions}
-%\vspace{-0.5em}
-=======
-\subsection{Summary of Technical Contributions}
->>>>>>> master
 
 We consider the following problem in training generalized linear models: 
 \begin{align}
@@ -239,19 +190,11 @@ where the proximal operator is defined as
 \text{prox}_{\gamma R(\cdot)}(\y) =\argmin_{\x} {1\over 2}\|\x-\y\|^2 + \gamma R(\x).
 \]
 
-<<<<<<< HEAD
-%\vspace{-1.5em}
-\paragraph{Our Results} We summarize our results as follows. 
-
-%\vspace{-1em}
-\paragraph{Linear Models.} When $l(\cdot,\cdot)$ is 
-=======
-\paragraph{Our Results} We summarize our results as follows. The {\bf (+)}
+\paragraph{Our Results.} We summarize our results as follows. The {\bf (+)}
 sign denotes a ``positive result,'' where we achieve
 significant practical speedup; it is {\bf (--)} otherwise.
 
 \paragraph{(+) Linear Models.} When $l(\cdot,\cdot)$ is 
->>>>>>> master
 the least squares loss, we first notice that
 simply doing stochastic quantization of data samples  
 (i.e., $Q_s$) introduces bias of the gradient
@@ -268,20 +211,11 @@ number of bits used to store a quantized sample is at least $\Theta( \log n / \s
 where $\sigma^2$ is the variance of the standard stochastic gradient. 
 This implies that the 32-bit precision may be excessive for many practical scenarios. 
 
-<<<<<<< HEAD
-%\vspace{-0.5em}
-=======
->>>>>>> master
 We build on this result to obtain an \emph{end-to-end quantization} strategy
 for linear models, which compresses all data movements. 
 For certain settings of parameters, end-to-end quantization adds as little as a \emph{constant factor} to the variance of the entire process. 
 
-<<<<<<< HEAD
-%\vspace{-1.5em}
-\paragraph{Optimal Quantization and Extension to Deep Learning.}
-=======
 \paragraph{(+) Optimal Quantization and Extension to Deep Learning.}
->>>>>>> master
 We then focus on reducing the variance of  
 stochastic quantization. We notice that different methods for setting the quantization points have different variances---the standard uniformly-distributed quantization strategy is far from optimal in many settings.
 We formulate this as an independent optimization problem, and solve it optimally with 
@@ -291,16 +225,12 @@ When applied to linear models, this optimal
 strategy can save up to $1.6\times$ communication
 compared with the uniform strategy.
 
-<<<<<<< HEAD
-%\vspace{-0.5em}
-=======
->>>>>>> master
 We perform an analysis of the optimal quantizations for various settings, and observe that the uniform quantization approach
 popularly used by state-of-the-art end-to-end
 low-precision deep learning training systems
 when more than 1 bit is used is suboptimal.
 We apply optimal quantization to 
-models and show that, with one
+model quantization and show that, with one
 standard neural network, we outperform the
 uniform quantization used by XNOR-Net and a
 range of other recent approaches. This
@@ -308,15 +238,6 @@ is related, but different, to recent work
 on model compression for inference~\cite{Han:2016:ICLR}. 
 To the best of our knowledge, this is the first time such optimal quantization strategies have been applied to training. 
 
-<<<<<<< HEAD
-
-\begin{figure}[t]
-\centering   
-\includegraphics[scale=0.27]{compmodel-pdfcrop}
-%\vspace{-1em}
-\caption{A schematic representation of the computational model.}
-%\vspace{-0.5em}
-=======
 \paragraph{(--) Non-Linear Models.} We extend our
 results to non-linear models, such as SVM. We can stretch our multiple-sampling strategy to provide 
 unbiased estimators for any polynomials, at the cost of increased variance. 
@@ -351,23 +272,15 @@ modern CPU, it is likely that the  bottleneck when training
 a dense generalized linear model is the
 memory bandwidth between SampleStore
 and GradientDevice.}
->>>>>>> master
 \label{fig:model}
 \end{figure}
 
 
-<<<<<<< HEAD
-%\vspace{-0.5em}
 \section{Linear Models}
 
 %\vspace{-0.5em}
 In this section, we focus on linear models with possibly non-smooth regularization. We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
 %\vspace{-0.5em}
-=======
-\section{Linear Models}
-
-In this section, we focus on linear models with possibly non-smooth regularization. We have labeled data points $(\a_1, b_1), (\a_2, b_2), \ldots, (\a_K, b_K) \in \R^n \times \R$, and our goal is to minimize the function
->>>>>>> master
 \begin{align}
 F(\x) = \underbrace{\frac{1}{K} \sum_{k = 1}^K \| \a_k^\top \x - b_k \|_2^2}_{=: f(\x)} + R(\x) \; ,
 \label{eq:linear}
@@ -390,34 +303,24 @@ F\left(\frac{1}{T} \sum_{t = 0}^T \x_t\right) - \min_{\x}F(\x) \leq \Theta\left(
 \end{equation}
 where $\sigma$ is the upper bound of the mean variance 
 \[
-<<<<<<< HEAD
 %\vspace{-1em}
-=======
->>>>>>> master
 \sigma^2 \geq {1\over T}\sum_{t=1}^T \E\|\g_t - \nabla f(\x_t)\|^2. 
 \]
 %Then $\E \left[ f \left( \frac{1}{T} \sum_{t = 0}^T \x_t \right) \right] - \min_{\x \in \mathcal{X}} f(\x) \leq \epsilon$.
 \end{theorem} 
-<<<<<<< HEAD
 %\vspace{-0.7em}
-There are three key factors to ensure for SGD:
+There are three key requirements for SGD to converge:
 \begin{enumerate}[leftmargin=*, noitemsep]
 %\vspace{-0.75em}
-=======
-There are three key factors to ensure for SGD:
-\begin{enumerate}[leftmargin=*, noitemsep]
->>>>>>> master
 \item Computing stochastic gradient $\g_t$ is cheap;
+%\vspace{-0.75em}
 \item The stochastic gradient $\g_t$ should be unbiased;
+%\vspace{-0.75em}
 \item The stochastic gradient variance $\sigma$ dominates the convergence efficiency, so it needs to be controlled appropriately.
 \end{enumerate}
-<<<<<<< HEAD
 %\vspace{-1.5em}
 The common choice is to uniformly select one sample:
 %\vspace{-0.5em}
-=======
-The common choice is to uniformly select one sample:
->>>>>>> master
 \begin{align}
 \g_t = \g_t^{(full)} := \a_{\pi(t)} (\a_{\pi(t)}^\top \x - b_{\pi(t)}).
 \label{eq:sgfull}
@@ -429,20 +332,15 @@ of reading $\a_{t}$ (e.g., in sensor networks) and the associated computation (e
 each register can hold more numbers). 
 This motivates us to use low-precision sample points to train the model. The following will introduce the proposed low-precision SGD framework by meeting all three factors for SGD.
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-\subsection{Stochastic Quantization for Saving Bandwidth} 
+\subsection{Bandwidth-Efficient Stochastic Quantization} 
 %\vspace{-0.5em}
-=======
-\subsection{Stochastic Quantization for Saving Bandwidth} 
->>>>>>> master
 
 We propose to use stochastic quantization to generate a low-precision version of an arbitrary vector $\v$ in the following 
 way. Given a vector
 $\v$, let $M(\v)$ be a scaling factor such that $-1 \le \v/M(\v) \le 1$. Without loss of generality, let $M(\v)=||\v||_2$. We partition the interval $[-1, 1]$ using $s+1$ separators: $-1 = l_0 \le l_1 ... \le l_{s} = 1$; for each number $v$ in $\v/M(\v)$, we 
 quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote the \emph{stochastic quantization} function by $Q(\v, s)$ and choose the probability of quantizing to different separators such that $\E[Q(\v, s)] = \v$. We use $Q(\v)$ when $s$ is not relevant.
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
 \subsection{Double Sampling for Unbiased Stochastic Gradient}
 %\vspace{-0.5em}
@@ -453,14 +351,6 @@ quantize it to one of two nearest separators: $l_i \le v \le l_{i+1}$. We denote
     \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
   \end{center}
       %\vspace{-5mm}
-=======
-\subsection{Double Sampling for Unbiased Stochastic Gradient}
-
-\begin{wrapfigure}{r}{0.23\textwidth}
-  \begin{center}
-    \includegraphics[width=0.23\textwidth]{micro-experiments/gap.pdf}
-  \end{center}
->>>>>>> master
   \label{fig:gap}
 \end{wrapfigure}
 The naive way to use low-precision samples $\hat{\a}_t := Q(\a_t)$ is 
@@ -476,10 +366,7 @@ where $D_{\a}$ is diagonal and its $i$th diagonal element is
 \E[ Q(\a_i)^2 ] - \a_i^2.
 \]
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
 Since $D_{\a}$ is non-zero, we obtain a \emph{biased} estimator of the gradient, so the iteration is unlikely to converge. 
 The figure on the right illustrates the bias caused by a non-zero $D_{\a}$. In fact, it is easy to see that in instances where the minimizer $\x$ is large and gradients become small, we will simply diverge. 
 
@@ -490,15 +377,13 @@ We now present a simple method to fix the biased gradient estimator. We generate
 \end{align}
 This gives us an unbiased estimator of the gradient. 
 
-\paragraph*{Overhead of Storing Two Samples}
+\paragraph*{Overhead of Storing Samples.}
 The reader may have noticed that one implication of double sampling is the overhead of sending
 two samples instead of one. We note that this will not introduce $2\times$
-overhead in terms of data communication. Instead, just one additional bit
-is needed for the second sample because of correlation, as the two samples 
-<<<<<<< HEAD
-differ by at most one bit. For example, to quantize the number 0.7 to either 0 or 1. Our strategy is to first store the smallest number of the interval (here 0), and then for each sample, send out 1 bit to represent whether this sample is at the lower marker (0) or the upper marker (1). Under this procedure, we need one extra bit for each sample. 
+overhead in terms of data communication. Instead, we start from the observation that the two samples can  
+differ by at most one bit. For example, to quantize the number 0.7 to either 0 or 1. Our strategy is to first store the smallest number of the interval (here 0), and then for each sample, send out 1 bit to represent whether this sample is at the lower marker (0) or the upper marker (1). Under this procedure, once we store the base quantization level, we will need one extra bit for each additional sample. 
 More generally, since samples
-are used symmetrically, we only need to send a number representing “count” for the lower marker. 
+are used symmetrically, we only need to send a number representing the number€œ of times  the lower quantization level has been chosen among all the sampling trials. 
 Thus, sending $k$ samples only requires $\log_2 k$ more bits.
 %\vspace{-0.5em}
 \subsection{Variance Reduction}
@@ -506,20 +391,15 @@ Thus, sending $k$ samples only requires $\log_2 k$ more bits.
 
 From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t - \nabla f(\x)\|^2$ will dominate the convergence efficiency. It is not hard to see that the variance of the double sampling based stochastic gradient in \eqref{eq:double} can be decomposed into
 %\vspace{-0.5em}
-=======
-differ by at most one bit. More generally, since samples
-are used symmetrically, sending $k$ samples only requires $\log_2 k$ more bits.
-
-\subsection{Variance Reduction}
-
-From Theorem~\ref{thm:sgd-conv}, the mean variance ${1\over T}\sum_{t}\E\|\g_t - \nabla f(\x)\|^2$ will dominate the convergence efficiency. It is not hard to see that the variance of the double sampling based stochastic gradient in \eqref{eq:double} can be decomposed into
->>>>>>> master
-\begin{align*}
+\begin{align}
+\begin{split}
 \E\|\g_t - \nabla f(\x_t)\|^2 & \leq \E \|\g_t^{(full)}- \nabla f(\x_t)\|^2 
 \\
-&+ \E \|\g_t - \g_t^{(full)})\|^2.
-\end{align*}
-The first term is from the full stochastic gradient, which can be reduced by using strategies such as mini-batch, weight sampling, and so on. Reducing the first term is issue orthogonal to this paper. 
+&+ \E \|\g_t - \g_t^{(full)}\|^2.
+\label{eqn:varbound}
+\end{split}
+\end{align}
+The first term is from the full stochastic gradient, which can be reduced by using strategies such as mini-batch, weight sampling, and so on. Thus, reducing the first term is an orthogonal issue for this paper. 
 Rather, we are interested in the second term, which is the additional cost of using low-precision samples. All strategies for reducing the variance of the first term can seamlessly combine with the approach of this paper. 
 The additional cost can be bounded by the following lemma.
 \begin{lemma} 
@@ -532,11 +412,8 @@ where $\mathcal{TV}(\a_t) := \E\|Q(\a_t) - \a_t\|^2$ and $\odot$ denotes the ele
 \end{lemma}
 Thus, minimizing $\mathcal{TV}(\a_t)$ is key to reducing variance. 
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
-\paragraph{Uniform quantization} It makes intuitive sense that, the more levels of quantization, the lower the variance. The following  makes this quantitative dependence precise. 
+\paragraph{Uniform quantization.} It makes intuitive sense that, the more levels of quantization, the lower the variance. The following  makes this quantitative dependence precise. 
 
 \begin{lemma}
 \label{lem:quant-facts} [\cite{Alistarh:2016:ArXiv}]
@@ -546,50 +423,33 @@ Assume that quantization levels are uniformly distributed. For any vector $\vec{
 \]
 \end{lemma} 
 
-<<<<<<< HEAD
 %\vspace{-1em}
-=======
->>>>>>> master
 Together with other results, it suggests the stochastic gradient variance of using double sampling is bounded by
 \[
 \E\|\g_t - \nabla f(\x_t)\|^2 \leq \sigma^2_{(full)} + \Theta \left( {n /s^2} \right),
 \]
-where $\sigma^2_{(full)} \geq \E \|\g_t^{(full)} - \nabla f(\x)\|^2$ is the upper bound of using the full stochastic gradient, assuming that $\x$ and all $\a_k$'s are bounded. Because the quantization level $s$ is exponential to the number of bits, to ensure that these two terms are comparable (using a low-precision sample does not degrade the convergence rate), the number of bits only needs to be greater than $\Theta (\log n /\sigma_{(full)})$. Even for linear models with millions
+where $\sigma^2_{(full)} \geq \E \|\g_t^{(full)} - \nabla f(\x)\|^2$ is the upper bound of using the full stochastic gradient, assuming that $\x$ and all $\a_k$'s are bounded. Because the number of quantization levels $s$ is exponential to the number of bits we use to quantize, to ensure that these two terms are comparable (using a low-precision sample does not degrade the convergence rate), the number of bits only needs to be greater than $\Theta (\log n /\sigma_{(full)})$. Even for linear models with millions
 of features, 32 bits is likely to be  ``overkill.''
 
-%The uniform quantization provides us an intuitive dependence between variance and the level of quantization. However, in practice, we can do better by designing the optimal quantization separation given the quantization level $s$. This motivates
-%our study in the next section.
 
 
 
 
-
-<<<<<<< HEAD
 %\vspace{-1em}
 \section{Optimal Quantization Strategy for Reducing Variance} \label{sec:optimal}
 
 %\vspace{-0.5em}
-=======
-\section{Optimal Quantization Strategy for Reducing Variance} \label{sec:optimal}
-
->>>>>>> master
 
 In the previous section, we have assumed uniformly distributed quantization points.  
 We now investigate the choice of quantization points and present an optimal strategy to minimize the quantization variance term $\mathcal{TV}(\a_t)$.
 
-<<<<<<< HEAD
 %\vspace{-1em}
-=======
->>>>>>> master
-\paragraph*{Problem Setting}
+\paragraph*{Problem Setting.}
 Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. WLOG, assume that all numbers are in $[0, 1]$ and that $x_1 \leq \ldots \leq x_N$. 
 
 The goal is to partition $\setI = \{I_j\}_{j = 1}^s$ of $[0, 1]$ into $s$ disjoint intervals, so that if we randomly quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $s$ intervals.
 Formally:
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
 \begin{align}
 \nonumber \min_{\setI: |\setI| = s} \quad & \mathcal{MV}(\setI) := {1\over N}\sum_{j = 1}^s \sum_{x_i \in I_j} \err(x_i, I_j)\\
 \text{s.t.}\quad & \bigcup_{j = 1}^s I_j = [0, 1],\quad I_j\cap l_k = \emptyset~\text{for $k\neq j$},
@@ -603,7 +463,6 @@ We also define $\err (\setX, I) = \sum_{x_j \in I} \err (x_j, I)$.
 Given a partition $\setI$ of $[0, 1]$, we let $\err (\setX, \setI) = \sum_{I \in \setI} \err (\setX, I)$.
 We let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$, breaking ties randomly. 
 
-<<<<<<< HEAD
 %\vspace{-1em}
 \subsection{Dynamic Programming}
 %\vspace{-0.5em}
@@ -611,14 +470,8 @@ We let the optimum solution be $\setI^* = \argmin_{|\setI| = k} \err (\setX, \se
 We first present a dynamic programming algorithm that solves the above problem in an exact way. In the next subsection, we present a more practical approximation algorithm that only needs to scan all data points \emph{once}.
 
 %\vspace{-0.5em}
-=======
-\subsection{Dynamic Programming}
-
-We first present a dynamic programming algorithm that solves the above problem in an exact way. In the next subsection, we present a more practical approximation algorithm that only needs to scan all data points \emph{once}.
-
->>>>>>> master
-One challenge is due to non-convexity and non-smoothness. 
-We start from the observation that there exists an optimal solution that places endpoints at input points. 
+This optimization problem is non-convex and non-smooth. 
+We start from the observation that there exists an optimal solution that places endpoints \emph{at input points}. 
 
 \begin{lemma}
 \label{lem:discrete}
@@ -637,20 +490,16 @@ where $A, C$ are constants that do not depend on $b$. Hence, this is a linear ob
 \end{proof}
 \fi
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
 Therefore, to solve the problem in an exact way, we just need to select a subset of data points in $\Omega$ as quantization points. Define $T(k, m)$ be the optimal total variance for points in $[0, d_m]$ with $k$ quantization levels choosing $d_m=x_m$ for all $m=1,2,\cdots, N$. Our goal is to calculate $T(s, N)$. This problem can be solved by dynamic programing using the following recursion
 \[
 T(k, m) = \min_{j\in \{k-1, k, \cdots, m-1\}} T(k-1,j) + V(j,m),
 \]
-where $V(j,m)$ denotes the total variance of points falling into $[d_j, d_m]$. The complexity of calculating the matrix $V(\cdot, \cdot)$ is $O(N^2 + N)$ and the complexity of calculating matrix $T(\cdot, \cdot)$ is $O(kN^2)$. The memory cost is $O(kN + N^2)$. 
+where $V(j,m)$ denotes the total variance of points falling in the interval $[d_j, d_m]$. The complexity of calculating the matrix $V(\cdot, \cdot)$ is $O(N^2 + N)$ and the complexity of calculating the matrix $T(\cdot, \cdot)$ is $O(kN^2)$. The memory cost is $O(kN + N^2)$. 
 
 \begin{figure}[t]
 \centering    
 \includegraphics[width=0.5\columnwidth]{micro-experiments/dp-level.pdf} 
-<<<<<<< HEAD
 %\vspace{-1em}
 \caption{Optimal quantization points calculated with
 dynamic programming given a data distribution. }
@@ -661,78 +510,49 @@ dynamic programming given a data distribution. }
 %\vspace{-0.5em}
 \subsection{Heuristics}
 %\vspace{-0.5em}
-=======
-\caption{Optimal quantization points calculated with
-dynamic programming given a data distribution. }
-\label{fig:optimalquantization}
-\end{figure} 
 
-\subsection{Heuristics}
->>>>>>> master
-
-The exact algorithm has a complexity that is quadratic to the number of data points. To make our algorithm practical,
+The exact algorithm has a complexity that is quadratic in the number of data points, which may be impractical. To make our algorithm practical,
 we develop an approximation algorithm that only needs to scan all data points once and has linear complexity to $N$.
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
-\paragraph*{Discretization}
+\paragraph*{Discretization.}
 
-We can discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. We then restrict our algorithms to only choose $k$ quantization points within these $M$ points, instead of all $N$ points in the exact algorithm. The following result bounded the quality of this approximation.
+We can discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. We then restrict our algorithms to only choose $k$ quantization points within these $M$ points, instead of all $N$ points in the exact algorithm. The following result bounds the quality of this approximation.
 
 \begin{theorem} \label{thm:optQ}
 Let the maximal number of data points in each ``small interval'' (defined by $\{d_m\}_{m=1}^{M-1}$) and the maximal length of small intervals be bounded by $bN/M$ and $a/M$, respectively. Let ${\mathcal{I}^*} := \{l^*_j\}_{k=1}^{k-1}$ and $\hat{\mathcal{I}}^* :=\{\hat{l}^*_k\}_{k=1}^{k-1}$ be the optimal quantization to \eqref{eq:opt_Q} and the solution with discretization. Let $cM/k$ be the upper bound of the number of small intervals crossed by any ``large interval'' (defined by ${\mathcal{I}}^*$). Then we have the discretization error bounded by
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
 \[
  \mathcal{MV}(\hat{\mathcal{I}}^*) -  \mathcal{MV}({\mathcal{I}}^*) \leq {a^2b k \over 4 M^3} + {a^2bc^2 \over Mk}.
 \]
 \end{theorem}
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
 Theorem~\ref{thm:optQ} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/Mk)$.
 
 %\vspace{-0.5em}
-=======
-Theorem~\ref{thm:optQ} suggests that the mean variance using the discrete variance-optimal quantization will converge to the optimal with the rate $O(1/Mk)$.
-
->>>>>>> master
-\paragraph*{Dynamic Programming with Candidate Points}
+\paragraph*{Dynamic Programming with Candidate Points.}
 Notice that we can apply the same dynamic programming approach given $M$ candidate points. 
 In this case, the total computational complexity becomes $O((k+1)M^2 + N)$, with memory cost 
 $O(kM + M^2)$. Also, to find the optimal quantization,  we only need to scan all $N$ numbers once.
 Figure~\ref{fig:optimalquantization} illustrates an example output for our algorithm.
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
-\paragraph*{$2$-Approximation in Almost-Linear Time} 
+\paragraph*{$2$-Approximation in Almost-Linear Time.} 
 In the supplementary material, we present an algorithm which, given $\Omega$ and $k$, provides a split using at most $4 k$ intervals, which guarantees a $2$-approximation of the optimal variance for $k$ intervals, using $O( N \log N )$ time. This 
-is a new variant of that by (Acharya et al., 2015) for the histogram recovery problem. 
+is a new variant of the algorithm by~\cite{acharya2015fast} for the histogram recovery problem. 
 We can use the $4k$ intervals given by this algorithm as candidates for the DP solution, to get a general $2$-approximation using $k$ intervals in time $O( N \log N + k^3)$. 
 
-<<<<<<< HEAD
 %\vspace{-1.0em}
-\subsection{Extension to Deep Learning}
+\subsection{Applications to Deep Learning}
 %\vspace{-0.5em}
-=======
-\subsection{Extension to Deep Learning}
->>>>>>> master
 
 In this section, we show that it is possible 
 to apply optimal quantization to
 training deep neural networks.
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
-\paragraph*{State-of-the-art} We focus on
+\paragraph*{State-of-the-art.} We focus on
 training deep neural networks with a quantized
 model. Let $\mathcal{W}$ be the model and 
 $l(\mathcal{W})$ be the loss function. State-of-the-art quantized networks,
@@ -752,11 +572,8 @@ XNOR-Net searches the optimal quantization point. However, for multiple bits,
 XNOR-Net, as well as other approaches such as QNN, resort
 to uniform quantization.
 
-<<<<<<< HEAD
 %\vspace{-1.0em}
-=======
->>>>>>> master
-\paragraph*{Optimal Model Quantization for Deep Learning}
+\paragraph*{Optimal Model Quantization for Deep Learning.}
 
 We can apply our optimal quantization strategy 
 and use it as the quantization function $Q$
@@ -779,8 +596,6 @@ function than ours. In this paper, we
 develop a dynamic
 programming algorithm to do optimal stochastic quantization efficiently.
 
-<<<<<<< HEAD
-=======
 
 
 \section{Non-Linear Models}
@@ -824,7 +639,7 @@ We can extend Lemma~\ref{lem:poly-sec-moment-bound} to obtain a general guarante
 	For any $\epsilon > 0$ and any convex classification loss function $\ell: \R \rightarrow \R$, there exists a polynomial degree $D(\epsilon, \ell)$ such that the polynomial approximation framework converges to within $\epsilon$ of OPT.  
 \end{lemma}
 
-\paragraph{Chebyshev Approximations} 
+\paragraph{Chebyshev Approximations.} 
 For \emph{logistic loss}, with sigmoid gradient, we notice that polynomial approximations have been well studied. In particular, we use the Chebyshev polynomial approximation of~\cite{vlcek2012chebyshev}. 
 
 \subsection{Quantizing Non-Smooth Classification Losses}
@@ -845,11 +660,11 @@ This approach is always correct; however, it requires more communication.
 Under the same generative assumptions, we show that the additional communication is \emph{sublinear} in the dimension.
 Details are in the supplementary material.
 
-\paragraph{Practical Considerations} The above strategy introduces a precision-variance trade-off, since increasing the precision of approximation (higher polynomial degree) also increases the variance of the gradient. 
+\paragraph{Practical Considerations.} The above strategy introduces a precision-variance trade-off, since increasing the precision of approximation (higher polynomial degree) also increases the variance of the gradient. 
 Fortunately, we can reduce the variance and increase the approximation quality by increasing the density of the quantization. 
 In practice, a total of $8$ bits per sample is sufficient to ensure convergence for both hinge and logistic loss. 
 
-\paragraph*{The Refetching Heuristic}
+\paragraph*{The Refetching Heuristic.}
 The second theoretical approach inspires the following heuristic. 
 Consider hinge loss, i.e.  $\sum_{k=1}^K \max(0, 1 - b_k \a_k^\top \x)$. 
 We first transmit a single low-precision version of $\a_k$, and   
@@ -859,7 +674,6 @@ If the sign could change, then we {\em refetch} the data at full precision.
 In practice, this works for 
 8-bit while only refetching $<5\%$ of the data.
 
->>>>>>> master
 \begin{table}[t]
 %\scriptsize
 \small
@@ -896,9 +710,8 @@ Dataset           & \# Projections & Volumn Size & Proj. Size \\
                   & $128$            & $128^3$      & $128^3$     \\
 \hline
 \end{tabular}
-<<<<<<< HEAD
 %\vspace{-1em}
-\caption{Dataset statistics}
+\caption{Dataset statistics.}
 %\vspace{-.5em}
 \label{table:dataset}
 \end{table}
@@ -907,22 +720,11 @@ Dataset           & \# Projections & Volumn Size & Proj. Size \\
 \section{Experiments} \label{sec:exp}
 
 %\vspace{-0.5em}
-We provide empirical validation of
-our framework.
+We now provide an empirical validation of
+our ZipML framework.
 
 %\vspace{-1em}
-=======
-\caption{Dataset statistics}
-\label{table:dataset}
-\end{table}
-
-\section{Experiments} \label{sec:exp}
-
-We provide empirical validation of
-our framework.
-
->>>>>>> master
-\paragraph{Experimental Setup} 
+\paragraph{Experimental Setup.} 
 Table~\ref{table:dataset} shows the 
 datasets we use. 
 Unless otherwise noted, we always
@@ -939,24 +741,20 @@ implementation often favors smaller step size.
 Thus we do not tune step sizes for the low-precision 
 implementation, as this can only improve the accuracy of our approach.) 
 
-<<<<<<< HEAD
 %\vspace{-1em}
-=======
->>>>>>> master
-\paragraph*{Summary of Experiments}
+\paragraph*{Summary of Experiments.}
 Due to space limitations, we only report on {\bf Synthetic 100} for regression, and on 
 {\bf gisette} for classification. 
-The additional material contains (1) several other datasets, 
+The full version of this paper~\cite{zhang2016zipml} contains (1) several other datasets, 
 and discusses (2) different
 factors such as impact of the number of features, 
-(3) FPGA implementation and design
-decisions, and (4) refetching heuristics.
+and (3) refetching heuristics. The FPGA implementation and design
+decisions can be found in~\cite{kara2017fpga}.
 
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.8\columnwidth]{final-experiments/linearmodel} 
-<<<<<<< HEAD
 %\vspace{-1em}
 \caption{Linear models with end-to-end low precision.}
 %\vspace{-1.5em}
@@ -964,17 +762,10 @@ decisions, and (4) refetching heuristics.
 \end{figure}
 
 %\vspace{-1em}
-\subsection{Linear Models}
+\subsection{Convergence on Linear Models}
 %\vspace{-0.5em}
-=======
-\caption{Linear models with end-to-end low precision.}
-\label{fig:convergence}
-\end{figure}
 
-\subsection{Linear Models}
->>>>>>> master
-
-For linear models, we validate that (1) 
+We validate that (1) 
 with double sampling, SGD with low
 precision converges---in
 comparable empirical 
@@ -985,11 +776,8 @@ prototype achieves significant speedup
 because of the decrease in bandwidth
 consumption.
 
-<<<<<<< HEAD
 %\vspace{-1.5em}
-=======
->>>>>>> master
-\paragraph{Convergence}
+\paragraph{Convergence.}
 
 Figure~\ref{fig:convergence} illustrates
 the result of training linear models:
@@ -1004,10 +792,7 @@ curve. We compare the final
 training loss in both settings 
 and the convergence rate.
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
 We see that, for both linear regression 
 and least squares SVM,
 using 5- or 6-bit is always enough
@@ -1022,25 +807,19 @@ could potentially save 6--8$\times$
 memory bandwidth compared to using 
 32-bit. 
 
-<<<<<<< HEAD
 %\vspace{-1em}
-=======
->>>>>>> master
-\paragraph{Speedup}
+\paragraph{Speedup.}
 We implemented our low-precision 
 framework on a state-of-the-art 
-FPGA platform. We leave the detailed 
-implementation to the full version.
+FPGA platform. The detailed 
+implementation is described in ~\cite{kara2017fpga}.
 This implementation assumes the input
 data is already quantized and
 stored in memory (data can be
 quantized during the
 first epoch).
 
-<<<<<<< HEAD
 %\vspace{-0.5em}
-=======
->>>>>>> master
 Figure~\ref{fig:speedup} illustrates 
 the result of (1) our FPGA
 implementation with quantized data,
@@ -1062,20 +841,33 @@ explains the speedup.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.8\columnwidth]{final-experiments/linear-fpga} 
-<<<<<<< HEAD
 %\vspace{-1em}
 \caption{FPGA implementation of linear models.}
 %\vspace{-1em}
-=======
-\caption{FPGA implementation of linear models.}
->>>>>>> master
 \label{fig:speedup}
 \end{figure}
 
 \begin{figure}[t]
 \centering
+\includegraphics[width=0.8\columnwidth]{minibatchs.pdf} 
+%\vspace{-1em}
+\caption{Impact of Using Mini-Batch. BS=Batch Size.}
+%\vspace{-2em}
+\label{fig:minibatch}
+\end{figure}
+
+\paragraph{Impact of Mini-Batching.}
+
+
+We now validate the``sensitivity'' of the algorithm to the precision under batching. Equation~\ref{eqn:varbound} suggests that, as we increase batch size, the variance term corresponding to input quantization may start to dominate the variance of the stochastic gradient. However, in practice and for reasonable parameter settings, we found this does not occur: convergence trends for small batch size, e.g. 1, are the same as for larger sizes, e.g. 256.
+Figure~\ref{fig:minibatch} shows that, if we use larger mini-batch size (256), we need more epochs
+than using smaller mini-batch size (16) to converge, but for the quantized version, actually the one with larger mini-batch size converges faster. 
+
+
+
+\begin{figure}[t]
+\centering
 \includegraphics[width=0.8\columnwidth]{final-experiments/optimal} 
-<<<<<<< HEAD
 %\vspace{-1em}
 \caption{Optimal quantization strategy.}
 %\vspace{-2em}
@@ -1085,13 +877,6 @@ explains the speedup.
 %\vspace{-1em}
 \subsection{Data-Optimal Quantization Strategy}
 %\vspace{-0.5em}
-=======
-\caption{Optimal quantization strategy.}
-\label{fig:optimal}
-\end{figure}
-
-\subsection{Data-Optimal Quantization Strategy}
->>>>>>> master
 
 We validate that, with our data-optimal quantization strategy, we can 
 significantly decrease the number of 
@@ -1101,20 +886,23 @@ Figure~\ref{fig:optimal}(a) illustrates
 the result of using 3-bit and 5-bit
 for uniform quantization and optimal 
 quantization on the {\bf YearPrediction}
-dataset. We see that,
+dataset. 
+Here, we only consider quantization on data, but not on gradient or model, because to compute the
+data-optimal quantization, we need to have access to all data and assume the data doesn't change too much, which is not the case for gradient or model.
+The quantization points are calculated for each feature for both uniform quantization and optimal quantization.
+We see that,
 while uniform quantization needs 5-bit
 to converge smoothly, optimal
 quantization only needs 3-bit. 
 We save almost $1.7\times$ number of 
 bits by just allocating quantization points carefully.
 
-<<<<<<< HEAD
-\paragraph{Comparision with uniform quantization}
+\paragraph{Comparision with uniform quantization.}
 
 \begin{figure}[t]
 \centering
     \includegraphics[width=1\columnwidth]{final-experiments/lr-data.pdf} 
-\caption{Linear regression with \emph{quantized data} on multiple datasets}
+\caption{Linear regression with \emph{quantized data} on multiple datasets.}
 \label{fig:lr-qd}
 \end{figure}
 
@@ -1130,10 +918,10 @@ but not gradient or model.
 We see that, if we use same number of bits, optimal quantization
 always converges faster than uniform quantization and the loss curve
 is more stable, because the variance induced by quantization is smaller. 
-As a result, with our data-optimal quantization strategy
-We can either (1) get higher convergence speed
+As a result, with our data-optimal quantization strategy,
+we can either (1) get up to $4\times$ faster convergence speed
 with the same number of bits;
-or (2) use less bits while getting the same convergence speed. 
+or (2) save up to $1.7\times$ bits while getting the same convergence speed. 
 
 
 We also see from Figure~\ref{fig:lr-qd} (a) to (c) that if the dataset has more
@@ -1143,9 +931,6 @@ is higher when the dimensionality is higher.
 %\vspace{-1em}
 \subsection{Extensions to Deep Learning}
 %\vspace{-0.5em}
-=======
-\subsection{Extensions to Deep Learning}
->>>>>>> master
 
 We validate that our data-optimal quantization
 strategy can be used in training deep neural
@@ -1166,19 +951,13 @@ This illustrates the improvement
 obtainable by training a neural network with
 a carefully chosen quantization strategy.
 
-
-<<<<<<< HEAD
-%\vspace{-0.5em}
-\section{Related Work} 
-%\vspace{-0.5em}
-=======
-
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.8\columnwidth]{final-experiments/chebyshev} 
 \caption{Non-linear models with Chebyshev approximation.}
 \label{fig:chebyshev}
 \end{figure}
+
 
 \subsection{Non-Linear Models}
 
@@ -1193,7 +972,7 @@ rounding or naive stochastic rounding
 to achieve the same quality and convergence 
 rate.
 
-\paragraph{Chebyshev Approximations}
+\paragraph{Chebyshev Approximations.}
 
 Figure~\ref{fig:chebyshev} illustrates
 the result of training SVM
@@ -1212,9 +991,7 @@ with a comparable empirical convergence
 rate for both SVM and logistic regression.
 We also experience no loss in test accuracy.
 
-
-
-\paragraph{Negative Results}
+\paragraph{Negative Results.}
 
 We are able to construct the following,
 much simpler strategy that also
@@ -1234,121 +1011,9 @@ same, and sometimes better,
 convergence than our Chebyshev 
 approximation.
 
-\section{Extended Experiments}
 
-This section provides more experiment results.
-All experiments settings are the same with
-the previous section.
-
-\subsection{Linear Models}
-
-For linear models, we validate that 
-with double sampling, SGD with low
-precision converges---in
-comparable empirical 
-convergence rates---to the same solution
-as SGD with full precision and we want to
-understand how many bits do we need to
-achieve it empirically and how it is related to 
-the size of dataset.
-
-\begin{figure}[t]
-\centering
-    \includegraphics[width=1\columnwidth]{final-experiments/lr-endtoend}
-    
-\caption{Linear regression with \emph{end-to-end quantization} on multiple datasets}
-\label{fig:lr-endtoend}
-\end{figure}
-\begin{figure}[t]
-\centering
-    \includegraphics[width=0.6\columnwidth]{final-experiments/lssvm-endtoend}
-    
-\caption{Least squares SVM with \emph{end-to-end quantization} on multiple datasets}
-\label{fig:lssvm-endtoend}
-\end{figure}
-
-Figure~\ref{fig:lr-endtoend} and~\ref{fig:lssvm-endtoend} illustrates
-the result of training linear models: 
-linear regression and least squares SVMs, respectively,
-with end-to-end low-precision and 
-full precision. For
-low precision, we pick the 
-smallest number of bits that
-results in a smooth convergence
-curve. We compare the final 
-training loss in both settings 
-and the convergence rate.
-
-We see that, for both linear regression 
-and least squares SVM,
-on all our datasets,
-using 5- or 6-bit is always enough
-to converge to the same solution
-with comparable convergence rate. 
-This validates our prediction that
-double-sampling provides an
-unbiased estimator of the gradient.
-Considering the size of input
-samples that we need to read, we
-could potentially save 6--8$\times$ 
-memory bandwidth compared to using 
-32-bit. 
-
-We also see from Figure~\ref{fig:lr-endtoend} (a) to (c) that if the dataset has more
-features, usually we need more bits for quantization,
-because the variance induced by quantization
-is higher when the dimensionality is higher.
-
-\subsection{Data-Optimal Quantization Strategy for linear models}
-\begin{figure}[t]
-\centering
-    \includegraphics[width=1\columnwidth]{final-experiments/lr-data}
-    
-\caption{Linear regression with \emph{quantized data} on multiple datasets}
-\label{fig:lr-qd}
-\end{figure}
-
-
-We validate that, with our data-optimal quantization strategy, we can 
-significantly increase the convergence speed.
-
-Figure~\ref{fig:lr-qd} illustrates
-the result of training linear regression models: 
-with uniform quantization points and 
-optimal quantization points. Here, notice that we only quantize data,
-but not gradient or model.
-We see that, if we use same number of bits, optimal quantization
-always converges faster than uniform quantization and the loss curve
-is more stable, because the variance induced by quantization is smaller. 
-As a result, with our data-optimal quantization strategy
-We can either (1) get higher convergence speed
-with the same number of bits;
-or (2) use less bits while getting the same convergence speed. 
-\subsection{Non-Linear Models}
-
-Figure~\ref{fig:refetch} illustrates
-the result of training SVM
-with refetching heuristic. 
-We see that, 
-with our refetching heuristic,
-SGD converges to similar training loss 
-with a comparable empirical convergence 
-rate for SVM. If we increase the number of
-bits we use, we need to refetch less data and
-if we use 8-bit quantization, we only need to fetch
-about $6\%$ of data.
-We also experience no loss in test accuracy.
-
-\begin{figure}[t]
-\centering
-    \includegraphics[width=0.6\columnwidth]{additional/fetch}
-    
-\caption{SVM with low precision data and refetching on cod-rna dataset}
-\label{fig:refetch}
-\end{figure}
 
 \section{Related Work} 
->>>>>>> master
 
 There has been significant work on ``low-precision SGD''~\cite{DeSa:NIPS:2015,Alistarh:2016:ArXiv}. 
 These results provide
@@ -1357,10 +1022,6 @@ The model and input samples, on the other hand, are much more difficult
 to analyze because of the non-linearity. We focus on {\em end-to-end}
 quantization, for all components.
 
-<<<<<<< HEAD
-%\vspace{-0.5em}
-=======
->>>>>>> master
 \paragraph{Low-Precision Deep Learning.}
 
 Low-precision training of deep neural networks has been studied
@@ -1371,9 +1032,9 @@ neural networks for speech recognition. There are successful
 applications of end-to-end quantization to training neural networks that 
 result in little to no quality loss~\cite{hubara2016quantized,
 rastegari2016xnor,zhou2016dorefa,miyashita2016convolutional,li2016ternary,gupta2015deep}. They quantize weights, activations, and gradients 
-to low precision (e.g., 1-bit) and revise the back-propagation 
+to low precision (e.g., 1-bit) and revise the backpropagation 
 algorithm to be aware of the quantization function.
-The empirical success of these works inspired this paper, in which we try
+The empirical success of this work inspired this paper, in which we try
 to provide a {\em theoretical} understanding of end-to-end low-precision
 training for machine learning models.
 Another line of research concerns inference and model
@@ -1381,10 +1042,6 @@ compression of a pre-trained model~\cite{vanhoucke2011improving,gong2014compress
 In this paper, we focus on training and leave the study of
 inference for future work.
 
-<<<<<<< HEAD
-%\vspace{-0.5em}
-=======
->>>>>>> master
 \paragraph{Low-Precision Linear Models.}
 
 Quantization is a fundamental topic studied by the
@@ -1403,10 +1060,6 @@ For SVM the straw man approach
 can also be seen as a very simple case of kernel 
 approximation~\cite{Cortes:2010:AISTATS}.
 
-<<<<<<< HEAD
-%\vspace{-0.5em}
-=======
->>>>>>> master
 \paragraph{Other Related Work.} Precision of data
 representation is a key design decision
 for configurable hardwares such as FPGA. There have been attempts to
@@ -1415,34 +1068,13 @@ These results are mostly empirical; we
 aim at providing a theoretical understanding, which 
 enables new algorithms.
 
-<<<<<<< HEAD
-%\vspace{-0.5em}
-\section{Discussion and Future Work}
-\label{sec:conclusions}
-
-%\vspace{-0.5em}
-=======
 \section{Discussion}
 \label{sec:conclusions}
 
->>>>>>> master
 Our motivating question was whether end-to-end low-precision data representation can enable efficient computation with convergence guarantees. 
 We show that a relatively simple stochastic quantization framework can achieve this for linear models. 
 With this setting, as little as two bits per model dimension are sufficient for good accuracy, and can enable a fast FPGA implementation.  
 
-<<<<<<< HEAD
-%\vspace{-0.2em}
-\paragraph{Non-Linear Models.}
-We mainly discussed linear models (e.g. linear regression) in this paper. The natural question is that can we extend our ZipML framework to non-linear models (e.g. logistic regression or SVM) which are arguably more commonly used?
-Actually, we find that our framework can be generalized to non-linear settings, and that in practice 8-bit is sufficient to achieve 
-good accuracy on a variety of tasks, such as SVM and logistic regression. However, we notice that the straw man approach, which applies naive stochastic rounding over the input data to just 8-bit precision, converges to similar results, without the added complexity. It is interesting to consider the rationale behind these results. Our framework is based on the idea of \emph{unbiased approximation} of the original SGD process. For linear models, this is easy to achieve. For non-linear models, this is harder, and we focus on guaranteeing arbitrarily low bias. 
-However, for a variety of interesting functions such as hinge loss, guaranteeing low bias requires complex approximations. In turn, these increase the variance. The complexity of the approximation and the resulting variance increase force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. We will leave detailed research for ZipML on non-linear models as future work.
-
-\paragraph{Hardware Selection.}
-
-We choose to realize our implementation using FPGA because of its flexibility in dealing with low-precision arithmetic, while CPU or GPU can only do at least 8-bit computation efficiently. However, we do observe speed up in other environments -- for example, the “double sampling” techniques are currently being applied to sensor networks with embedded GPUs and CPUs to achieve similar speedup.
-We are currently conducting an “architecture exploration” study which aims at understanding the system trade-off between FPGA, CPU, and GPU. This requires us to push the implementation on all three architectures to the extreme. We expect this study will soon provide a full systematic answer to the question that on which hardware can we get the most from the ZipML framework.
-=======
 For non-linear models, the picture is more nuanced. 
 In particular, we find that our framework can be generalized to this setting, and that in practice \emph{8-bit is sufficient} to achieve good accuracy on a variety of tasks, such as SVM and logistic regression. 
 However, in this generalized setting, naive rounding has similar performance on many practical tasks. 
@@ -1451,7 +1083,7 @@ It is interesting to consider the rationale behind these results. Our framework 
 However, for a variety of interesting functions such as hinge loss, guaranteeing low bias requires complex approximations. In turn, these increase the variance. The complexity of the approximation and the resulting variance increase force us to increase the \emph{density} of the quantization, in order to achieve good approximation guarantees. 
 
 \newpage~\newpage~\newpage~
-
+\appendix
 \begin{center}
 \textbf{\large Supplemental Materials: Training Models with End-to-End Low Precision:\\
 The Cans, the Cannots, and a Little Bit of Deep Learning}
@@ -1529,7 +1161,7 @@ We say it has variance at most $\sigma^2$ if $\E [\| g (\x) - \nabla f(\x) \|_2^
 For simplicity, if $\beta = 0$ we will simply refer to such a random function as a stochastic gradient.
 Under these conditions, the following convergence rate for SGD is well-known:
 
-\begin{theorem}[e.g. \cite{2014arXiv1405.4980B}, Theorem 6.3]
+\begin{theorem}[e.g. \cite{bubeck2015convex}, Theorem 6.3]
 \label{thm:sgd}
 Let $\mathcal{X} \subseteq \R^n$ be convex, and let $f: \mathcal{X} \to \R$ be an unknown, convex, and $L$-smooth.
 Let $\x_0 \in \mathcal{X}$ be given, and let $R^2 = \sup_{\x \in \mathcal{X}} \| \x - \x_0 \|_2^2$.
@@ -1584,7 +1216,7 @@ r = r(s) = \left( 1 + \frac{1}{s^2} \sum_{i = 1}^n p\left( \frac{|\vec{v}_i|}{M_
 
 We now discuss different choices of the scaling function $M_i(\vec{v})$.
 
-\paragraph*{``Row Scaling''}
+\paragraph*{``Row Scaling''.}
 
 One obvious choice that was suggested in \cite{Alistarh:2016:ArXiv} is to have $M_i(\vec{v}) = \| \vec{v} \|_2$, in this way, we
 always have $\frac{\vec{v}_i}{M_i(\vec{v})} \in [-1, 1]$ and all $M_i(\vec{v})$ are the same
@@ -1605,7 +1237,7 @@ Moreover, it was shown in \cite{Alistarh:2016:ArXiv} that for this choice of $M_
 r(s) \leq \rrow (s) = 1 + \min\left( \frac{n}{s^2}, \frac{\sqrt{n}}{s} \right) \; .
 \]
 
-\paragraph*{``Column Scaling''}
+\paragraph*{``Column Scaling''.}
 Let $\vec{v} \in \R^n$ be a sample and $V \subset \R^n$ be the set of sample vectors. 
 %Another choice, especially when $\vec{v} \in \R^n$ is an input sample and 
 We can obtain the upper and lower bound for each feature, that is,
@@ -1623,7 +1255,7 @@ $M_i(\vec{v})$ and thus can be easily stored in cache when all
 input samples are accessed sequentially (like in SGD).
 
 
-\paragraph*{Choice between Row Scaling and Column Scaling}
+\paragraph*{Choice between Row Scaling and Column Scaling.}
 
 In this working paper, we make the following choices regarding row scaling
 and column scaling and leave the more general treatment to future work.
@@ -1669,7 +1301,7 @@ Fortunately, however, this issue can be easily fixed.
 
 \subsection{Double Sampling}
 
-\paragraph{Algorithm}
+\paragraph{Algorithm.}
 Instead of the naive estimate, our algorithm is as follows.
 We generate two independent
 random quantizations $Q_1$
@@ -1692,7 +1324,7 @@ but enjoys lower variance (by a constant) both theoretically and empirically.}
 
 
 
-\paragraph{Variance Analysis}
+\paragraph{Variance Analysis.}
 
 \begin{lemma} 
 The stochastic gradient variance using double sampling above $\E\|\g_t - \g_t^{(full)}\|^2$ can be bounded by
@@ -1941,7 +1573,7 @@ The (sub-)gradient at a randomly selected sample $(\a_k, b_k)$ is:
          -b_k \a_k & \mbox{if $b_k \a_k^\top \x < 1$};\\
          0 & \mbox{otherwise}. \end{array} \right.
 \]
-Observe that this loss function is not smooth.\footnote{Technically this implies that Theorem \ref{thm:sgd} does not apply in this setting, but other well-known and similar results still do, see \cite{2014arXiv1405.4980B}.}
+Observe that this loss function is not smooth.\footnote{Technically this implies that Theorem \ref{thm:sgd} does not apply in this setting, but other well-known and similar results still do, see \cite{bubeck2015convex}.}
 When quantizing samples, the estimator of gradient is biased, as $(1 - b_k \a_k^\top \x)$ and $(1 - b_k Q(\a_k)^\top \x)$ may have different signs, in which case the two procedures will apply different gradients. We say that in this case the gradient is \emph{flipped}. 
 We have two approaches to dealing with this: the first provides rigorous guarantees, however, requires some fairly heavy algorithmic machinery (in particular, Johnson-Lindenstrauss matrices with little randomness).
 The latter is a simpler heuristic that we find works well in practice.
@@ -2226,7 +1858,7 @@ This seems to work well in practice, however, we could not prove any guarantees 
 
 We prove Lemma~\ref{lem:discrete} and Theorem~\ref{thm:optQ} in the main paper here.
 
-\paragraph*{Problem Setting}
+\paragraph*{Problem Setting.}
 Assume a set of real numbers $\Omega = \{x_1, \ldots, x_N\}$ with cardinality $N$. WLOG, assume that all numbers are in $[0, 1]$ and sorted are sorted such that $x_1 \leq \ldots \leq x_N$. 
 
 The goal is to find an partition $\setI = \{I_j\}_{j = 1}^s$ of $[0, 1]$ into $s$ disjoint intervals, so that if we randomly quantize every $x \in I_j$ to an endpoint of $I_j$, the variance is minimal over all possible partitions of $[0, 1]$ into $k$ intervals.
@@ -2279,7 +1911,7 @@ where $V(j,m)$ denotes the total variance of points falling into $[d_j, d_m]$. T
 The exact algorithm has a complexity that is quadratic to the number of data points. To make our algorithm practical,
 we develop an approximation algorithm that only needs to scan all data points once and has linear complexity to $N$.
 
-\paragraph*{Discretization}
+\paragraph*{Discretization.}
 
 We can discretize the range $[0,1]$ into $M$ intervals, i.e., $[0,d_1), [d_1, d_2), \cdots, [d_{M-1}, 1]$ with $0< d_1<d_2<\cdots < d_{M-1}<1$. We then restrict our algorithms to only choose $k$ quantization points within these $M$ points, instead of all $N$ points in the exact algorithm. The following result bounded the quality of this approximation.
 
@@ -2444,7 +2076,7 @@ We have $n$ points $\setX = x_1, \ldots, x_n \in [0, 1]$.
 Our goal is to partition $[0, 1]$ into $k$ intervals $I_1, \ldots, I_k$, so that if we quantize all $x_i$ in $I_j$ to an endpoint of $I_j$, we minimize the variance.
 If $I = [a, b]$, and $x \in I$, it is not hard to show that the variance of the quantization is given by $\err (x, I) = (b - x) (x - a)$.
 
-\paragraph{Notation} Given an interval $I \subseteq [0, 1]$, we let $\setX_I$ be the set of $x_j \in \setX$ contained in $I$.
+\paragraph{Notation.} Given an interval $I \subseteq [0, 1]$, we let $\setX_I$ be the set of $x_j \in \setX$ contained in $I$.
 We also define $\err (\setX, I) = \sum_{x_j \in I} \err (x_j, I)$.
 Given a partition $\setI$ of $[0, 1]$, we let $\err (\setX, \setI) = \sum_{I \in \setI} \err (\setX, I)$.
 We also let $\setI^* = \argmin_{|\setI| = k} \err (\setX, \setI)$ (if there are multiple, then choose one arbitrarily), and we let $\OPT_k = \err(\setX, \setI^*)$.
@@ -2518,29 +2150,99 @@ Since this holds for all $I \in \setJ$, and $|\setJ| \leq k$, this implies that
 Combining the above two expressions yields that $\err (\setX, \setI) \leq  \left( 1 + \frac{1}{\gamma} \right) \OPT_k$, as claimed.
 \end{proof}
 
-\section{Implementation on FPGA}
-\label{section:implementation}
-%We describe the FPGA implementations. First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
-In this section, we show the computation pipeline for full-precision SGD and quantized SGD implemented on FPGA in figure~\ref{fig:floatFPGASGD} and~\ref{fig:qallFPGASGD}. The FPGA implementation work is submitted to IEEE International Symposium on Field-Programmable Custom Computing Machines (FCCM) 2017.
 
-First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
+\section{Extended Experiments}
 
-\subsection{Target platform: Intel Xeon+FPGA}
-\label{section:xeonfpga}
+This section provides more experiment results.
+All experiments settings are the same with
+the previous section.
 
-Our target platform is the Intel Xeon+FPGA represented in Figure \ref{fig:xeonfpga}, made available through the \textit{Intel-Altera Heterogeneous Architecture Research Platform}\footnote{Following the Intel legal guidelines on publishing performance numbers we want to make the reader aware that results in this publication were generated using preproduction hardware and software, and may not reflect the performance of production or future systems.}. It combines a 10-core CPU (Intel Xeon E5-2680 v2, 2.8 GHz) and an FPGA (Altera Stratix V 5SGXEA) on a 2-socket motherboard. The FPGA has cache-coherent access to the CPU-connected main memory through QPI (Quick Path Interconnect) with a combined read and write bandwidth of around 6.5 GB/s. The usage of an FPGA accelerator, that we implement using VHDL, is pretty straightforward with Intel-provided software libraries, a QPI endpoint and an FPGA based page table of our own implementation: At the start of an application the required amount of shared memory is allocated by software in 4MB pages and the page table on the FPGA is populated with corresponding addresses. The accelerator can request cache-line wide (64B) reads and writes to the entire memory through the use of the page table and the QPI endpoint, which in addition to handling the QPI protocol also implements an FPGA local cache (128KB two-way associative) using BRAMs. Apart from the page-table, a further addition we made to the interface is a reorder buffer, since by default QPI requests arrive out of order. In addition to an accelerator requesting data from QPI, the software can also issue direct writes, a useful feature for configuring some registers containing runtime parameters.
+\subsection{Linear Models}
+
+For linear models, we validate that 
+with double sampling, SGD with low
+precision converges---in
+comparable empirical 
+convergence rates---to the same solution
+as SGD with full precision and we want to
+understand how many bits do we need to
+achieve it empirically and how it is related to 
+the size of dataset.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=.7\columnwidth]{Figures/XeonFPGA-eps-converted-to.pdf}
-\caption{Intel Xeon+FPGA Architecture}
-\label{fig:xeonfpga}
+    \includegraphics[width=1\columnwidth]{final-experiments/lr-endtoend}
+    
+\caption{Linear regression with \emph{end-to-end quantization} on multiple datasets}
+\label{fig:lr-endtoend}
+\end{figure}
+\begin{figure}[t]
+\centering
+    \includegraphics[width=0.6\columnwidth]{final-experiments/lssvm-endtoend}
+    
+\caption{Least squares SVM with \emph{end-to-end quantization} on multiple datasets}
+\label{fig:lssvm-endtoend}
 \end{figure}
 
-\subsection{FPGA-SGD on \textbf{float} data}
-\label{section:floatfpgasgd}
+Figure~\ref{fig:lr-endtoend} and~\ref{fig:lssvm-endtoend} illustrates
+the result of training linear models: 
+linear regression and least squares SVMs, respectively,
+with end-to-end low-precision and 
+full precision. For
+low precision, we pick the 
+smallest number of bits that
+results in a smooth convergence
+curve. We compare the final 
+training loss in both settings 
+and the convergence rate.
 
-We first present an SGD implementation on the FPGA, that works on 32-bit floating-point data, which is very often the original data representation in machine learning data sets. In Figure \ref{fig:floatFPGASGD} the computation pipeline for \textit{float} FPGA-SGD is presented. As the data access width is a 64B cache-line on Xeon+FPGA, the circuit is designed to work on that data width. It is able to accept a cache-line at every clock cycle ($f_{clock} = 200 MHz$), resulting in an internal processing rate of 12.8 GB/s.
+We see that, for both linear regression 
+and least squares SVM,
+on all our datasets,
+using 5- or 6-bit is always enough
+to converge to the same solution
+with comparable convergence rate. 
+This validates our prediction that
+double-sampling provides an
+unbiased estimator of the gradient.
+Considering the size of input
+samples that we need to read, we
+could potentially save 6--8$\times$ 
+memory bandwidth compared to using 
+32-bit. 
+
+We also see from Figure~\ref{fig:lr-endtoend} (a) to (c) that if the dataset has more
+features, usually we need more bits for quantization,
+because the variance induced by quantization
+is higher when the dimensionality is higher.
+
+\subsection{Non-Linear Models}
+
+Figure~\ref{fig:refetch} illustrates
+the result of training SVM
+with refetching heuristic. 
+We see that, 
+with our refetching heuristic,
+SGD converges to similar training loss 
+with a comparable empirical convergence 
+rate for SVM. If we increase the number of
+bits we use, we need to refetch less data and
+if we use 8-bit quantization, we only need to fetch
+about $6\%$ of data.
+We also experience no loss in test accuracy.
+
+\begin{figure}[t]
+\centering
+    \includegraphics[width=0.6\columnwidth]{additional/fetch}
+    
+\caption{SVM with low precision data and refetching on cod-rna dataset}
+\label{fig:refetch}
+\end{figure}
+
+\section{Implementation on FPGA}
+\label{section:implementation}
+%We describe the FPGA implementations. First, we introduce the target platform, Intel Xeon+FPGA. Then, we present our FPGA implementations for SGD that work on 32-bit floating point data and lower precision quantized data, respectively. Under each subsection, we discuss the trade-off for the circuit design we faced during the implementation phase.
+We show the computation pipeline for full-precision SGD and quantized SGD implemented on FPGA in Figure~\ref{fig:floatFPGASGD} and~\ref{fig:qallFPGASGD}. For detailed FPGA implementation, please refer to~\cite{kara2017fpga}.
 
 \begin{figure}[t]
 \centering
@@ -2548,22 +2250,6 @@ We first present an SGD implementation on the FPGA, that works on 32-bit floatin
 \caption{Computation pipeline for \textit{float} FPGA-SGD, with a latency of 36 cycles, a data width of 64B and a processing rate of 64B/cycle.}
 \label{fig:floatFPGASGD}
 \end{figure}
-
-\noindent
-\textbf{Scale to \# features:} The challenging part of the design is to make it capable of handling a number of features $D$ that is larger than 16, which is the default width of the pipeline. In fact, this is possible since all vector algebra can be performed iteratively, where each chunk contains 16 values. This implies that the number $D$ needs to be a multiple of 16. To ensure that, we use zero-padding on a data set, if $D\bmod16\neq0$. Thus, we can calculate how many cache-lines it takes for $\mathbf{a_i}$ (one row in the set) to be completely received:
-\[
-\text{\#} \mathbf{a_i} \text{cache-lines} = 
-\begin{cases}
-%\frac{D}{16}
-D/16
-\quad & \text{if } D\bmod16=0 \\
-\frac{D + (16-D\bmod16)}{16}
-%(D + (16-D\bmod16))/16
-\quad & \text{if } D\bmod16\neq0
-\end{cases}
-\]
-The only parameter that the design needs to scale for is the maximum number of dimensions $D_{max}$ that can be supported, and the only value growing with that is the amount of BRAM for storing the model $\mathbf{x}$. We choose $D_{max}$ to be 8192, since this is more than enough for most existing linear dense model training examples. The design can handle any number of samples, \textit{N}, since training is done in a streaming fashion, as explained in the following.
-%The resource consumption numbers on the target FPGA are given in Table \ref{table:resources}.
 
 \begin{figure*}[t]
 \centering
@@ -2585,105 +2271,6 @@ The only parameter that the design needs to scale for is the maximum number of d
 \end{figure*}
 
 
-\noindent
-\textbf{Walk-through of computation pipeline:} In the following, we explain what happens at each stage of the computation pipeline. The first stage is the dot product $\mathbf{a_i}\cdot\mathbf{x} = \sum_{j=1}^{D} a_{i,j}x_j$. When a cache-line containing a part of vector $\mathbf{a_i}$ arrives, it is first multiplied (\circled{1}) with the corresponding part of vector $\mathbf{x}$. The multiplication is performed in floating point with multiplier IPs\footnote{All floating point IPs are created via Altera Quartus II 13.1}, which have 5 cycles latency and a result per cycle throughput. Then, the values are converted to a 32-bit integer (\circled{2}) by multiplication with a large constant that is configurable during runtime, depending on the value range or the precision that is desired to be kept. This \textit{float2fixed} conversion takes 1 cyle. After that, an adder tree (\circled{3}) accumulates 16 values, each layer taking 1 cycle. At the output of the adder tree is a single accumulator (\circled{4}). It accumulates the results coming out from the adder tree for the pre-calculated number of $\text{\#} \mathbf{a_i} \text{cache-lines}$, thus building the final value for the dot product. The dot product result is converted back to floating point (\circled{5}), since the next stages of the calculation will be performed with floating point data.
-In the next part, the rest of the gradient calculation takes place. First, the scalar value $b$, which is the true inference value in the data set, is subtracted from the dot product (\circled{6}) using a floating point adder IP, which has 7 cycles latency and a result per cycle throughput. As for where the $b$ value comes from, it is actually received some cycles before the subtraction takes place and is put into a FIFO (\circled{B}), waiting there until the dot product result is ready. After the subtraction, a floating point multiplication takes place with the step size $\gamma$ (\circled{7}), which can be configured to any \textit{float} value during runtime. At the end of this step, we have a scalar value $\gamma(\mathbf{a_i}\cdot\mathbf{x}-b_i)$, which needs to be multiplied with vector $\mathbf{a_i}$. At this stage, a FIFO (\circled{A}) already contains all parts of vector $\mathbf{a_i}$, because the incoming cache-lines are written to this FIFO simultaneously as they were sent to the dot product calculation. The scalar-vector multiplication (\circled{8}) takes place in floating point, where all parts of $\mathbf{a_i}$ are multiplied with the same scalar value. This gives us the gradient $\mathbf{g_i}$ one part at a time, which undergoes \textit{float2fixed} conversion (\circled{9}), so that a cycle-by-cycle update of the model $\mathbf{x}$ (\circled{C}) can take place, which would not be possible with a floating point adder having 7 cycles latency. The part of the gradient, which is ready, is applied to the corresponding part of the model. After the last part of the gradient is subtracted from the model, the update for $\mathbf{a_i}$ (a row in the data set) is completed. After all rows go through the same calculation, one so called epoch is completed. In Figure \ref{fig:floatFPGASGD} we can see that the model we apply the updates to and the model we read for the dot product are separate. Only when a certain batch size (the number of already processed $\mathbf{a_i}$) is reached, the updated model is carried on to the actual model (\circled{D}). The reason for this is the latency introduced by the computation pipeline: In theory, the whole gradient calculation and the update to the model should be an atomic operation. However, since we would like to exploit the deep-pipelining an FPGA provides to achieve high processing throughput, we don't perform this operation atomically. Instead, we keep the actual model and the updated model separate and only carry out the accumulated update when a certain batch size is reached (called also a mini-batch SGD). The batch size is a runtime configurable parameter, which should be set to the latency of the pipeline (36 cycles) to avoid any so called stale updates.
-
-\noindent
-\textbf{Trade-off: End-to-end float vs. hybrid computation} We choose a hybrid (float+fixed) over end-to-end float computation because of the following reasons: (1) One floating point addition takes 7 cycles, resulting in a high latency adder tree (\circled{3}). Because of the increased latency (as explained previously) a larger batch-size is required to avoid staleness, which slows down the convergence rate. (2) Again, since a floating point addition takes 7 cycles, a cycle-by-cycle accumulation (\circled{7}) would not be possible, since the result of an ongoing addition is required in the next cycle. Thus, for keeping the processing rate at 64B/cycle, a hybrid design is chosen.
-
-\subsection{FPGA-SGD on \textbf{quantized} data}
-\label{section:qfpgasgd}
-
-We explain how the FPGA-SGD design for \textit{float} data is adjusted to work on quantized data. The main purpose of this design is simple: Instead of reading \textit{float} data, where only 16 values can be fit into a cache-line, we would like to quantize the data beforehand, so that we can fit more than 16 values into a cache-line, thus utilize the available bandwidth more efficiently and gain speedup. There is one main challenge in making the FPGA-SGD work on quantized data: Scaling out the computation pipeline presented in Figure \ref{fig:floatFPGASGD}, so that it can work on more than 16 values in parallel. Before we dive in and explain how this is achieved, first we would like to give an overview of quantization options we consider and how the data layout looks like.
-
-\noindent
-\textbf{Quantization for FPGA-SGD:} When we analyze what happens when we quantize data, given a non-integer value, the quantization still might produce a non-integer value. However, floating point arithmetic induced by non-integer values are hard to implement on the FPGA, and scaling out such a design would not be possible. We would like to take advantage of the fact that we can select the quantization variables $[L,U]$ and $s$ intelligently, so that only integer values are produced. In Table \ref{table:quantization} we present choices for these values.
-
-\begin{table}[t]
-\centering
-\caption{Choice of quantization levels, lower and upper bounds, so that only integer values are produced.}
-\label{table:quantization}
-\begin{tabular}{c|c|c|c}
-Levels & Data set positive & Data set negative & Needed bits\\
-\hline
-s=2 & $[L,U]=[0,1]$ & N/A & 1, \textit{Q1} \\
-s=3 & $[L,U]=[0,2]$ & $[L,U]=[-1,1]$ & 2, \textit{Q2} \\
-s=9 & $[L,U]=[0,8]$ & $[L,U]=[-4,4]$ & 4, \textit{Q4} \\
-s=129 & $[L,U]=[0,128]$ & $[L,U]=[-64,64]$ & 8, \textit{Q8}
-\end{tabular}
-\end{table}
-
-After we have selected a quantization precision (one of \textit{Q1}, \textit{Q2}, \textit{Q4} or \textit{Q8}), the data set (the values in matrix $\mathbf{a}$) must be normalized to selected quantization's corresponding $[L,U]$. At this stage, the sign of the data set is considered for the normalization. For example, we choose not the normalize a negative data set into a positive interval, in order to keep existing zeros, thus we don't use \textit{Q1} for negative data sets.
-
-\noindent
-\textbf{The layout of quantized data}  For calculating a correct gradient we need 2 quantization samples of the same data point. That is, if we for example select \textit{Q8}, a quantized sample has 8 bits and we need 2 of them for calculating the gradient; the actual amount of bits we use is 16. That's why, when we perform quantization on a data set, we always create 2 samples and store them in memory next to each other. Thus, we can calculate how many quantized values can fit into one cache-line, a value we call $K$, in Table \ref{table:valuesincl}. The value $K$ dictates the amount of zero-padding we need to perform, in order to be cache-line aligned, similar to as it did for \textit{float} FPGA-SGD. Thus, the number of cache-lines required to receive one quantized row $Q(\mathbf{a_i})$ can be calculated:
-\begin{equation}
-\label{equation:cachelines}
-\text{\#} \mathbf{a_i} \text{cache-lines} = 
-\begin{cases}
-%\frac{D}{16}
-D/K
-\quad & \text{if } D\bmod K=0 \\
-\frac{D + (K-D\bmod K)}{K}
-%(D + (16-D\bmod16))/16
-\quad & \text{if } D\bmod K\neq0
-\end{cases}
-\end{equation}
-\begin{table}[t]
-\centering
-\caption{Number of received values in a single cache-line.}
-\label{table:valuesincl}
-\begin{tabular}{c|c|c|c|c|c}
-Data type & \textit{Q1} & \textit{Q2} & \textit{Q4} & \textit{Q8} & \textit{float}\\
-\hline
-Number of values in a cache-line, $K$ & 256 & 128 & 64 & 32 & 16\\
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\begin{subfigure}{.9\columnwidth}
-\centering
-\includegraphics[width=\columnwidth]{Figures/Q8Q4mult-eps-converted-to.pdf}
-\caption{Signed integer multiplication for \textit{Q8} and \textit{Q4} data, implemented with DSPs.}
-\label{fig:Q8Q4mult}
-\end{subfigure}
-\begin{subfigure}{\columnwidth}
-\centering
-\includegraphics[width=.7\columnwidth]{Figures/Q2Q1mult-eps-converted-to.pdf}
-\caption{Signed integer multiplication for \textit{Q2} and \textit{Q1} data, implemented with combinational logic.}
-\label{fig:Q2Q1mult}
-\end{subfigure}
-\caption{Multiplication implementations depending on the quantization kind.}
-\label{fig:Qmult}
-\end{figure}
-
-\noindent
-\textbf{Computation pipeline for quantized data:} The computation pipeline for quantized data is presented in Figure \ref{fig:qallFPGASGD}. The selection of \textit{Qx}, which determines the width of the pipeline is a generic parameter that can be set before synthesis. So, for each \textit{Qx} a different bitstream needs to be compiled. The pipeline is very similar to the \textit{float} version, explained in Section \ref{section:floatfpgasgd}. For this reason, our explanation here only focuses on the differences and how the pipelines are scaled out. The first thing to note is that \textit{Qx} pipelines are working only on integer data, so there is no need for converters. This is because, the arriving quantized data $Q(\mathbf{a_i})$ is already in integer form, as explained previously, and the inference values $b$ are also converted to integer by multiplication with a large constant. Another difference here is that for a given value in vector $\mathbf{a_i}$, 2 quantized samples arrive because of the double sampling method. The first sample is given to the dot product calculation (\circled{1}) and the second sample is put into a FIFO (\circled{A}), where it is kept until the dot product result is ready, as depicted in Figure \ref{fig:qallFPGASGD}. The last difference we would like to mention is the appliance of the step size $\gamma$ (\circled{2}), which is actually a division. Since we are dealing with integer data here, we choose to apply $\gamma$ as a bit-shift operation. By how many bits the value is shifted to right is a runtime configurable parameter, allowing adjustments according to data set characteristics.
-
-\noindent
-\textbf{Scaling out for quantized data and trade-offs:} Now, scaling out the pipeline for \textit{Q8} and \textit{Q4} is very straightforward as conventional signed multipliers (\circled{3}), implemented by DSP resources, followed by a bitshift, to keep the data width at 32 bits, is used as shown in Figure \ref{fig:Q8Q4mult}. However, for \textit{Q2} and \textit{Q1}, we can do a much more efficient multiplication using multiplexers as shown in \ref{fig:Q2Q1mult}, since one of the multiplicands is only 2 bits and 1 bit, respectively. Doing this efficient multiplication allows \textit{Q2} pipeline to scale to 128 value parallelism, which would have otherwise required a 100\% usage of the available DSP resources on the target FPGA (see Table \ref{table:resources}). However, the pipeline shown in Figure \ref{fig:qFPGASGD} does not scale to 256 value parallelism, even though \textit{Q1} multiplier is just one multiplexer. The main problem here is that the adder tree is too wide and deep, making the routing very challenging. Once it has become clear that we cannot scale the pipeline to this parallelism, we decided to halve it to process \textit{Q1} data. For doing that, we split an arriving cache-line into 2 parts (\circled{4}), which are processed sequentially by the pipeline shown in Figure \ref{fig:q1FPGASGD}. The processing rate of this pipeline is 32B/cycle, or 6.4 GB/s, which is slightly less than the memory bandwidth. Thus, \textit{Q1} FPGA-SGD will actually be compute bound.
-{\tiny
-\begin{table}[t]
-\centering
-\caption{Resource consumption for computation pipelines.}
-\label{table:resources}
-\begin{tabular}{c|c|c|c}
-Data type & Logic (ALMs) & DSP & BRAM (bits)\\
-\hline
-\textit{float} & 38\% (89194) & 12\% (33) & 7\% (3.471K) \\
-\textit{Q8} & 35\% (82152) & 25\% (64) & 6\% (3.145K) \\
-\textit{Q4} & 36\% (84500) & 50\% (128) & 6\% (3.145K) \\
-\textit{Q2}, \textit{Q1} & 43\% (100930) & 1\% (2) & 6\% (3.145K) %\\
-%\textit{Q1}	& 42\% (98582) & 1\% (2) & 6\% (3.145K)
-\end{tabular}
-\end{table}
-}
-
-
-
->>>>>>> master
 
 \cleardoublepage
 
